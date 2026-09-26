@@ -48,6 +48,34 @@ export const POST_SLUGS_QUERY = defineQuery(
   `*[_type == "post" && defined(slug.current)][].slug.current`,
 );
 
+export const LEGAL_PAGES_NAV_QUERY = defineQuery(
+  `*[_type == "legalPage" && defined(slug.current)] | order(_createdAt asc){
+    _id,
+    title,
+    "slug": slug.current
+  }`,
+);
+
+export const LEGAL_PAGE_QUERY = defineQuery(
+  `*[_type == "legalPage" && slug.current == $slug][0]{
+    _id,
+    title,
+    description,
+    content[]{
+      _key,
+      _type,
+      ...,
+      markDefs[]{
+        _key,
+        ...,
+        _type == "link" => { "href": @.href }
+      },
+      _type == "image" => { asset-> }
+    },
+    accordion[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } }
+  }`,
+);
+
 export const POST_DETAIL_QUERY = defineQuery(
   `*[_type == "post" && slug.current == $slug][0]{
     _id,
@@ -101,9 +129,9 @@ export const REQUEST_DETAIL_QUERY = defineQuery(
     contractType,
     status,
     submittedAt,
-    applicant{ role, isAgent, agencyNumber, phone, nationalId },
+    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob },
     counterparty{
-      counterType, fullName, nationalId, phone, dob, unifiedNumber,
+      counterType, nationalId, phone, dob, unifiedNumber,
       entityName, repId, repPhone, repDob, authNumber
     },
     property{
@@ -112,7 +140,7 @@ export const REQUEST_DETAIL_QUERY = defineQuery(
       bathrooms, bathroomsCustom, extras, livingRooms,
       electroMeter, waterMeter, activity, hasLicense, licenseNumber
     },
-    location{ mapsLink, city, buildingNumber, additionalNumber, postalCode },
+    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },
     terms{
       duration, customMonths, contractStart, payment, annualRent, feePayer,
       feeBreakdown{ years, government, company, total }, notes
@@ -142,4 +170,22 @@ export const SUBSCRIBER_BY_TOKEN_QUERY = defineQuery(
 
 export const BROADCAST_CANDIDATE_QUERY = defineQuery(
   `*[_type == "post" && _id == $id][0]{ _id, title, "slug": slug.current, excerpt, cover, publishedAt, broadcastSentAt, broadcastId }`,
+);
+
+export const TESTIMONIALS_QUERY = defineQuery(
+  `*[_id == "testimonials"][0]{
+    items[]{ _key, name, role, city, quote }
+  }`,
+);
+
+export const FEATURES_QUERY = defineQuery(
+  `*[_id == "features"][0]{
+    items[]{ _key, title, description, icon }
+  }`,
+);
+
+export const LICENSES_QUERY = defineQuery(
+  `*[_id == "licenses"][0]{
+    items[]{ _key, title, issuer, description, number, icon }
+  }`,
 );

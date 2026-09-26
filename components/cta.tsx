@@ -22,7 +22,7 @@ const features = [
   { icon: MdReceiptLong, label: "عرض الرسوم مقدماً" },
 ];
 
-export function BlogCta() {
+export function Cta() {
   return (
     <section className="border-border bg-surface relative overflow-hidden rounded-3xl border before:pointer-events-none before:absolute before:inset-0 before:z-10 before:bg-[url(/images/noise.gif)] before:bg-repeat before:opacity-[0.05] before:content-['']">
       <div

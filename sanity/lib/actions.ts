@@ -7,7 +7,7 @@ import {
   feeConfigFromSettings,
   type ContractType,
 } from "@/lib/fees";
-import { validators } from "@/lib/validation";
+import { isAdultISO, isPastDayISO, normalizePhone, validators } from "@/lib/validation";
 import { SITE_URL } from "@/lib/blog";
 import {
   counterTypeText,
@@ -48,24 +48,35 @@ function assertValidRentalRequest(
   if (s.role !== "owner" && s.role !== "tenant") throw invalid("role");
   if (!validators.mobile(s.applicantPhone)) throw invalid("applicantPhone");
   if (!validators.nationalOrIqama(s.applicantId)) throw invalid("applicantId");
+  if (s.role === "tenant" && !isAdultISO(s.applicantDob))
+    throw invalid("applicantDob");
   if (s.role === "owner" && s.isAgent && !validators.required(s.agencyNumber))
     throw invalid("agencyNumber");
+  if (isCommercial && s.counterType !== "entity" && s.counterType !== "individual")
+    throw invalid("counterType");
   if (isCommercial && s.counterType === "entity") {
     if (!validators.unifiedNumber(s.unifiedNumber)) throw invalid("unifiedNumber");
     if (!validators.nationalOrIqama(s.repId)) throw invalid("repId");
     if (!validators.mobile(s.repPhone)) throw invalid("repPhone");
   } else {
-    if (!isCommercial && s.role === "owner" && !validators.required(s.otherName))
-      throw invalid("otherName");
     if (!validators.nationalOrIqama(s.otherId)) throw invalid("otherId");
     if (!validators.mobile(s.otherPhone)) throw invalid("otherPhone");
+    if (s.role === "owner" && !isAdultISO(s.otherDob))
+      throw invalid("otherDob");
   }
   if (!validators.deedNumber(s.deedNumber)) throw invalid("deedNumber");
   if (!s.deedDate) throw invalid("deedDate");
-  if (!validators.required(s.city)) throw invalid("city");
+  if (s.locationManual !== true && s.locationManual !== false)
+    throw invalid("locationManual");
+  if (s.locationManual) {
+    if (!validators.required(s.city)) throw invalid("city");
+  } else if (!validators.required(s.mapsLink)) {
+    throw invalid("mapsLink");
+  }
   if (s.postalCode.trim() !== "" && !validators.postal(s.postalCode))
     throw invalid("postalCode");
   if (!s.contractStart) throw invalid("contractStart");
+  if (isPastDayISO(s.contractStart)) throw invalid("contractStartPast");
   if (s.duration === "custom" && !(s.customMonths >= 1))
     throw invalid("customMonths");
   if (!(s.annualRent > 0) || !s.duration || !s.payment)
@@ -73,7 +84,7 @@ function assertValidRentalRequest(
   if (!s.propertyType || !s.unitType || !s.floor) throw invalid("property");
   if (!validators.required(s.unitNumber)) throw invalid("unitNumber");
   if (!(s.area > 0)) throw invalid("area");
-  if (!isCommercial && !validators.required(s.electroMeter))
+  if (!validators.required(s.electroMeter))
     throw invalid("electroMeter");
   if (s.propertyType === "other" && !validators.required(s.propertyCustom))
     throw invalid("propertyCustom");
@@ -87,9 +98,9 @@ function assertValidRentalRequest(
       throw invalid("bedroomsCustom");
     if (s.bathrooms === "other" && !(s.bathroomsCustom > 0))
       throw invalid("bathroomsCustom");
-    if (s.extras.includes("sitting") && !(s.livingRooms > 0))
-      throw invalid("livingRooms");
   }
+  if (s.extras.includes("sitting") && !(s.livingRooms > 0))
+    throw invalid("livingRooms");
 }
 
 export async function submitRentalRequest(
@@ -128,19 +139,20 @@ export async function submitRentalRequest(
       role: storedArabic(OPTION_VALUES.role, s.role),
       isAgent: s.isAgent,
       agencyNumber: s.agencyNumber || undefined,
-      phone: s.applicantPhone,
+      phone: normalizePhone(s.applicantPhone),
       nationalId: s.applicantId,
+      dob: toDateString(s.applicantDob),
     },
     counterparty: {
-      counterType: counterTypeText(s.counterType) ?? undefined,
-      fullName: s.otherName || undefined,
+      counterType:
+        counterTypeText(s.counterType) ?? (isCommercial ? undefined : "فرد"),
       nationalId: s.otherId || undefined,
-      phone: s.otherPhone || undefined,
+      phone: s.otherPhone ? normalizePhone(s.otherPhone) : undefined,
       dob: toDateString(s.otherDob),
       unifiedNumber: s.unifiedNumber || undefined,
       entityName: s.entityName || undefined,
       repId: s.repId || undefined,
-      repPhone: s.repPhone || undefined,
+      repPhone: s.repPhone ? normalizePhone(s.repPhone) : undefined,
       repDob: toDateString(s.repDob),
       authNumber: s.authNumber || undefined,
     },
@@ -172,6 +184,7 @@ export async function submitRentalRequest(
       licenseNumber: s.licenseNumber || undefined,
     },
     location: {
+      locationManual: s.locationManual,
       mapsLink: s.mapsLink || undefined,
       city: storedArabic(OPTION_VALUES.city, s.city),
       buildingNumber: s.buildingNumber || undefined,
@@ -225,7 +238,7 @@ export async function submitContactMessage(input: {
   message: string;
 }): Promise<{ ok: true }> {
   const name = input.name.trim();
-  const phone = input.phone.trim();
+  const phone = normalizePhone(input.phone);
   const email = input.email?.trim() || undefined;
   const message = input.message.trim();
   if (!name || !phone || !message) {
@@ -254,7 +267,7 @@ export async function getRequestDetail(
   if (!/^REQ-\d{4}-\d{6}$/.test(normalized)) {
     return null;
   }
-  const phone = applicantPhone.replace(/[\s-]/g, "");
+  const phone = normalizePhone(applicantPhone);
   if (!phone) {
     return null;
   }
@@ -265,7 +278,7 @@ export async function getRequestDetail(
     if (!data?.requestNo) {
       return null;
     }
-    const stored = `${data.applicant?.phone ?? ""}`.replace(/[\s-]/g, "");
+    const stored = normalizePhone(`${data.applicant?.phone ?? ""}`);
     if (!stored || stored !== phone) {
       return null;
     }

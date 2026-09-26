@@ -8,8 +8,10 @@ export type FeeBreakdown = {
 };
 
 export type FeeConfig = {
-  residentialGov: number;
-  residentialCompany: number;
+  residentialFirstGov: number;
+  residentialFirstCompany: number;
+  residentialExtraGov: number;
+  residentialExtraCompany: number;
   commercialFirstGov: number;
   commercialFirstCompany: number;
   commercialExtraGov: number;
@@ -17,21 +19,41 @@ export type FeeConfig = {
 };
 
 export const DEFAULT_FEE_CONFIG: FeeConfig = {
-  residentialGov: 125,
-  residentialCompany: 125,
+  residentialFirstGov: 125,
+  residentialFirstCompany: 125,
+  residentialExtraGov: 125,
+  residentialExtraCompany: 125,
   commercialFirstGov: 200,
   commercialFirstCompany: 200,
   commercialExtraGov: 400,
   commercialExtraCompany: 400,
 };
 
+type LegacyFeeConfig = Partial<FeeConfig> & {
+  residentialGov?: number;
+  residentialCompany?: number;
+};
+
 export function feeConfigFromSettings(
-  fees: Partial<FeeConfig> | null | undefined,
+  fees: LegacyFeeConfig | null | undefined,
 ): FeeConfig {
   return {
-    residentialGov: fees?.residentialGov ?? DEFAULT_FEE_CONFIG.residentialGov,
-    residentialCompany:
-      fees?.residentialCompany ?? DEFAULT_FEE_CONFIG.residentialCompany,
+    residentialFirstGov:
+      fees?.residentialFirstGov ??
+      fees?.residentialGov ??
+      DEFAULT_FEE_CONFIG.residentialFirstGov,
+    residentialFirstCompany:
+      fees?.residentialFirstCompany ??
+      fees?.residentialCompany ??
+      DEFAULT_FEE_CONFIG.residentialFirstCompany,
+    residentialExtraGov:
+      fees?.residentialExtraGov ??
+      fees?.residentialGov ??
+      DEFAULT_FEE_CONFIG.residentialExtraGov,
+    residentialExtraCompany:
+      fees?.residentialExtraCompany ??
+      fees?.residentialCompany ??
+      DEFAULT_FEE_CONFIG.residentialExtraCompany,
     commercialFirstGov:
       fees?.commercialFirstGov ?? DEFAULT_FEE_CONFIG.commercialFirstGov,
     commercialFirstCompany:
@@ -55,8 +77,11 @@ export function calcFeeBreakdown(params: {
   const config = params.config ?? DEFAULT_FEE_CONFIG;
   const years = billedYears(params.durationMonths);
   if (params.contractType === "residential") {
-    const government = config.residentialGov * years;
-    const company = config.residentialCompany * years;
+    const government =
+      config.residentialFirstGov + config.residentialExtraGov * (years - 1);
+    const company =
+      config.residentialFirstCompany +
+      config.residentialExtraCompany * (years - 1);
     return { years, government, company, total: government + company };
   }
   const government =
@@ -110,7 +135,7 @@ export function durationToMonths(
   }
 }
 
-export const CURRENCY_SYMBOL = String.fromCodePoint(0x20c1);
+export const CURRENCY_SYMBOL = "ر.س";
 
 const CurrencyFormat = new Intl.NumberFormat("ar-SA-u-nu-latn", {
   style: "currency",

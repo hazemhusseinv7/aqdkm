@@ -10,7 +10,6 @@ import {
 import { mailTheme as t } from "./_components/theme";
 import {
   FIELD_LABELS,
-  counterpartyNameAr,
   counterTypeText,
   OPTION_VALUES,
   propValueLists,
@@ -20,6 +19,7 @@ import {
   durationText,
   extrasText,
   formatDateValue,
+  formatDualDate,
   formatMoney,
   lookupOption,
   resolveOtherOption,
@@ -101,7 +101,7 @@ export function NewRequestNotification({
   const c = detail.counterparty;
   const loc = detail.location;
   const tm = detail.terms;
-  const isEntity = c?.counterType === "entity";
+  const isEntity = counterTypeText(c?.counterType) === "منشأة";
 
   const counterpartyRows: Row[] = [
     { label: L.counterpartyType.ar, display: counterTypeText(c?.counterType) },
@@ -116,15 +116,11 @@ export function NewRequestNotification({
           { label: L.counterpartyRepPhone.ar, display: c?.repPhone ?? null },
           {
             label: L.counterpartyRepDob.ar,
-            display: formatDateValue(c?.repDob),
+            display: formatDualDate(c?.repDob),
           },
           { label: L.counterpartyAuthNumber.ar, display: c?.authNumber ?? null },
         ]
       : [
-          {
-            label: counterpartyNameAr(detail.applicant.role),
-            display: c?.fullName ?? null,
-          },
           {
             label: L.counterpartyNationalId.ar,
             display: c?.nationalId ?? null,
@@ -132,7 +128,7 @@ export function NewRequestNotification({
           { label: L.counterpartyPhone.ar, display: c?.phone ?? null },
           {
             label: L.counterpartyDob.ar,
-            display: formatDateValue(c?.dob),
+            display: formatDualDate(c?.dob),
           },
         ]),
   ];
@@ -162,6 +158,10 @@ export function NewRequestNotification({
             display: detail.applicant.nationalId ?? null,
           },
           {
+            label: L.applicantDob.ar,
+            display: formatDualDate(detail.applicant.dob),
+          },
+          {
             label: L.applicantIsAgent.ar,
             display: yesNo(detail.applicant.isAgent),
           },
@@ -182,25 +182,34 @@ export function NewRequestNotification({
           { label: L.propertyDeedNumber.ar, display: p?.deedNumber ?? null },
           {
             label: L.propertyDeedDate.ar,
-            display: formatDateValue(p?.deedDate),
+            display: formatDualDate(p?.deedDate),
           },
         ]}
       />
       <MailSection
         title="موقع العقار"
-        rows={[
-          { label: L.mapsLink.ar, display: loc?.mapsLink ?? null },
-          {
-            label: L.city.ar,
-            display: lookupOption(OPTION_VALUES.city, loc?.city),
-          },
-          { label: L.buildingNumber.ar, display: loc?.buildingNumber ?? null },
-          {
-            label: L.additionalNumber.ar,
-            display: loc?.additionalNumber ?? null,
-          },
-          { label: L.postalCode.ar, display: loc?.postalCode ?? null },
-        ]}
+        rows={
+          loc?.locationManual === false
+            ? [{ label: L.mapsLink.ar, display: loc?.mapsLink ?? null }]
+            : [
+                ...(loc?.mapsLink
+                  ? [{ label: L.mapsLink.ar, display: loc?.mapsLink ?? null }]
+                  : []),
+                {
+                  label: L.city.ar,
+                  display: lookupOption(OPTION_VALUES.city, loc?.city),
+                },
+                {
+                  label: L.buildingNumber.ar,
+                  display: loc?.buildingNumber ?? null,
+                },
+                {
+                  label: L.additionalNumber.ar,
+                  display: loc?.additionalNumber ?? null,
+                },
+                { label: L.postalCode.ar, display: loc?.postalCode ?? null },
+              ]
+        }
       />
       <MailSection
         title="مواصفات العقار"
@@ -259,7 +268,7 @@ export function NewRequestNotification({
         rows={[
           {
             label: L.contractStart.ar,
-            display: formatDateValue(tm?.contractStart),
+            display: formatDualDate(tm?.contractStart),
           },
           {
             label: L.duration.ar,
@@ -341,7 +350,7 @@ export default function NewRequestNotificationPreview() {
         applicant: {
           role: "owner",
           isAgent: false,
-          phone: "0550336663",
+          phone: "550336663",
           nationalId: "1111133333",
         },
         counterparty: { counterType: "individual" },

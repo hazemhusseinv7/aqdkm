@@ -21,8 +21,8 @@ export const FIELD_LABELS = {
     en: "National ID / Iqama",
     ar: "رقم الهوية / الإقامة لمقدم الطلب",
   },
+  applicantDob: { en: "Date of birth", ar: "تاريخ ميلاد مقدم الطلب" },
   counterpartyType: { en: "Party type", ar: "نوع الطرف الآخر" },
-  counterpartyFullName: { en: "Full name", ar: "اسم الطرف الآخر" },
   counterpartyNationalId: {
     en: "National ID / Iqama",
     ar: "رقم الهوية / الإقامة للطرف الآخر",
@@ -60,8 +60,8 @@ export const FIELD_LABELS = {
   floor: { en: "Floor", ar: "الدور" },
   floorCustom: { en: "Floor (custom)", ar: "يرجى تحديد رقم الدور" },
   area: { en: "Area (sqm)", ar: "المساحة" },
-  bedrooms: { en: "Bedrooms", ar: "غرف النوم" },
-  bedroomsCustom: { en: "Bedrooms (custom)", ar: "عدد غرف النوم" },
+  bedrooms: { en: "Bedrooms", ar: "الغرف" },
+  bedroomsCustom: { en: "Bedrooms (custom)", ar: "عدد الغرف" },
   bathrooms: { en: "Bathrooms", ar: "الحمامات" },
   bathroomsCustom: { en: "Bathrooms (custom)", ar: "عدد الحمامات" },
   extras: { en: "Extras", ar: "المرافق المتوفرة" },
@@ -72,6 +72,7 @@ export const FIELD_LABELS = {
   hasLicense: { en: "Has municipal license", ar: "الرخصة البلدية" },
   licenseNumber: { en: "License number", ar: "رقم الرخصة" },
   mapsLink: { en: "Maps link", ar: "رابط موقع العقار" },
+  locationManual: { en: "Manual address entry", ar: "إدخال العنوان يدوياً" },
   city: { en: "City", ar: "المدينة" },
   buildingNumber: { en: "Building number", ar: "رقم المبنى" },
   additionalNumber: { en: "Additional number", ar: "الرقم الإضافي" },
@@ -95,11 +96,6 @@ export type RequestFieldKey = keyof typeof FIELD_LABELS;
 export function bilingualTitle(key: RequestFieldKey): string {
   const l = FIELD_LABELS[key];
   return `${l.en} / ${l.ar}`;
-}
-
-/** Website-form label for the counterparty name, which varies by applicant role. */
-export function counterpartyNameAr(role?: string): string {
-  return role === "owner" ? "اسم المستأجر" : "اسم المالك";
 }
 
 /** Arabic request-status labels, shared by tracking and admin surfaces. */

@@ -32,17 +32,16 @@ import { PiBathtubFill } from "react-icons/pi";
 
 import {
   FIELD_LABELS,
-  counterpartyNameAr,
   counterTypeText,
   OPTION_VALUES,
   propValueLists,
 } from "@/lib/request-fields";
+import { Price, priceText } from "@/components/price";
 import {
   countText,
   durationText,
   extrasText,
-  formatDateValue,
-  formatMoney,
+  formatDualDate,
   lookupOption,
   resolveOtherOption,
   yesNo,
@@ -95,7 +94,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       onClick={handleCopy}
       aria-label={`نسخ ${label}`}
       title={`نسخ ${label}`}
-      className="text-muted hover:bg-accent hover:text-white flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors"
+      className="text-muted hover:bg-accent flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors hover:text-white"
     >
       {done ? (
         <MdCheck className="size-4" aria-hidden="true" />
@@ -116,13 +115,13 @@ function FieldRow({
 }: {
   icon: React.ReactNode;
   label: string;
-  display: string | null;
+  display: React.ReactNode;
   copy?: string | null;
   ltr?: boolean;
   href?: string | null;
 }) {
   const value = display ?? EMPTY;
-  const copyTextValue = copy ?? display;
+  const copyTextValue = copy ?? (typeof display === "string" ? display : null);
   return (
     <div className="bg-surface flex items-center justify-between gap-3 rounded-2xl p-3 text-sm">
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -151,9 +150,7 @@ function FieldRow({
           )}
         </div>
       </div>
-      {copyTextValue ? (
-        <CopyButton text={copyTextValue} label={label} />
-      ) : null}
+      {copyTextValue ? <CopyButton text={copyTextValue} label={label} /> : null}
     </div>
   );
 }
@@ -184,7 +181,7 @@ export function RequestDetails({ detail }: { detail: Detail }) {
   const p = detail.property;
   const c = detail.counterparty;
   const t = detail.terms;
-  const isEntity = c?.counterType === "entity";
+  const isEntity = counterTypeText(c?.counterType) === "منشأة";
 
   const durationDisplay = durationText(t?.duration, t?.customMonths);
   const extrasDisplay = extrasText(p?.extras);
@@ -208,6 +205,12 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           label={L.applicantNationalId.ar}
           display={detail.applicant.nationalId ?? null}
           ltr
+        />
+        <FieldRow
+          icon={<MdCake />}
+          label={L.applicantDob.ar}
+          display={formatDualDate(detail.applicant.dob)}
+          copy={detail.applicant.dob ?? null}
         />
         <FieldRow
           icon={<MdGavel />}
@@ -258,7 +261,7 @@ export function RequestDetails({ detail }: { detail: Detail }) {
             <FieldRow
               icon={<MdCake />}
               label={L.counterpartyRepDob.ar}
-              display={formatDateValue(c?.repDob)}
+              display={formatDualDate(c?.repDob)}
               copy={c?.repDob ?? null}
             />
             <FieldRow
@@ -270,11 +273,6 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           </>
         ) : (
           <>
-            <FieldRow
-              icon={<FaUsers />}
-              label={counterpartyNameAr(detail.applicant.role)}
-              display={c?.fullName ?? null}
-            />
             <FieldRow
               icon={<MdBadge />}
               label={L.counterpartyNationalId.ar}
@@ -290,7 +288,7 @@ export function RequestDetails({ detail }: { detail: Detail }) {
             <FieldRow
               icon={<MdCake />}
               label={L.counterpartyDob.ar}
-              display={formatDateValue(c?.dob)}
+              display={formatDualDate(c?.dob)}
               copy={c?.dob ?? null}
             />
           </>
@@ -307,46 +305,58 @@ export function RequestDetails({ detail }: { detail: Detail }) {
         <FieldRow
           icon={<BsCalendar2WeekFill />}
           label={L.propertyDeedDate.ar}
-          display={formatDateValue(p?.deedDate)}
+          display={formatDualDate(p?.deedDate)}
           copy={p?.deedDate ?? null}
         />
       </Section>
 
       <Section icon={<MdLocationOn />} title="موقع العقار">
-        <FieldRow
-          icon={<MdLocationOn />}
-          label={L.mapsLink.ar}
-          display={detail.location?.mapsLink ?? null}
-          copy={detail.location?.mapsLink ?? null}
-          ltr
-          href={detail.location?.mapsLink ?? null}
-        />
-        <FieldRow
-          icon={<MdLocationOn />}
-          label={L.city.ar}
-          display={lookupOption(
-            OPTION_VALUES.city,
-            detail.location?.city,
-          )}
-        />
-        <FieldRow
-          icon={<MdHome />}
-          label={L.buildingNumber.ar}
-          display={detail.location?.buildingNumber ?? null}
-          ltr
-        />
-        <FieldRow
-          icon={<MdNumbers />}
-          label={L.additionalNumber.ar}
-          display={detail.location?.additionalNumber ?? null}
-          ltr
-        />
-        <FieldRow
-          icon={<MdLocationOn />}
-          label={L.postalCode.ar}
-          display={detail.location?.postalCode ?? null}
-          ltr
-        />
+        {detail.location?.locationManual === false ? (
+          <FieldRow
+            icon={<MdLocationOn />}
+            label={L.mapsLink.ar}
+            display={detail.location?.mapsLink ?? null}
+            copy={detail.location?.mapsLink ?? null}
+            ltr
+            href={detail.location?.mapsLink ?? null}
+          />
+        ) : (
+          <>
+            {detail.location?.mapsLink ? (
+              <FieldRow
+                icon={<MdLocationOn />}
+                label={L.mapsLink.ar}
+                display={detail.location?.mapsLink ?? null}
+                copy={detail.location?.mapsLink ?? null}
+                ltr
+                href={detail.location?.mapsLink ?? null}
+              />
+            ) : null}
+            <FieldRow
+              icon={<MdLocationOn />}
+              label={L.city.ar}
+              display={lookupOption(OPTION_VALUES.city, detail.location?.city)}
+            />
+            <FieldRow
+              icon={<MdHome />}
+              label={L.buildingNumber.ar}
+              display={detail.location?.buildingNumber ?? null}
+              ltr
+            />
+            <FieldRow
+              icon={<MdNumbers />}
+              label={L.additionalNumber.ar}
+              display={detail.location?.additionalNumber ?? null}
+              ltr
+            />
+            <FieldRow
+              icon={<MdLocationOn />}
+              label={L.postalCode.ar}
+              display={detail.location?.postalCode ?? null}
+              ltr
+            />
+          </>
+        )}
       </Section>
 
       <Section icon={<MdHome />} title="مواصفات العقار">
@@ -442,7 +452,7 @@ export function RequestDetails({ detail }: { detail: Detail }) {
         <FieldRow
           icon={<MdDateRange />}
           label={L.contractStart.ar}
-          display={formatDateValue(t?.contractStart)}
+          display={formatDualDate(t?.contractStart)}
           copy={t?.contractStart ?? null}
         />
         <FieldRow
@@ -462,8 +472,10 @@ export function RequestDetails({ detail }: { detail: Detail }) {
         <FieldRow
           icon={<BiSolidCoinStack />}
           label={L.annualRent.ar}
-          display={formatMoney(t?.annualRent)}
-          copy={t?.annualRent != null ? `${t.annualRent}` : null}
+          display={
+            t?.annualRent != null ? <Price value={t.annualRent} /> : null
+          }
+          copy={priceText(t?.annualRent)}
         />
         <FieldRow
           icon={<FaUsers />}
@@ -473,10 +485,12 @@ export function RequestDetails({ detail }: { detail: Detail }) {
         <FieldRow
           icon={<BiSolidCoinStack />}
           label={L.feeTotal.ar}
-          display={formatMoney(t?.feeBreakdown?.total)}
-          copy={
-            t?.feeBreakdown?.total != null ? `${t.feeBreakdown.total}` : null
+          display={
+            t?.feeBreakdown?.total != null ? (
+              <Price value={t.feeBreakdown.total} />
+            ) : null
           }
+          copy={priceText(t?.feeBreakdown?.total)}
         />
         <FieldRow
           icon={<MdNotes />}

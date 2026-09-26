@@ -18,11 +18,7 @@ export function FieldLabel({
 }) {
   const labelContent = (
     <span className="inline-flex items-center gap-1.5">
-      {icon ? (
-        <span className="text-base text-accent">
-          {icon}
-        </span>
-      ) : null}
+      {icon ? <span className="text-accent text-base">{icon}</span> : null}
       <Label>{children}</Label>
       {tooltip || helpText ? (
         <span className="text-muted">
@@ -40,7 +36,7 @@ export function FieldLabel({
           <Popover.Dialog>
             <Popover.Arrow />
             <Popover.Heading>{helpTitle ?? children}</Popover.Heading>
-            <p className="mt-1 text-sm text-muted">{helpText}</p>
+            <p className="text-muted mt-1 text-sm">{helpText}</p>
           </Popover.Dialog>
         </Popover.Content>
       </Popover>

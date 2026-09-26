@@ -7,7 +7,7 @@ import { MdCheckCircle, MdNumbers, MdReceiptLong } from "react-icons/md";
 
 import { SuccessPing } from "@/components/request/success-ping";
 import { SummaryRow } from "@/components/request/summary-row";
-import { formatCurrency } from "@/lib/fees";
+import { Price } from "@/components/price";
 import { copy } from "@/lib/copy";
 import { OPTION_VALUES } from "@/lib/request-fields";
 import { lookupOption } from "@/lib/request-display";
@@ -70,7 +70,7 @@ export default async function RequestSuccessPage({
           </SummaryRow>
           {status.annualRent !== null && (
             <SummaryRow icon={<BiSolidCoinStack />} label="الإيجار السنوي">
-              <strong>{formatCurrency(status.annualRent)}</strong>
+              <Price value={status.annualRent} />
             </SummaryRow>
           )}
           {status.feeTotal !== null && (
@@ -79,7 +79,7 @@ export default async function RequestSuccessPage({
               label={`رسوم التوثيق التقديرية (${payerLabel})`}
               highlight
             >
-              <strong>{formatCurrency(status.feeTotal)}</strong>
+              <Price value={status.feeTotal} />
             </SummaryRow>
           )}
           <p className="text-muted text-xs">{copy.feeNote}</p>

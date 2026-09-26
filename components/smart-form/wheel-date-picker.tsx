@@ -1,20 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDate } from "@internationalized/date";
-import { Button, Drawer } from "@heroui/react";
+import { CalendarDate, toCalendar } from "@internationalized/date";
+import { Button, Drawer, Tabs } from "@heroui/react";
 import { BsCalendar2WeekFill } from "react-icons/bs";
 import { cn } from "@/lib/utils";
+import {
+  calendarObject,
+  calendarSystemOf,
+  convertCalendar,
+  currentYear,
+  daysInCalendarMonth,
+  type CalendarSystem,
+} from "@/lib/calendar";
 
 const ITEM_H = 40;
 const VISIBLE_ROWS = 5;
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
-}
-
-function daysInMonthGregorian(year: number, month: number): number {
-  return new Date(year, month, 0).getDate();
 }
 
 function range(from: number, to: number): number[] {
@@ -115,14 +119,27 @@ export function WheelDatePicker({
   minYear?: number;
   maxYear?: number;
 }) {
-  const currentYear = new Date().getFullYear();
-  const loYear = minYear ?? currentYear - 100;
-  const hiYear = maxYear ?? currentYear + 10;
+  const thisGregorianYear = new Date().getFullYear();
+  // minYear/maxYear are Gregorian-denominated; converted per active calendar below.
+  const loG = minYear ?? thisGregorianYear - 100;
+  const hiG = maxYear ?? thisGregorianYear + 10;
+
+  const boundsFor = (sys: CalendarSystem) => {
+    if (sys === "gregory") return { lo: loG, hi: hiG };
+    return {
+      lo: convertCalendar(loG, 1, 1, "gregory", "islamic-umalqura").y,
+      hi: convertCalendar(hiG, 12, 31, "gregory", "islamic-umalqura").y,
+    };
+  };
+
+  const [system, setSystem] = useState<CalendarSystem>("gregory");
+  const cal = useMemo(() => calendarObject(system), [system]);
+  const { lo: loYear, hi: hiYear } = boundsFor(system);
   const years = useMemo(() => range(loYear, hiYear), [loYear, hiYear]);
   const months = useMemo(() => range(1, 12), []);
 
   const [open, setOpen] = useState(false);
-  const [temp, setTemp] = useState({ y: currentYear, m: 1, d: 1 });
+  const [temp, setTemp] = useState({ y: thisGregorianYear, m: 1, d: 1 });
   const scrollers = useRef<{
     y: HTMLDivElement | null;
     m: HTMLDivElement | null;
@@ -132,16 +149,45 @@ export function WheelDatePicker({
     m: null,
     d: null,
   });
-  const pendingScroll = useRef({ y: currentYear, m: 1, d: 1 });
+  const pendingScroll = useRef({ y: thisGregorianYear, m: 1, d: 1 });
 
   const openPicker = () => {
-    const base = value ?? new CalendarDate(currentYear, 1, 1);
-    const y = Math.min(hiYear, Math.max(loYear, base.year));
-    const m = Math.min(12, Math.max(1, base.month));
-    const d = Math.min(daysInMonthGregorian(y, m), Math.max(1, base.day));
+    const sys: CalendarSystem = value ? calendarSystemOf(value) : system;
+    const { lo, hi } = boundsFor(sys);
+    const base = value ? toCalendar(value, calendarObject(sys)) : null;
+    const fallback = currentYear(sys);
+    const y = base
+      ? Math.min(hi, Math.max(lo, base.year))
+      : Math.min(hi, Math.max(lo, fallback));
+    const m = base ? Math.min(12, Math.max(1, base.month)) : 1;
+    const d = base
+      ? Math.min(
+          daysInCalendarMonth(calendarObject(sys), y, m),
+          Math.max(1, base.day),
+        )
+      : 1;
+    setSystem(sys);
     setTemp({ y, m, d });
     pendingScroll.current = { y, m, d };
     setOpen(true);
+  };
+
+  const switchSystem = (next: CalendarSystem) => {
+    if (next === system) return;
+    const { lo, hi } = boundsFor(next);
+    const c = convertCalendar(temp.y, temp.m, temp.d, system, next);
+    const clamped = {
+      y: Math.min(hi, Math.max(lo, c.y)),
+      m: Math.min(12, Math.max(1, c.m)),
+      d: Math.max(1, c.d),
+    };
+    clamped.d = Math.min(
+      clamped.d,
+      daysInCalendarMonth(calendarObject(next), clamped.y, clamped.m),
+    );
+    pendingScroll.current = clamped;
+    setTemp(clamped);
+    setSystem(next);
   };
 
   useEffect(() => {
@@ -156,8 +202,8 @@ export function WheelDatePicker({
   }, [open, loYear]);
 
   const days = useMemo(
-    () => range(1, daysInMonthGregorian(temp.y, temp.m)),
-    [temp.y, temp.m],
+    () => range(1, daysInCalendarMonth(cal, temp.y, temp.m)),
+    [cal, temp.y, temp.m],
   );
 
   const scrollTo = (which: "y" | "m" | "d", i: number, smooth: boolean) => {
@@ -175,7 +221,7 @@ export function WheelDatePicker({
     setTemp((t) => ({
       ...t,
       y,
-      d: Math.min(t.d, daysInMonthGregorian(y, t.m)),
+      d: Math.min(t.d, daysInCalendarMonth(cal, y, t.m)),
     }));
     if (scroll) scrollTo("y", clampIndex(i, years.length), true);
   };
@@ -185,7 +231,7 @@ export function WheelDatePicker({
     setTemp((t) => ({
       ...t,
       m,
-      d: Math.min(t.d, daysInMonthGregorian(t.y, m)),
+      d: Math.min(t.d, daysInCalendarMonth(cal, t.y, m)),
     }));
     if (scroll) scrollTo("m", clampIndex(i, 12), true);
   };
@@ -197,12 +243,17 @@ export function WheelDatePicker({
   };
 
   const confirm = () => {
-    onChange(new CalendarDate(temp.y, temp.m, temp.d));
+    onChange(new CalendarDate(cal, temp.y, temp.m, temp.d));
     setOpen(false);
   };
 
+  const displaySuffix = value
+    ? calendarSystemOf(value) === "islamic-umalqura"
+      ? "هـ"
+      : "م"
+    : "";
   const display = value
-    ? `${pad(value.day)}/${pad(value.month)}/${value.year}`
+    ? `${pad(value.day)}/${pad(value.month)}/${value.year} ${displaySuffix}`
     : "اختر التاريخ";
 
   return (
@@ -225,6 +276,28 @@ export function WheelDatePicker({
             <Drawer.CloseTrigger />
             <Drawer.Header>
               <Drawer.Heading>{label}</Drawer.Heading>
+              <Tabs
+                className="mt-3 w-full"
+                selectedKey={system}
+                onSelectionChange={(k) => switchSystem(k as CalendarSystem)}
+              >
+                <Tabs.ListContainer>
+                  <Tabs.List aria-label="نظام التقويم">
+                    <Tabs.Tab
+                      id="gregory"
+                      className="text-muted data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground cursor-pointer data-[selected=true]:font-medium"
+                    >
+                      ميلادي
+                    </Tabs.Tab>
+                    <Tabs.Tab
+                      id="islamic-umalqura"
+                      className="text-muted data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground cursor-pointer data-[selected=true]:font-medium"
+                    >
+                      هجري
+                    </Tabs.Tab>
+                  </Tabs.List>
+                </Tabs.ListContainer>
+              </Tabs>
             </Drawer.Header>
             <Drawer.Body>
               <div dir="ltr" className="relative flex gap-2">

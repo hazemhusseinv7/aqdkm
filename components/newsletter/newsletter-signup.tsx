@@ -2,7 +2,11 @@
 
 import { toast } from "@heroui/react";
 import { useState } from "react";
-import { HiArrowLeft, HiCheckCircle, HiExclamationCircle } from "react-icons/hi2";
+import {
+  HiArrowLeft,
+  HiCheckCircle,
+  HiExclamationCircle,
+} from "react-icons/hi2";
 import { MdMarkEmailRead } from "react-icons/md";
 
 import {
@@ -52,7 +56,7 @@ export function NewsletterSignup() {
           name="newsletter_email"
           placeholder="بريدك الإلكتروني"
           aria-label="بريدك الإلكتروني"
-          className="border-border bg-surface-secondary/60 text-foreground placeholder:text-muted min-w-0 flex-1 rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-[var(--focus)]"
+          className="border-border bg-surface-secondary/60 text-foreground placeholder:text-muted min-w-0 flex-1 rounded-xl border px-3.5 py-2.5 text-sm transition-colors outline-none focus:border-transparent focus:ring-2 focus:ring-[var(--focus)]"
         />
         <input
           type="text"

@@ -1,4 +1,4 @@
-import { formatPostDate } from "@/lib/blog";
+import { formatDual, formatGregorian } from "@/lib/calendar";
 import { formatCurrency } from "@/lib/fees";
 import {
   EXTRA_LABELS,
@@ -27,13 +27,12 @@ export function resolveOtherOption(
 
 export function formatDateValue(value?: string | null): string | null {
   if (!value) return null;
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  try {
-    return formatPostDate(value);
-  } catch {
-    return value;
-  }
+  return formatGregorian(value) ?? value;
+}
+
+export function formatDualDate(value?: string | null): string | null {
+  if (!value) return null;
+  return formatDual(value) ?? value;
 }
 
 export function formatMoney(value?: number | null): string | null {

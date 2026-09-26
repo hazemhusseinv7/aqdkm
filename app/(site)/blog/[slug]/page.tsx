@@ -13,7 +13,7 @@ import type {
   POST_SLUGS_QUERY_RESULT,
 } from "@/sanity.types";
 import { BlogBody } from "@/components/blog/portable-text";
-import { BlogCta } from "@/components/blog/blog-cta";
+import { Cta } from "@/components/cta";
 import { PostCover } from "@/components/blog/post-cover";
 import { formatPostDate, postCoverImage } from "@/lib/blog";
 
@@ -160,7 +160,7 @@ export default async function BlogPostPage({
         </span>
       </Link>
 
-      <BlogCta />
+      <Cta />
     </article>
   );
 }

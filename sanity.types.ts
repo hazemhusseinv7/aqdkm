@@ -15,6 +15,143 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type Licenses = {
+  _id: string;
+  _type: "licenses";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  items?: Array<{
+    title: string;
+    issuer: string;
+    description: string;
+    number?: string;
+    icon: "gavel" | "ticket" | "store";
+    _key: string;
+  }>;
+};
+
+export type Features = {
+  _id: string;
+  _type: "features";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  items?: Array<{
+    title: string;
+    description: string;
+    icon: "save" | "review" | "fees" | "verify" | "track" | "meters";
+    _key: string;
+  }>;
+};
+
+export type Testimonials = {
+  _id: string;
+  _type: "testimonials";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  items?: Array<{
+    name: string;
+    role: string;
+    city: string;
+    quote: string;
+    _key: string;
+  }>;
+};
+
+export type SanityImageAssetReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+};
+
+export type LegalPage = {
+  _id: string;
+  _type: "legalPage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title: string;
+  slug: Slug;
+  description: string;
+  content?: Array<
+    | {
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?: "normal" | "h2" | "h3" | "h4" | "blockquote";
+        listItem?: "bullet" | "number";
+        markDefs?: Array<{
+          href?: string;
+          _type: "link";
+          _key: string;
+        }>;
+        level?: number;
+        _type: "block";
+        _key: string;
+      }
+    | {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        _type: "image";
+        _key: string;
+      }
+  >;
+  accordion?: Array<{
+    question: string;
+    answer: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "normal" | "h4" | "blockquote";
+      listItem?: "bullet" | "number";
+      markDefs?: Array<{
+        href?: string;
+        _type: "link";
+        _key: string;
+      }>;
+      level?: number;
+      _type: "block";
+      _key: string;
+    }>;
+    _key: string;
+  }>;
+};
+
+export type SanityImageCrop = {
+  _type: "sanity.imageCrop";
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+};
+
+export type SanityImageHotspot = {
+  _type: "sanity.imageHotspot";
+  x: number;
+  y: number;
+  height: number;
+  width: number;
+};
+
+export type Slug = {
+  _type: "slug";
+  current: string;
+  source?: string;
+};
+
 export type Category = {
   _id: string;
   _type: "category";
@@ -24,19 +161,6 @@ export type Category = {
   title: string;
   slug: Slug;
   description?: string;
-};
-
-export type Slug = {
-  _type: "slug";
-  current: string;
-  source?: string;
-};
-
-export type SanityImageAssetReference = {
-  _ref: string;
-  _type: "reference";
-  _weak?: boolean;
-  [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
 };
 
 export type CategoryReference = {
@@ -131,22 +255,6 @@ export type Author = {
   bio?: string;
 };
 
-export type SanityImageCrop = {
-  _type: "sanity.imageCrop";
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-};
-
-export type SanityImageHotspot = {
-  _type: "sanity.imageHotspot";
-  x: number;
-  y: number;
-  height: number;
-  width: number;
-};
-
 export type SiteSettings = {
   _id: string;
   _type: "siteSettings";
@@ -154,8 +262,10 @@ export type SiteSettings = {
   _updatedAt: string;
   _rev: string;
   fees?: {
-    residentialGov: number;
-    residentialCompany: number;
+    residentialFirstGov: number;
+    residentialFirstCompany: number;
+    residentialExtraGov: number;
+    residentialExtraCompany: number;
     commercialFirstGov: number;
     commercialFirstCompany: number;
     commercialExtraGov: number;
@@ -249,10 +359,10 @@ export type RentalRequest = {
     agencyNumber?: string;
     phone: string;
     nationalId: string;
+    dob?: string;
   };
   counterparty?: {
     counterType: "\u0641\u0631\u062F" | "\u0645\u0646\u0634\u0623\u0629";
-    fullName?: string;
     nationalId?: string;
     phone?: string;
     dob?: string;
@@ -287,6 +397,7 @@ export type RentalRequest = {
     licenseNumber?: string;
   };
   location?: {
+    locationManual?: boolean;
     mapsLink?: string;
     city?: string;
     buildingNumber?: string;
@@ -408,15 +519,19 @@ export type Geopoint = {
 };
 
 export type AllSanitySchemaTypes =
-  | Category
-  | Slug
+  | Licenses
+  | Features
+  | Testimonials
   | SanityImageAssetReference
+  | LegalPage
+  | SanityImageCrop
+  | SanityImageHotspot
+  | Slug
+  | Category
   | CategoryReference
   | AuthorReference
   | Post
   | Author
-  | SanityImageCrop
-  | SanityImageHotspot
   | SiteSettings
   | Subscriber
   | ContactMessage
@@ -463,8 +578,10 @@ export type SITE_SETTINGS_QUERY_RESULT =
     }
   | {
       fees: {
-        residentialGov: number;
-        residentialCompany: number;
+        residentialFirstGov: number;
+        residentialFirstCompany: number;
+        residentialExtraGov: number;
+        residentialExtraCompany: number;
         commercialFirstGov: number;
         commercialFirstCompany: number;
         commercialExtraGov: number;
@@ -624,6 +741,98 @@ export type LATEST_POSTS_QUERY_RESULT = Array<{
 // Variable: POST_SLUGS_QUERY
 // Query: *[_type == "post" && defined(slug.current)][].slug.current
 export type POST_SLUGS_QUERY_RESULT = Array<string>;
+
+// Source: sanity/lib/queries.ts
+// Variable: LEGAL_PAGES_NAV_QUERY
+// Query: *[_type == "legalPage" && defined(slug.current)] | order(_createdAt asc){    _id,    title,    "slug": slug.current  }
+export type LEGAL_PAGES_NAV_QUERY_RESULT = Array<{
+  _id: string;
+  title: string;
+  slug: string;
+}>;
+
+// Source: sanity/lib/queries.ts
+// Variable: LEGAL_PAGE_QUERY
+// Query: *[_type == "legalPage" && slug.current == $slug][0]{    _id,    title,    description,    content[]{      _key,      _type,      ...,      markDefs[]{        _key,        ...,        _type == "link" => { "href": @.href }      },      _type == "image" => { asset-> }    },    accordion[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } }  }
+export type LEGAL_PAGE_QUERY_RESULT = {
+  _id: string;
+  title: string;
+  description: string;
+  content: Array<
+    | {
+        _key: string;
+        _type: "block";
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?: "blockquote" | "h2" | "h3" | "h4" | "normal";
+        listItem?: "bullet" | "number";
+        markDefs: Array<{
+          _key: string;
+          href: string | null;
+          _type: "link";
+        }> | null;
+        level?: number;
+      }
+    | {
+        _key: string;
+        _type: "image";
+        asset: {
+          _id: string;
+          _type: "sanity.imageAsset";
+          _createdAt: string;
+          _updatedAt: string;
+          _rev: string;
+          originalFilename?: string;
+          label?: string;
+          title?: string;
+          description?: string;
+          altText?: string;
+          sha1hash: string;
+          extension: string;
+          mimeType: string;
+          size: number;
+          assetId: string;
+          uploadId?: string;
+          path: string;
+          url: string;
+          metadata?: SanityImageMetadata;
+          source?: SanityAssetSourceData;
+        } | null;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        markDefs: null;
+      }
+  > | null;
+  accordion: Array<{
+    _key: string;
+    question: string;
+    answer: Array<{
+      _key: string;
+      _type: "block";
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "blockquote" | "h4" | "normal";
+      listItem?: "bullet" | "number";
+      markDefs: Array<{
+        _key: string;
+        href?: string;
+        _type: "link";
+      }> | null;
+      level?: number;
+    }>;
+  }> | null;
+} | null;
 
 // Source: sanity/lib/queries.ts
 // Variable: POST_DETAIL_QUERY
@@ -808,7 +1017,7 @@ export type POSTS_BY_CATEGORY_QUERY_RESULT = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: REQUEST_DETAIL_QUERY
-// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId },    counterparty{      counterType, fullName, nationalId, phone, dob, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,      bathrooms, bathroomsCustom, extras, livingRooms,      electroMeter, waterMeter, activity, hasLicense, licenseNumber    },    location{ mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent, feePayer,      feeBreakdown{ years, government, company, total }, notes    }  }
+// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob },    counterparty{      counterType, nationalId, phone, dob, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,      bathrooms, bathroomsCustom, extras, livingRooms,      electroMeter, waterMeter, activity, hasLicense, licenseNumber    },    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent, feePayer,      feeBreakdown{ years, government, company, total }, notes    }  }
 export type REQUEST_DETAIL_QUERY_RESULT = {
   requestNo: string;
   contractType: "commercial" | "residential";
@@ -822,10 +1031,10 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
     agencyNumber: string | null;
     phone: string;
     nationalId: string;
+    dob: string | null;
   } | null;
   counterparty: {
     counterType: "\u0641\u0631\u062F" | "\u0645\u0646\u0634\u0623\u0629";
-    fullName: string | null;
     nationalId: string | null;
     phone: string | null;
     dob: string | null;
@@ -860,6 +1069,7 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
     licenseNumber: string | null;
   } | null;
   location: {
+    locationManual: boolean | null;
     mapsLink: string | null;
     city: string | null;
     buildingNumber: string | null;
@@ -942,6 +1152,105 @@ export type BROADCAST_CANDIDATE_QUERY_RESULT = {
   broadcastId: string | null;
 } | null;
 
+// Source: sanity/lib/queries.ts
+// Variable: TESTIMONIALS_QUERY
+// Query: *[_id == "testimonials"][0]{    items[]{ _key, name, role, city, quote }  }
+export type TESTIMONIALS_QUERY_RESULT =
+  | {
+      items: null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        name: null;
+        role: null;
+        city: null;
+        quote: null;
+      }> | null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        name: string;
+        role: string;
+        city: string;
+        quote: string;
+      }> | null;
+    }
+  | null;
+
+// Source: sanity/lib/queries.ts
+// Variable: FEATURES_QUERY
+// Query: *[_id == "features"][0]{    items[]{ _key, title, description, icon }  }
+export type FEATURES_QUERY_RESULT =
+  | {
+      items: null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        title: null;
+        description: null;
+        icon: null;
+      }> | null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        title: string;
+        description: string;
+        icon: "fees" | "meters" | "review" | "save" | "track" | "verify";
+      }> | null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        title: string;
+        description: string;
+        icon: "gavel" | "store" | "ticket";
+      }> | null;
+    }
+  | null;
+
+// Source: sanity/lib/queries.ts
+// Variable: LICENSES_QUERY
+// Query: *[_id == "licenses"][0]{    items[]{ _key, title, issuer, description, number, icon }  }
+export type LICENSES_QUERY_RESULT =
+  | {
+      items: null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        title: null;
+        issuer: null;
+        description: null;
+        number: null;
+        icon: null;
+      }> | null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        title: string;
+        issuer: null;
+        description: string;
+        number: null;
+        icon: "fees" | "meters" | "review" | "save" | "track" | "verify";
+      }> | null;
+    }
+  | {
+      items: Array<{
+        _key: string;
+        title: string;
+        issuer: string;
+        description: string;
+        number: string | null;
+        icon: "gavel" | "store" | "ticket";
+      }> | null;
+    }
+  | null;
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -952,13 +1261,18 @@ declare module "@sanity/client" {
     'count(*[_type == "post" && defined(slug.current) && defined(publishedAt)])': POSTS_COUNT_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt)] | order(publishedAt desc)[0...6]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': LATEST_POSTS_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current)][].slug.current': POST_SLUGS_QUERY_RESULT;
+    '*[_type == "legalPage" && defined(slug.current)] | order(_createdAt asc){\n    _id,\n    title,\n    "slug": slug.current\n  }': LEGAL_PAGES_NAV_QUERY_RESULT;
+    '*[_type == "legalPage" && slug.current == $slug][0]{\n    _id,\n    title,\n    description,\n    content[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    },\n    accordion[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } }\n  }': LEGAL_PAGE_QUERY_RESULT;
     '*[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role, bio, avatar{ alt, asset-> } },\n    body[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    }\n  }': POST_DETAIL_QUERY_RESULT;
     '*[_type == "category"] | order(title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    "postCount": count(*[_type == "post" && references(^._id) && defined(publishedAt)])\n  }': CATEGORIES_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt) && $categorySlug in categories[]->slug.current] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_BY_CATEGORY_QUERY_RESULT;
-    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId },\n    counterparty{\n      counterType, fullName, nationalId, phone, dob, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,\n      bathrooms, bathroomsCustom, extras, livingRooms,\n      electroMeter, waterMeter, activity, hasLicense, licenseNumber\n    },\n    location{ mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent, feePayer,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
+    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob },\n    counterparty{\n      counterType, nationalId, phone, dob, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,\n      bathrooms, bathroomsCustom, extras, livingRooms,\n      electroMeter, waterMeter, activity, hasLicense, licenseNumber\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent, feePayer,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
     '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    "feeTotal": terms.feeBreakdown.total,\n    "annualRent": terms.annualRent,\n    "feePayer": terms.feePayer\n  }': REQUEST_STATUS_QUERY_RESULT;
     '*[_type == "subscriber" && email == $email][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_EMAIL_QUERY_RESULT;
     '*[_type == "subscriber" && confirmToken == $tok][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_TOKEN_QUERY_RESULT;
     '*[_type == "post" && _id == $id][0]{ _id, title, "slug": slug.current, excerpt, cover, publishedAt, broadcastSentAt, broadcastId }': BROADCAST_CANDIDATE_QUERY_RESULT;
+    '*[_id == "testimonials"][0]{\n    items[]{ _key, name, role, city, quote }\n  }': TESTIMONIALS_QUERY_RESULT;
+    '*[_id == "features"][0]{\n    items[]{ _key, title, description, icon }\n  }': FEATURES_QUERY_RESULT;
+    '*[_id == "licenses"][0]{\n    items[]{ _key, title, issuer, description, number, icon }\n  }': LICENSES_QUERY_RESULT;
   }
 }

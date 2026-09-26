@@ -1,16 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import {
-  MdCheckCircle,
-  MdHourglassTop,
-  MdInfo,
-  MdPayments,
-} from "react-icons/md";
-import { FaHome } from "react-icons/fa";
+import { MdRateReview, MdReceiptLong, MdSave } from "react-icons/md";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/fees";
 
 const STAGE_DELAYS = [500, 1100];
 
@@ -38,30 +32,34 @@ function SkeletonRows() {
 
 function FinalCard() {
   return (
-    <div className="border-border bg-surface flex flex-col gap-2 rounded-2xl border p-3">
+    <div className="border-border bg-surface relative flex flex-col gap-2 overflow-hidden rounded-2xl border p-3">
+      <Image
+        src="/logo/logo.svg"
+        alt=""
+        aria-hidden="true"
+        width={512}
+        height={348}
+        className="pointer-events-none absolute inset-e-0 -bottom-8.5 size-28 opacity-40 select-none dark:hidden"
+      />
+      <Image
+        src="/logo/logo-alt.svg"
+        alt=""
+        aria-hidden="true"
+        width={512}
+        height={348}
+        className="pointer-events-none absolute inset-e-0 -bottom-8.5 hidden size-28 opacity-20 select-none dark:block"
+      />
       <span className="flex items-center gap-1.5 text-sm font-medium">
-        <MdCheckCircle className="text-accent size-4 shrink-0" />
-        تم استلام الطلب
+        <MdRateReview className="text-accent size-4 shrink-0" />
+        مراجعة قبل الإرسال
       </span>
-      <span className="text-muted flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1.5">
-          <FaHome className="text-accent size-3.5 shrink-0" />
-          عقد سكني
-        </span>
-        <strong className="flex items-center gap-1 tabular-nums">
-          <MdPayments className="text-accent size-3.5 shrink-0" />
-          {formatCurrency(250)}
-        </strong>
+      <span className="text-muted flex items-center gap-1.5 text-xs">
+        <MdReceiptLong className="text-accent size-3.5 shrink-0" />
+        عرض الرسوم مقدماً
       </span>
-      <span className="text-muted flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1.5">
-          <MdInfo className="text-accent size-3.5 shrink-0" />
-          الحالة
-        </span>
-        <span className="flex items-center gap-1.5">
-          <MdHourglassTop className="text-accent size-3.5 shrink-0" />
-          قيد المراجعة
-        </span>
+      <span className="text-muted flex items-center gap-1.5 text-xs">
+        <MdSave className="text-accent size-3.5 shrink-0" />
+        حفظ تلقائي للمسودة
       </span>
     </div>
   );

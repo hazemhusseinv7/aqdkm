@@ -18,7 +18,7 @@ export function FloatingBadge({
   return (
     <motion.span
       aria-hidden="true"
-      className={`border-border bg-surface text-muted absolute z-10 hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs shadow-lg lg:inline-flex ${className ?? ""}`}
+      className={`border-border bg-surface text-muted absolute z-10 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs shadow-lg ${className ?? ""}`}
       animate={shouldReduceMotion ? undefined : { y: [0, -8, 0] }}
       transition={{ duration, repeat: Infinity, ease: "easeInOut" }}
     >

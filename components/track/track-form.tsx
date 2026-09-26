@@ -27,12 +27,12 @@ import {
   MdSearchOff,
 } from "react-icons/md";
 import { formatPostDate } from "@/lib/blog";
-import { formatCurrency } from "@/lib/fees";
 import { REQUEST_STATUS_AR } from "@/lib/request-fields";
 import { getRequestDetail, getRequestStatus } from "@/sanity/lib/actions";
 import type { RequestDetail, RequestStatus } from "@/lib/request-form";
 import { RequestDetails } from "@/components/request/request-details";
 import { SummaryRow } from "@/components/request/summary-row";
+import { Price } from "@/components/price";
 
 const STATUS_TONE: Record<
   string,
@@ -122,11 +122,7 @@ export function TrackForm() {
           }}
         >
           <Label>جوال مقدم الطلب</Label>
-          <Input
-            placeholder="05xx xxx xxx"
-            dir="ltr"
-            inputMode="tel"
-          />
+          <Input placeholder="05xx xxx xxx" dir="ltr" inputMode="tel" />
           <FieldError />
         </TextField>
         <div>
@@ -185,7 +181,7 @@ export function TrackForm() {
                 label="رسوم التوثيق التقديرية"
                 highlight
               >
-                <strong>{formatCurrency(result.feeTotal)}</strong>
+                <Price value={result.feeTotal} />
               </SummaryRow>
             )}
           </Card.Content>

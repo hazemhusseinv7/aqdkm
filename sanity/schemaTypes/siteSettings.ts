@@ -23,57 +23,87 @@ export const siteSettings = defineType({
   fields: [
     defineField({
       name: "fees",
-      title: "Documentation fees (SAR per year)",
+      title: "Documentation fees (SAR)",
       type: "object",
       group: "general",
       components: { input: FeesInput },
+      fieldsets: [
+        { name: "residential", title: "Residential" },
+        { name: "commercial", title: "Commercial" },
+      ],
       preview: {
         select: {
-          residentialGov: "residentialGov",
-          residentialCompany: "residentialCompany",
+          residentialFirstGov: "residentialFirstGov",
+          residentialFirstCompany: "residentialFirstCompany",
+          residentialExtraGov: "residentialExtraGov",
+          residentialExtraCompany: "residentialExtraCompany",
           commercialFirstGov: "commercialFirstGov",
           commercialFirstCompany: "commercialFirstCompany",
           commercialExtraGov: "commercialExtraGov",
           commercialExtraCompany: "commercialExtraCompany",
         },
         prepare(sel: {
-          residentialGov?: number;
-          residentialCompany?: number;
+          residentialFirstGov?: number;
+          residentialFirstCompany?: number;
+          residentialExtraGov?: number;
+          residentialExtraCompany?: number;
           commercialFirstGov?: number;
           commercialFirstCompany?: number;
           commercialExtraGov?: number;
           commercialExtraCompany?: number;
         }) {
           const n = (v: unknown) => (typeof v === "number" ? v : 0);
-          const residential = n(sel.residentialGov) + n(sel.residentialCompany);
+          const resFirst =
+            n(sel.residentialFirstGov) + n(sel.residentialFirstCompany);
+          const resExtra =
+            n(sel.residentialExtraGov) + n(sel.residentialExtraCompany);
           const first =
             n(sel.commercialFirstGov) + n(sel.commercialFirstCompany);
           const extra =
             n(sel.commercialExtraGov) + n(sel.commercialExtraCompany);
           return {
             title: "Documentation fees",
-            subtitle: `Residential ${residential}/yr · Commercial ${first} first / ${extra} extra`,
+            subtitle: `Residential ${resFirst} first / ${resExtra} extra · Commercial ${first} first / ${extra} extra`,
             media: MdPayments,
           };
         },
       },
       fields: [
         defineField({
-          name: "residentialGov",
-          title: "Residential - government",
+          name: "residentialFirstGov",
+          fieldset: "residential",
+          title: "Residential first year - government",
           type: "number",
           initialValue: 125,
           validation: (rule) => rule.required().min(0),
         }),
         defineField({
-          name: "residentialCompany",
-          title: "Residential - company",
+          name: "residentialFirstCompany",
+          fieldset: "residential",
+          title: "Residential first year - company",
+          type: "number",
+          initialValue: 125,
+          validation: (rule) => rule.required().min(0),
+        }),
+        defineField({
+          name: "residentialExtraGov",
+          fieldset: "residential",
+          title: "Residential extra year - government",
+          type: "number",
+          initialValue: 125,
+          validation: (rule) => rule.required().min(0),
+        }),
+        defineField({
+          name: "residentialExtraCompany",
+          fieldset: "residential",
+          title: "Residential extra year - company",
           type: "number",
           initialValue: 125,
           validation: (rule) => rule.required().min(0),
         }),
         defineField({
           name: "commercialFirstGov",
+          fieldset: "commercial",
           title: "Commercial first year - government",
           type: "number",
           initialValue: 200,
@@ -81,6 +111,7 @@ export const siteSettings = defineType({
         }),
         defineField({
           name: "commercialFirstCompany",
+          fieldset: "commercial",
           title: "Commercial first year - company",
           type: "number",
           initialValue: 200,
@@ -88,6 +119,7 @@ export const siteSettings = defineType({
         }),
         defineField({
           name: "commercialExtraGov",
+          fieldset: "commercial",
           title: "Commercial extra year - government",
           type: "number",
           initialValue: 400,
@@ -95,6 +127,7 @@ export const siteSettings = defineType({
         }),
         defineField({
           name: "commercialExtraCompany",
+          fieldset: "commercial",
           title: "Commercial extra year - company",
           type: "number",
           initialValue: 400,

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { MdEmail, MdMail, MdPhone } from "react-icons/md";
+import { MdEmail, MdGavel, MdMail, MdPhone } from "react-icons/md";
 import { FaBuilding, FaHome } from "react-icons/fa";
 import { HiNewspaper, HiTicket } from "react-icons/hi2";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,11 @@ import {
 export type FooterSocialLink = {
   platform: string;
   url: string | null;
+};
+
+export type FooterLegalLink = {
+  title: string;
+  href: string;
 };
 
 type FooterSection = {
@@ -37,10 +42,12 @@ const quickLinks: FooterSection = {
 
 export function Footer({
   socialLinks,
+  legalLinks,
   supportPhone,
   email,
 }: {
   socialLinks?: FooterSocialLink[] | null;
+  legalLinks?: FooterLegalLink[] | null;
   supportPhone?: string | null;
   email?: string | null;
 }) {
@@ -87,6 +94,29 @@ export function Footer({
               </ul>
             </div>
           </AnimatedContainer>
+
+          {(legalLinks ?? []).length > 0 && (
+            <AnimatedContainer delay={0.25}>
+              <div className="mb-10 md:mb-0">
+                <h2 className="text-muted text-xs font-medium">
+                  الصفحات القانونية
+                </h2>
+                <ul className="text-muted mt-4 space-y-2 text-sm">
+                  {(legalLinks ?? []).map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        className="hover:text-alt inline-flex items-center duration-200 [&_svg]:me-1.5 [&_svg]:size-3.5"
+                        href={link.href}
+                      >
+                        <MdGavel />
+                        {link.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </AnimatedContainer>
+          )}
 
           {(supportPhone || email) && (
             <AnimatedContainer delay={0.3}>

@@ -21,7 +21,5 @@
   },
   "menuColor": "default",
   "menuAccent": "subtle",
-  "registries": {
-    "@skiper-ui": "https://skiper-ui.com/registry/{name}.json"
-  }
+  "registries": {}
 }

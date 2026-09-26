@@ -1,14 +1,19 @@
 import {
+  MdBadge,
   MdCancel,
   MdCheckCircle,
   MdDoneAll,
   MdFolder,
+  MdGavel,
   MdHourglassTop,
   MdInbox,
   MdMail,
   MdMarkChatUnread,
   MdPerson,
+  MdPageview,
+  MdRateReview,
 } from "react-icons/md";
+import { IoCheckmarkDoneCircle } from "react-icons/io5";
 import { HiTicket } from "react-icons/hi2";
 import { RiArticleFill, RiSettingsFill } from "react-icons/ri";
 import { FaBuilding, FaHome } from "react-icons/fa";
@@ -18,7 +23,7 @@ import type { StructureBuilder, StructureResolver } from "sanity/structure";
 import { apiVersion } from "./env";
 
 // https://www.sanity.io/docs/structure-builder-cheat-sheet
-const SINGLETONS = ["siteSettings"];
+const SINGLETONS = ["siteSettings", "testimonials", "features", "licenses"];
 const CUSTOM_GROUPS = [
   "rentalRequest",
   "contactMessage",
@@ -26,6 +31,7 @@ const CUSTOM_GROUPS = [
   "post",
   "category",
   "author",
+  "legalPage",
 ];
 
 function singletonItem(
@@ -204,6 +210,32 @@ export const structure: StructureResolver = (S) =>
                 .title("Categories")
                 .icon(MdFolder),
               S.documentTypeListItem("author").title("Authors").icon(MdPerson),
+            ]),
+        ),
+
+      S.divider(),
+
+      S.listItem()
+        .title("Legal")
+        .icon(MdGavel)
+        .child(
+          S.documentTypeList("legalPage")
+            .title("Legal pages")
+            .defaultOrdering([{ field: "_createdAt", direction: "asc" }]),
+        ),
+
+      S.divider(),
+
+      S.listItem()
+        .title("Homepage")
+        .icon(MdPageview)
+        .child(
+          S.list()
+            .title("Homepage")
+            .items([
+              singletonItem(S, "testimonials", "Testimonials", MdRateReview),
+              singletonItem(S, "features", "Features", IoCheckmarkDoneCircle),
+              singletonItem(S, "licenses", "Licenses", MdBadge),
             ]),
         ),
 

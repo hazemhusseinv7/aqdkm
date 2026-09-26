@@ -7,7 +7,6 @@ import {
   MdStore,
   MdWarehouse,
   MdBed,
-  MdKitchen,
   MdSquareFoot,
   MdLayers,
   MdFilter1,
@@ -146,18 +145,6 @@ export const commercialUnitTypes: IconOption[] = withIcons(
     workshop: <MdWarehouse />,
     factory: <FaBuilding />,
     other: <MdEdit />,
-  },
-);
-
-export const commercialActivities: IconOption[] = withIcons(
-  OPTION_VALUES.commercialActivity,
-  {
-    retail: <FaStore />,
-    restaurant: <MdKitchen />,
-    office: <MdMeetingRoom />,
-    storage: <MdWarehouse />,
-    industrial: <FaBuilding />,
-    other: <FaBuilding />,
   },
 );
 

@@ -171,7 +171,7 @@ export function IconNumber({
   onChange: (v: number) => void;
   min?: number;
   max?: number;
-  suffix?: string;
+  suffix?: string | React.ReactNode;
   required?: boolean;
 }) {
   return (
@@ -187,7 +187,19 @@ export function IconNumber({
     >
       <FieldLabel icon={icon} tooltip={tooltip}>
         {label}
-        {suffix ? ` (${suffix})` : ""}
+        {suffix ? (
+          typeof suffix === "string" ? (
+            ` (${suffix})`
+          ) : (
+            <>
+              {" ("}
+              <span className="inline-flex items-center">{suffix}</span>
+              {")"}
+            </>
+          )
+        ) : (
+          ""
+        )}
       </FieldLabel>
       <NumberField.Group className="w-full min-w-0">
         <NumberField.DecrementButton />
@@ -234,9 +246,7 @@ export function IconDate({
       </FieldLabel>
       <div
         aria-invalid={invalid}
-        className={
-          invalid ? "rounded-2xl ring-2 ring-[var(--danger)]" : undefined
-        }
+        className={invalid ? "ring-danger rounded-2xl ring-2" : undefined}
       >
         <WheelDatePicker
           label={label}

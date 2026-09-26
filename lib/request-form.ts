@@ -2,13 +2,14 @@ import type { CalendarDate } from "@internationalized/date";
 
 export type Role = "owner" | "tenant";
 
-type DateFields = "otherDob" | "repDob" | "deedDate" | "contractStart";
+type DateFields = "otherDob" | "repDob" | "deedDate" | "contractStart" | "applicantDob";
 
 export type SerializedFormState = Omit<FormState, DateFields> & {
   otherDob: string | null;
   repDob: string | null;
   deedDate: string | null;
   contractStart: string | null;
+  applicantDob: string | null;
 };
 
 export type FormState = {
@@ -17,11 +18,12 @@ export type FormState = {
   agencyNumber: string;
   applicantPhone: string;
   applicantId: string;
+  applicantDob: CalendarDate | null;
   otherName: string;
   otherId: string;
   otherPhone: string;
   otherDob: CalendarDate | null;
-  counterType: "individual" | "entity";
+  counterType: "individual" | "entity" | "";
   unifiedNumber: string;
   entityName: string;
   repId: string;
@@ -30,6 +32,7 @@ export type FormState = {
   authNumber: string;
   deedNumber: string;
   deedDate: CalendarDate | null;
+  locationManual: boolean | null;
   mapsLink: string;
   city: string;
   buildingNumber: string;
@@ -76,10 +79,10 @@ export type RequestDetail = {
     agencyNumber?: string;
     phone?: string;
     nationalId?: string;
+    dob?: string;
   };
   counterparty?: {
     counterType?: string;
-    fullName?: string;
     nationalId?: string;
     phone?: string;
     dob?: string;
@@ -114,6 +117,7 @@ export type RequestDetail = {
     licenseNumber?: string;
   };
   location?: {
+    locationManual?: boolean | null;
     mapsLink?: string;
     city?: string;
     buildingNumber?: string;

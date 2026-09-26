@@ -13,22 +13,36 @@ import {
   Accordion,
 } from "@heroui/react";
 import { MdCheckCircle, MdArrowBack, MdQuiz } from "react-icons/md";
+import { SharedElementTransition } from "react-aria-components";
 import { FaBuilding, FaFileContract, FaHome } from "react-icons/fa";
 import { PostCardGrid } from "@/components/blog/post-card";
 import { BlogBody } from "@/components/blog/portable-text";
 import { Hero } from "@/components/hero/hero";
 import type { LATEST_POSTS_QUERY_RESULT } from "@/sanity.types";
 import type { HomeFaqs } from "@/app/(site)/page";
+import Testimonials from "@/components/home/testimonials";
+import type { TestimonialItem } from "@/components/home/testimonials";
+import { Cta } from "@/components/cta";
+import { Features } from "@/components/home/features";
+import type { FeatureItem } from "@/components/home/features";
+import { Licenses } from "@/components/home/licenses";
+import type { LicenseItem } from "@/components/home/licenses";
 import type { FooterSocialLink } from "@/components/shell/footer";
 
 export function HomeContent({
   latestPosts,
   faqs,
   socialLinks,
+  testimonials,
+  features,
+  licenses,
 }: {
   latestPosts: LATEST_POSTS_QUERY_RESULT;
   faqs: HomeFaqs;
   socialLinks: FooterSocialLink[] | null;
+  testimonials: TestimonialItem[];
+  features: FeatureItem[];
+  licenses: LicenseItem[];
 }) {
   const [key, setKey] = useState("res");
   const [animReady, setAnimReady] = useState(false);
@@ -75,57 +89,61 @@ export function HomeContent({
         </div>
 
         <div id="contract-type" className="w-full scroll-mt-24">
-          <Tabs
-            className="w-full"
-            selectedKey={key}
-            onSelectionChange={(k) => setKey(String(k))}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="نوع العقد">
-                <Tabs.Tab id="res">
-                  <span className="flex items-center gap-2">
-                    <FaHome /> سكني
-                  </span>
-                  {pill("res")}
-                </Tabs.Tab>
-                <Tabs.Tab id="com">
-                  <span className="flex items-center gap-2">
-                    <FaBuilding /> تجاري
-                  </span>
-                  {pill("com")}
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-            <Tabs.Panel id="res">
-              <TypeCard
-                href="/residential"
-                icon={<FaHome className="size-7" />}
-                title="عقد سكني"
-                desc="للشقق والفلل والأدوار - بما فيها تفاصيل السكن"
-                points={[
-                  "يتم التحقق من صحة الهوية والجوال أثناء التعبئة",
-                  "يتم عرض رسوم التوثيق التقديرية أثناء التعبئة",
-                  "يمكن إرسال الطلب دون أرقام العدادات واستكمالها لاحقاً",
-                ]}
-              />
-            </Tabs.Panel>
-            <Tabs.Panel id="com">
-              <TypeCard
-                href="/commercial"
-                icon={<FaBuilding className="size-7" />}
-                title="عقد تجاري"
-                desc="للمحلات والمكاتب والمستودعات - للأفراد والمنشآت"
-                points={[
-                  "مناسب للأفراد والمنشآت",
-                  "يتضمن بيانات النشاط التجاري والرخصة عند توفرها",
-                  "نموذج مخصص للوحدات التجارية",
-                ]}
-              />
-            </Tabs.Panel>
-          </Tabs>
+          <SharedElementTransition>
+            <Tabs
+              className="w-full"
+              selectedKey={key}
+              onSelectionChange={(k) => setKey(String(k))}
+            >
+              <Tabs.ListContainer>
+                <Tabs.List aria-label="نوع العقد">
+                  <Tabs.Tab id="res">
+                    <span className="flex items-center gap-2">
+                      <FaHome /> سكني
+                    </span>
+                    {pill("res")}
+                  </Tabs.Tab>
+                  <Tabs.Tab id="com">
+                    <span className="flex items-center gap-2">
+                      <FaBuilding /> تجاري
+                    </span>
+                    {pill("com")}
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+              <Tabs.Panel id="res">
+                <TypeCard
+                  href="/residential"
+                  icon={<FaHome className="size-7" />}
+                  title="عقد سكني"
+                  desc="للشقق والفلل والأدوار - بما فيها تفاصيل السكن"
+                  points={[
+                    "يتم التحقق من صحة الهوية والجوال أثناء التعبئة",
+                    "يتم عرض رسوم التوثيق التقديرية أثناء التعبئة",
+                    "يمكن إرسال الطلب دون رقم عداد المياه واستكماله لاحقاً",
+                  ]}
+                />
+              </Tabs.Panel>
+              <Tabs.Panel id="com">
+                <TypeCard
+                  href="/commercial"
+                  icon={<FaBuilding className="size-7" />}
+                  title="عقد تجاري"
+                  desc="للمحلات والمكاتب والمستودعات - للأفراد والمنشآت"
+                  points={[
+                    "مناسب للأفراد والمنشآت",
+                    "يتضمن بيانات النشاط التجاري والرخصة عند توفرها",
+                    "نموذج مخصص للوحدات التجارية",
+                  ]}
+                />
+              </Tabs.Panel>
+            </Tabs>
+          </SharedElementTransition>
         </div>
 
         <Separator />
+
+        <Features items={features} />
 
         {faqs && faqs.length > 0 && (
           <Accordion variant="surface">
@@ -148,6 +166,9 @@ export function HomeContent({
           </Accordion>
         )}
 
+        <Testimonials items={testimonials} />
+        <Licenses items={licenses} />
+        <Cta />
         {latestPosts.length > 0 && (
           <>
             <Separator />

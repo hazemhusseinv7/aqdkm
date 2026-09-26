@@ -7,7 +7,11 @@ import { siteSettings } from "./siteSettings";
 import { post } from "./post";
 import { category } from "./category";
 import { author } from "./author";
+import { legalPage } from "./legalPage";
+import { testimonials } from "./testimonials";
+import { features } from "./features";
+import { licenses } from "./licenses";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [rentalRequest, contactMessage, subscriber, siteSettings, post, category, author],
+  types: [rentalRequest, contactMessage, subscriber, siteSettings, post, category, author, legalPage, testimonials, features, licenses],
 };

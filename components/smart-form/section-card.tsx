@@ -14,7 +14,7 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card>
+    <Card variant="secondary">
       <Card.Header>
         <span className="bg-accent/10 text-accent flex size-10 shrink-0 items-center justify-center rounded-xl text-xl">
           {icon}

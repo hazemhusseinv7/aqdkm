@@ -68,7 +68,7 @@ export function FormStepper({
                   ))}
                 <div
                   role="listitem"
-                  className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
+                  className="flex min-w-22 flex-1 flex-col items-center gap-1.5"
                 >
                   <Tooltip delay={0}>
                     <Tooltip.Trigger aria-label={t}>
@@ -144,7 +144,11 @@ export function FormStepper({
             <span>حفظ تلقائي</span>
           </Chip>
         </div>
-        <ScrollShadow orientation="horizontal" hideScrollBar className="py-4">
+        <ScrollShadow
+          orientation="horizontal"
+          hideScrollBar
+          className="mx-auto p-4"
+        >
           <div
             className="flex w-max items-center gap-1.5"
             role="list"

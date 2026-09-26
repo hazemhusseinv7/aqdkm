@@ -107,6 +107,11 @@ export const rentalRequest = defineType({
           type: "string",
           validation: (rule) => rule.required(),
         }),
+        defineField({
+          name: "dob",
+          title: bilingualTitle("applicantDob"),
+          type: "date",
+        }),
       ],
     }),
     defineField({
@@ -128,11 +133,6 @@ export const rentalRequest = defineType({
             layout: "radio",
           },
           validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: "fullName",
-          title: bilingualTitle("counterpartyFullName"),
-          type: "string",
         }),
         defineField({
           name: "nationalId",
@@ -302,6 +302,11 @@ export const rentalRequest = defineType({
       group: "property",
       readOnly: true,
       fields: [
+        defineField({
+          name: "locationManual",
+          title: bilingualTitle("locationManual"),
+          type: "boolean",
+        }),
         defineField({
           name: "mapsLink",
           title: bilingualTitle("mapsLink"),

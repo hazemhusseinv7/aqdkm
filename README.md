@@ -174,7 +174,10 @@ Server-Action boundary rules:
   so the webhook actually invalidates. Manual step: create the webhook in the
   Sanity dashboard with a GROQ filter on published documents.
 - Currency: `Intl.NumberFormat("ar-SA-u-nu-latn", { style: "currency",
-  currency: "SAR", maximumFractionDigits: 0 })`.
+  currency: "SAR", maximumFractionDigits: 0 })`, currency part replaced by
+  plain-text `ر.س` (`CURRENCY_SYMBOL`, `lib/fees.ts`). Web surfaces render
+  amounts with the Lucide `SaudiRiyal` icon (`components/price.tsx`, +
+  `priceText()` for clipboard); mail templates keep `ر.س` text (inbox-safe).
 - Skeletons mirror their content by construction: `SmartFormSkeleton` copies
   the step-0 grid (columns, stepper shapes, toolbar, sidebar, mobile fee bar);
   the hero `NewItemsLoading` rows copy the receipt card; `PostCardGridSkeleton`

@@ -14,7 +14,7 @@ import type {
   POSTS_INDEX_QUERY_RESULT,
 } from "@/sanity.types";
 import { BlogEmptyState, PostCardGrid } from "@/components/blog/post-card";
-import { BlogCta } from "@/components/blog/blog-cta";
+import { Cta } from "@/components/cta";
 import { BlogPagination } from "@/components/blog/blog-pagination";
 
 const PAGE_SIZE = 9;
@@ -115,7 +115,7 @@ export default async function BlogIndexPage({
 
       {totalPages > 1 && <BlogPagination page={page} totalPages={totalPages} />}
 
-      <BlogCta />
+      <Cta />
     </div>
   );
 }
