@@ -40,6 +40,7 @@ export const features = defineType({
                   { title: "Badge (verification)", value: "verify" },
                   { title: "Ticket (tracking)", value: "track" },
                   { title: "Note (meters)", value: "meters" },
+                  { title: "Bolt (speed)", value: "bolt" },
                 ],
               },
               validation: (rule) => rule.required(),

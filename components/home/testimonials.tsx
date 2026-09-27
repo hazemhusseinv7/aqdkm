@@ -1,9 +1,18 @@
 "use client";
 import { useRef } from "react";
+import Link from "next/link";
+import { buttonVariants } from "@heroui/react";
 import type { Variants } from "framer-motion";
-import { FaQuoteLeft, FaQuoteRight, FaUser, FaUserCheck } from "react-icons/fa";
-import { MdLocationOn } from "react-icons/md";
+import {
+  FaQuoteLeft,
+  FaQuoteRight,
+  FaStar,
+  FaUser,
+  FaUserCheck,
+} from "react-icons/fa";
+import { MdArrowBack, MdLocationOn } from "react-icons/md";
 import { TimelineAnimation } from "@/components/ui/timeline-animation";
+import { formatDualDate } from "@/lib/request-display";
 import { cn } from "@/lib/utils";
 
 type Tone = "default" | "accent" | "deep";
@@ -14,6 +23,8 @@ export type TestimonialItem = {
   name: string;
   role: string;
   city: string;
+  date: string | null;
+  rating: number | null;
 };
 
 const SLOT_TONES: Tone[] = [
@@ -56,6 +67,18 @@ const toneLocationIcon: Record<Tone, string> = {
   deep: "text-muted",
 };
 
+const toneStar: Record<Tone, string> = {
+  default: "text-accent",
+  accent: "text-white",
+  deep: "text-accent",
+};
+
+const toneStarEmpty: Record<Tone, string> = {
+  default: "text-muted opacity-40",
+  accent: "text-white opacity-40",
+  deep: "text-muted opacity-40",
+};
+
 type CardProps = {
   item: TestimonialItem;
   tone: Tone;
@@ -67,7 +90,7 @@ type CardProps = {
   gridOverlay?: boolean;
 };
 
-function TestimonialCard({
+export function TestimonialCard({
   item,
   tone,
   index,
@@ -77,6 +100,10 @@ function TestimonialCard({
   avatarSize = "h-16 w-16",
   gridOverlay = false,
 }: CardProps) {
+  const rating =
+    item.rating == null
+      ? null
+      : Math.min(5, Math.max(1, Math.round(item.rating)));
   return (
     <TimelineAnimation
       animationNum={index}
@@ -95,6 +122,24 @@ function TestimonialCard({
         />
       )}
       <div className="relative mt-auto">
+        {rating != null && (
+          <span
+            className="flex items-center gap-0.5 pb-2"
+            role="img"
+            aria-label={`التقييم ${rating} من 5`}
+          >
+            {[1, 2, 3, 4, 5].map((s) => (
+              <FaStar
+                key={s}
+                aria-hidden="true"
+                className={cn(
+                  "size-4",
+                  s <= rating ? toneStar[tone] : toneStarEmpty[tone],
+                )}
+              />
+            ))}
+          </span>
+        )}
         <p className="text-sm leading-7 2xl:text-base">
           <FaQuoteRight
             className="me-1 inline size-4 opacity-60"
@@ -115,18 +160,27 @@ function TestimonialCard({
               />
               {item.name}
             </h3>
-            <p
-              className={cn(
-                "flex items-center gap-1.5 text-sm lg:text-base",
-                toneRole[tone],
-              )}
-            >
-              <MdLocationOn
-                className={cn("size-4 shrink-0", toneLocationIcon[tone])}
-                aria-hidden="true"
-              />
-              {item.role} - {item.city}
-            </p>
+            {[item.role, item.city].filter(Boolean).length > 0 && (
+              <p
+                className={cn(
+                  "flex items-center gap-1.5 text-sm lg:text-base",
+                  toneRole[tone],
+                )}
+              >
+                <MdLocationOn
+                  className={cn("size-4 shrink-0", toneLocationIcon[tone])}
+                  aria-hidden="true"
+                />
+                {[item.role, item.city].filter(Boolean).join(" - ")}
+              </p>
+            )}
+            {item.date && (
+              <p className={cn("text-xs lg:text-sm", toneRole[tone])}>
+                <time dateTime={item.date}>
+                  {formatDualDate(item.date) ?? item.date}
+                </time>
+              </p>
+            )}
           </div>
           <span
             aria-hidden="true"
@@ -221,8 +275,8 @@ function Testimonials({ items }: { items: TestimonialItem[] }) {
             key={ci}
             className={
               ci === 1
-                ? "h-fit gap-2 md:flex lg:h-full lg:flex-col lg:gap-0 lg:space-y-2"
-                : "h-full gap-2 md:flex lg:flex-col lg:gap-0 lg:space-y-2"
+                ? "flex h-fit flex-col gap-2 md:flex lg:h-full lg:flex-col lg:gap-0 lg:space-y-2"
+                : "flex h-full flex-col gap-2 md:flex lg:flex-col lg:gap-0 lg:space-y-2"
             }
           >
             {column.map(
@@ -244,6 +298,17 @@ function Testimonials({ items }: { items: TestimonialItem[] }) {
           </div>
         ))}
       </div>
+      {items.length > slots.length && (
+        <div className="flex justify-center pt-8">
+          <Link
+            href="/testimonials"
+            className={buttonVariants({ variant: "primary", size: "lg" })}
+          >
+            عرض جميع الآراء
+            <MdArrowBack className="size-4" />
+          </Link>
+        </div>
+      )}
     </section>
   );
 }

@@ -51,9 +51,16 @@ export function yesNo(value?: boolean | null): string | null {
   return value ? "نعم" : "لا";
 }
 
-export function extrasText(extras?: string[] | null): string | null {
+export function extrasText(
+  extras?: { kind?: string | null; count?: number | null }[] | null,
+): string | null {
   if (!extras || extras.length === 0) return null;
-  return extras.map((e) => EXTRA_LABELS[e] ?? e).join("، ");
+  return extras
+    .map((e) => {
+      const label = e.kind ? (EXTRA_LABELS[e.kind] ?? e.kind) : "-";
+      return e.count != null && e.count > 0 ? `${label} (${e.count})` : label;
+    })
+    .join("، ");
 }
 
 export function durationText(

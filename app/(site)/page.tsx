@@ -33,6 +33,7 @@ export default async function HomePage() {
   let latestPosts: LATEST_POSTS_QUERY_RESULT = [];
   let faqs: HomeFaqs = null;
   let socialLinks: FooterSocialLink[] | null = null;
+  let regaUrl: string | null = null;
   let testimonials: TestimonialItem[] = [];
   let features: FeatureItem[] = [];
   let licenses: LicenseItem[] = [];
@@ -78,6 +79,7 @@ export default async function HomePage() {
         platform: `${l.platform}`,
         url: l.url ? `${l.url}` : null,
       })) ?? null;
+    regaUrl = settings?.regaLicenseUrl ? `${settings.regaLicenseUrl}` : null;
     testimonials = (
       (stegaClean(testimonialsData) as TESTIMONIALS_QUERY_RESULT)?.items ?? []
     ).map((t) => ({
@@ -85,6 +87,8 @@ export default async function HomePage() {
       name: t.name ?? "",
       role: t.role ?? "",
       city: t.city ?? "",
+      date: t.date ?? null,
+      rating: t.rating ?? null,
       quote: t.quote ?? "",
     }));
     features = (
@@ -112,6 +116,7 @@ export default async function HomePage() {
     testimonials = [];
     features = [];
     licenses = [];
+    regaUrl = null;
   }
   return (
     <HomeContent
@@ -121,6 +126,7 @@ export default async function HomePage() {
       testimonials={testimonials}
       features={features}
       licenses={licenses}
+      regaUrl={regaUrl}
     />
   );
 }

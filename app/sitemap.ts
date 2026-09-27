@@ -13,7 +13,7 @@ import type {
 } from "@/sanity.types";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticRoutes = ["", "/blog", "/residential", "/commercial", "/contact", "/track"].map(
+  const staticRoutes = ["", "/blog", "/testimonials", "/residential", "/commercial", "/contact", "/track"].map(
     (route) => ({ url: `${SITE_URL}${route}`, lastModified: new Date() }),
   );
   try {

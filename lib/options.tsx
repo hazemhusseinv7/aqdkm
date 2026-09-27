@@ -6,9 +6,7 @@ import {
   MdMeetingRoom,
   MdStore,
   MdWarehouse,
-  MdBed,
   MdSquareFoot,
-  MdLayers,
   MdFilter1,
   MdFilter2,
   MdFilter3,
@@ -36,7 +34,6 @@ import {
 } from "react-icons/fa";
 import { HiHomeModern, HiBuildingOffice } from "react-icons/hi2";
 import { BsCalendar2WeekFill } from "react-icons/bs";
-import { PiScalesFill } from "react-icons/pi";
 
 import {
   OPTION_VALUES,
@@ -89,15 +86,6 @@ export const paymentOptions: IconOption[] = withIcons(
   },
 );
 
-export const feePayerOptions: IconOption[] = withIcons(
-  OPTION_VALUES.feePayer,
-  {
-    owner: <FaUserTie />,
-    tenant: <FaUsers />,
-    split: <PiScalesFill />,
-  },
-);
-
 export const residentialPropertyTypes: IconOption[] = withIcons(
   OPTION_VALUES.residentialProperty,
   {
@@ -111,12 +99,16 @@ export const residentialPropertyTypes: IconOption[] = withIcons(
 );
 
 export const residentialUnitTypes: IconOption[] = withIcons(
-  OPTION_VALUES.residentialUnit,
+  OPTION_VALUES.commercialUnit,
   {
-    apartment: <HiHomeModern />,
-    floor: <MdLayers />,
-    "driver-room": <MdBed />,
-    studio: <MdMeetingRoom />,
+    shop: <FaStore />,
+    office: <MdMeetingRoom />,
+    warehouse: <FaWarehouse />,
+    showroom: <MdStore />,
+    land: <MdSquareFoot />,
+    kiosk: <MdStore />,
+    workshop: <MdWarehouse />,
+    factory: <FaBuilding />,
     other: <MdEdit />,
   },
 );

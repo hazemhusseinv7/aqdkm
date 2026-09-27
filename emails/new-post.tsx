@@ -60,7 +60,7 @@ export function NewPostBroadcast({
             textAlign: "right",
           }}
         >
-          مدونة عقدكم — مقالات وعقارات باللغة العربية.{" "}
+          مدونة عقدكم - مقالات وعقارات باللغة العربية.{" "}
           <Link href={siteUrl} style={{ color: t.alt }}>
             تصفح المدونة
           </Link>

@@ -2,6 +2,8 @@ import type { CalendarDate } from "@internationalized/date";
 
 export type Role = "owner" | "tenant";
 
+export type ExtraItem = { kind: string; count: number };
+
 type DateFields = "otherDob" | "repDob" | "deedDate" | "contractStart" | "applicantDob";
 
 export type SerializedFormState = Omit<FormState, DateFields> & {
@@ -44,7 +46,7 @@ export type FormState = {
   contractStart: CalendarDate | null;
   payment: string;
   annualRent: number;
-  feePayer: string;
+  ownerIban: string;
   propertyType: string;
   propertyCustom: string;
   unitType: string;
@@ -57,8 +59,8 @@ export type FormState = {
   bedroomsCustom: number;
   bathrooms: string;
   bathroomsCustom: number;
-  extras: string[];
-  livingRooms: number;
+  extras: ExtraItem[];
+  kitchenCabinets: boolean | null;
   electroMeter: string;
   waterMeter: string;
   activity: string;
@@ -80,12 +82,14 @@ export type RequestDetail = {
     phone?: string;
     nationalId?: string;
     dob?: string;
+    ownerIban?: string;
   };
   counterparty?: {
     counterType?: string;
     nationalId?: string;
     phone?: string;
     dob?: string;
+    ownerIban?: string;
     unifiedNumber?: string;
     entityName?: string;
     repId?: string;
@@ -108,8 +112,8 @@ export type RequestDetail = {
     bedroomsCustom?: number;
     bathrooms?: string;
     bathroomsCustom?: number;
-    extras?: string[];
-    livingRooms?: number;
+    extras?: { kind?: string; count?: number }[];
+    kitchenCabinets?: boolean | null;
     electroMeter?: string;
     waterMeter?: string;
     activity?: string;
@@ -130,7 +134,6 @@ export type RequestDetail = {
     contractStart?: string;
     payment?: string;
     annualRent?: number;
-    feePayer?: string;
     feeBreakdown?: {
       years?: number;
       government?: number;
@@ -148,5 +151,4 @@ export type RequestStatus = {
   submittedAt: string;
   feeTotal: number | null;
   annualRent: number | null;
-  feePayer: string;
 } | null;

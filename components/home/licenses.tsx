@@ -11,7 +11,13 @@ export type LicenseItem = {
   icon: string | null;
 };
 
-export function Licenses({ items }: { items: LicenseItem[] }) {
+export function Licenses({
+  items,
+  regaUrl,
+}: {
+  items: LicenseItem[];
+  regaUrl?: string | null;
+}) {
   if (items.length === 0) {
     return null;
   }
@@ -29,7 +35,7 @@ export function Licenses({ items }: { items: LicenseItem[] }) {
         {items.map((l) => {
           const Icon = licenseIcon(l.icon);
           return (
-            <Card key={l._key} variant="secondary">
+            <Card key={l._key} variant="default">
               <Card.Header className="gap-3">
                 <span className="bg-accent text-accent-foreground flex size-12 shrink-0 items-center justify-center rounded-2xl">
                   <Icon className="size-6" />
@@ -54,15 +60,17 @@ export function Licenses({ items }: { items: LicenseItem[] }) {
           );
         })}
       </div>
-      <a
-        href="https://eservicesredp.rega.gov.sa/e-services"
-        target="_blank"
-        rel="noreferrer"
-        className="text-accent inline-flex items-center gap-1 text-sm font-medium hover:underline"
-      >
-        تحقق من التراخيص عبر الهيئة العامة للعقار
-        <MdOpenInNew className="size-4" />
-      </a>
+      {regaUrl && (
+        <a
+          href={regaUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="text-accent inline-flex items-center gap-1 text-sm font-medium hover:underline"
+        >
+          تحقق من التراخيص عبر الهيئة العامة للعقار
+          <MdOpenInNew className="size-4" />
+        </a>
+      )}
     </section>
   );
 }

@@ -23,7 +23,7 @@ export function createNotifyPublishAction(
 
     useEffect(() => {
       if (!awaitingPublish || props.draft) return;
-      // Publish completed (draft is gone) — notify once.
+      // Publish completed (draft is gone) - notify once.
       setAwaitingPublish(false);
       const token = process.env.NEXT_PUBLIC_BROADCAST_TOKEN;
       if (!token) {
@@ -50,12 +50,12 @@ export function createNotifyPublishAction(
           if (json.result?.broadcastId) {
             toast.push({
               status: "success",
-              title: "Published — subscribers emailed",
+              title: "Published - subscribers emailed",
             });
           } else {
             toast.push({
               status: "info",
-              title: "Published — no email sent",
+              title: "Published - no email sent",
               description: `Broadcast skipped (${json.result?.skipped ?? "unknown reason"}).`,
             });
           }
@@ -63,7 +63,7 @@ export function createNotifyPublishAction(
         .catch((err: unknown) => {
           toast.push({
             status: "error",
-            title: "Published — email failed",
+            title: "Published - email failed",
             description: err instanceof Error ? err.message : "Retry publish.",
           });
         });

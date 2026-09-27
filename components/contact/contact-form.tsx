@@ -14,29 +14,49 @@ import {
 } from "@heroui/react";
 import { MdSend } from "react-icons/md";
 import { submitContactMessage } from "@/sanity/lib/actions";
+import { validateContact, type ContactErrors } from "@/lib/validation";
 
 export function ContactForm() {
   const [sending, setSending] = useState(false);
+  const [errors, setErrors] = useState<ContactErrors>({});
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
-    const name = `${formData.get("name") ?? ""}`.trim();
-    const phone = `${formData.get("phone") ?? ""}`.trim();
-    const email = `${formData.get("email") ?? ""}`.trim();
-    const message = `${formData.get("message") ?? ""}`.trim();
+    const input = {
+      name: `${formData.get("name") ?? ""}`.trim(),
+      phone: `${formData.get("phone") ?? ""}`.trim(),
+      email: `${formData.get("email") ?? ""}`.trim(),
+      message: `${formData.get("message") ?? ""}`.trim(),
+    };
+    const errs = validateContact(input);
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast("يرجى مراجعة الحقول المطلوبة", {
+        description: "بعض الحقول غير مكتملة أو بصيغة غير صحيحة",
+      });
+      return;
+    }
     setSending(true);
     try {
-      await submitContactMessage({ name, phone, email, message });
+      await submitContactMessage(input);
       form.reset();
+      setErrors({});
       toast("تم استلام رسالتك بنجاح", {
         description: "سنرد عليك في أقرب وقت ممكن.",
       });
-    } catch {
-      toast("تعذر إرسال الرسالة", {
-        description: "تحقق من الاتصال وحاول مجدداً.",
-      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.startsWith("validation: ")) {
+        toast("تعذر إرسال الرسالة", {
+          description: message.replace(/^validation: /, ""),
+        });
+      } else {
+        toast("تعذر إرسال الرسالة", {
+          description: "تحقق من الاتصال وحاول مجدداً.",
+        });
+      }
     } finally {
       setSending(false);
     }
@@ -49,49 +69,46 @@ export function ContactForm() {
       className="flex min-w-0 flex-col gap-4"
       onSubmit={onSubmit}
     >
-      <TextField isRequired name="name" minLength={2}>
+      <TextField
+        isRequired
+        name="name"
+        isInvalid={!!errors.name}
+        onChange={() => setErrors((p) => ({ ...p, name: undefined }))}
+      >
         <Label>الاسم</Label>
         <Input placeholder="الاسم كامل" />
-        <FieldError />
+        {errors.name && <FieldError>{errors.name}</FieldError>}
       </TextField>
       <TextField
         isRequired
         name="phone"
         type="tel"
-        validate={(value) => {
-          if (!value) return null;
-          const digits = value.replace(/\D/g, "");
-          if (digits.length < 9 || digits.length > 12) {
-            return "يرجى إدخال رقم جوال صحيح";
-          }
-          return null;
-        }}
+        isInvalid={!!errors.phone}
+        onChange={() => setErrors((p) => ({ ...p, phone: undefined }))}
       >
         <Label>رقم الجوال</Label>
         <Input placeholder="05xxxxxxxx" dir="ltr" />
-        <FieldError />
+        {errors.phone && <FieldError>{errors.phone}</FieldError>}
       </TextField>
       <TextField
         name="email"
         type="email"
-        validate={(value) => {
-          if (
-            value &&
-            !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)
-          ) {
-            return "يرجى إدخال بريد إلكتروني صحيح";
-          }
-          return null;
-        }}
+        isInvalid={!!errors.email}
+        onChange={() => setErrors((p) => ({ ...p, email: undefined }))}
       >
         <Label>البريد الإلكتروني (اختياري)</Label>
         <Input placeholder="name@example.com" dir="ltr" />
-        <FieldError />
+        {errors.email && <FieldError>{errors.email}</FieldError>}
       </TextField>
-      <TextField isRequired name="message" minLength={10}>
+      <TextField
+        isRequired
+        name="message"
+        isInvalid={!!errors.message}
+        onChange={() => setErrors((p) => ({ ...p, message: undefined }))}
+      >
         <Label>الرسالة</Label>
         <TextArea placeholder="اكتب رسالتك هنا…" rows={5} />
-        <FieldError />
+        {errors.message && <FieldError>{errors.message}</FieldError>}
       </TextField>
       <div>
         <Button type="submit" isDisabled={sending} className="min-w-32">

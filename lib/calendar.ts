@@ -109,6 +109,12 @@ export function isAdult18(date: CalendarDate | null): boolean {
   return g.compare(cutoff) <= 0;
 }
 
+/** Serialize any calendar date as Gregorian ISO (Sanity + server validators are Gregorian-only). */
+export function toGregorianISO(date: CalendarDate | null): string | null {
+  if (!date) return null;
+  return toCalendar(date, GREGORIAN).toString();
+}
+
 export function isPastDay(date: CalendarDate | null): boolean {
   if (!date) return false;
   const g = toCalendar(date, GREGORIAN);

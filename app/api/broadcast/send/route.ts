@@ -21,7 +21,7 @@ function tokensMatch(provided: string, expected: string): boolean {
  * Studio (same origin, so it works on localhost with no tunnel).
  *
  * Auth is a shared editor-visible token (NEXT_PUBLIC_BROADCAST_TOKEN): it
- * authorizes exactly one idempotent operation — broadcasting an
+ * authorizes exactly one idempotent operation - broadcasting an
  * already-published, unflagged post. Editors are trusted; rotate by
  * changing the value and rebuilding.
  */
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[broadcast-send]", err);
     return NextResponse.json(
-      { error: "Broadcast failed. Flags left unset — retry." },
+      { error: "Broadcast failed. Flags left unset - retry." },
       { status: 502 },
     );
   }

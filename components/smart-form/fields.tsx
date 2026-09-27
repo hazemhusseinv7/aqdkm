@@ -161,6 +161,8 @@ export function IconNumber({
   max,
   suffix,
   required,
+  emptyWhenZero,
+  placeholder,
 }: {
   label: string;
   icon?: React.ReactNode;
@@ -173,14 +175,18 @@ export function IconNumber({
   max?: number;
   suffix?: string | React.ReactNode;
   required?: boolean;
+  emptyWhenZero?: boolean;
+  placeholder?: string;
 }) {
   return (
     <NumberField
       fullWidth
       minValue={min}
       maxValue={max}
-      value={value || 0}
-      onChange={(v) => onChange(typeof v === "number" ? v : 0)}
+      value={emptyWhenZero && value === 0 ? Number.NaN : value}
+      onChange={(v) =>
+        onChange(typeof v === "number" && !Number.isNaN(v) ? v : 0)
+      }
       isInvalid={!!error}
       isRequired={required}
       className="min-w-0"
@@ -203,7 +209,10 @@ export function IconNumber({
       </FieldLabel>
       <NumberField.Group className="w-full min-w-0">
         <NumberField.DecrementButton />
-        <NumberField.Input className="min-w-0 flex-1" />
+        <NumberField.Input
+          className="min-w-0 flex-1"
+          placeholder={placeholder}
+        />
         <NumberField.IncrementButton />
       </NumberField.Group>
       {error ? (
@@ -296,38 +305,73 @@ export function IconSwitch({
   );
 }
 
-export function IconChecks({
+export function CountedChecks({
   label,
   icon,
   options,
   values,
   onChange,
+  errorForKind,
 }: {
   label: string;
   icon?: React.ReactNode;
   options: { value: string; label: string; icon: React.ReactNode }[];
-  values: string[];
-  onChange: (v: string[]) => void;
+  values: { kind: string; count: number }[];
+  onChange: (v: { kind: string; count: number }[]) => void;
+  errorForKind?: (kind: string) => string | null;
 }) {
   return (
-    <CheckboxGroup value={values} onChange={onChange}>
-      <FieldLabel icon={icon}>{label}</FieldLabel>
-      <div className="grid grid-cols-2 gap-2">
-        {options.map((o) => (
-          <Checkbox key={o.value} value={o.value}>
-            <Checkbox.Content>
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <span className="flex items-center gap-1.5 text-sm">
-                <span className="text-accent">{o.icon}</span>
-                {o.label}
-              </span>
-            </Checkbox.Content>
-          </Checkbox>
-        ))}
-      </div>
-    </CheckboxGroup>
+    <div className="flex min-w-0 flex-col gap-3">
+      <CheckboxGroup
+        value={values.map((v) => v.kind)}
+        onChange={(ks) => {
+          const keys = ks as string[];
+          onChange(
+            keys.map(
+              (kind) =>
+                values.find((v) => v.kind === kind) ?? { kind, count: 0 },
+            ),
+          );
+        }}
+      >
+        <FieldLabel icon={icon}>{label}</FieldLabel>
+        <div className="grid grid-cols-2 gap-2">
+          {options.map((o) => (
+            <Checkbox key={o.value} value={o.value}>
+              <Checkbox.Content>
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <span className="flex items-center gap-1.5 text-sm">
+                  <span className="text-accent">{o.icon}</span>
+                  {o.label}
+                </span>
+              </Checkbox.Content>
+            </Checkbox>
+          ))}
+        </div>
+      </CheckboxGroup>
+      {values.map((v) => {
+        const opt = options.find((o) => o.value === v.kind);
+        return (
+          <IconNumber
+            key={v.kind}
+            label={`${opt?.label ?? v.kind} - العدد`}
+            required
+            icon={opt?.icon}
+            min={1}
+            emptyWhenZero
+            value={v.count}
+            onChange={(c) =>
+              onChange(
+                values.map((x) => (x.kind === v.kind ? { ...x, count: c } : x)),
+              )
+            }
+            error={errorForKind?.(v.kind) ?? null}
+          />
+        );
+      })}
+    </div>
   );
 }
 

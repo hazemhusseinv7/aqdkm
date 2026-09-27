@@ -185,7 +185,7 @@ export async function unsubscribeNewsletterAction(
   const email = parsed.data.email;
   try {
     const sub = await findSubscriberByEmail(email);
-    // Same message either way — don't leak which emails are subscribed.
+    // Same message either way - don't leak which emails are subscribed.
     if (sub) {
       await setSubscriberStatus(sub._id, "unsubscribed");
       // Global opt-out: single mail stream, so this equals unsubscribing

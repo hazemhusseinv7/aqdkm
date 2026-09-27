@@ -7,7 +7,7 @@ import {
   feeConfigFromSettings,
   type ContractType,
 } from "@/lib/fees";
-import { isAdultISO, isPastDayISO, normalizePhone, validators } from "@/lib/validation";
+import { isAdultISO, isPastDayISO, normalizePhone, validateContact, validators } from "@/lib/validation";
 import { SITE_URL } from "@/lib/blog";
 import {
   counterTypeText,
@@ -27,7 +27,12 @@ import type { SITE_SETTINGS_QUERY_RESULT } from "@/sanity.types";
 import { getWriteClient } from "./writeClient";
 
 function toDateString(date: string | null): string | undefined {
-  return date ?? undefined;
+  if (!date) return undefined;
+  // Client serializes Gregorian ISO only; reject anything else (e.g. Hijri years).
+  if (!/^(19|20)\d{2}-\d{2}-\d{2}$/.test(date)) {
+    throw invalid("dateFormat");
+  }
+  return date;
 }
 
 function requestNumber(): string {
@@ -48,6 +53,7 @@ function assertValidRentalRequest(
   if (s.role !== "owner" && s.role !== "tenant") throw invalid("role");
   if (!validators.mobile(s.applicantPhone)) throw invalid("applicantPhone");
   if (!validators.nationalOrIqama(s.applicantId)) throw invalid("applicantId");
+  if (!validators.iban(s.ownerIban)) throw invalid("ownerIban");
   if (s.role === "tenant" && !isAdultISO(s.applicantDob))
     throw invalid("applicantDob");
   if (s.role === "owner" && s.isAgent && !validators.required(s.agencyNumber))
@@ -99,8 +105,16 @@ function assertValidRentalRequest(
     if (s.bathrooms === "other" && !(s.bathroomsCustom > 0))
       throw invalid("bathroomsCustom");
   }
-  if (s.extras.includes("sitting") && !(s.livingRooms > 0))
-    throw invalid("livingRooms");
+  if (
+    !Array.isArray(s.extras) ||
+    !s.extras.every((e) => e.count >= 1)
+  )
+    throw invalid("extras");
+  if (
+    s.extras.some((e) => e.kind === "kitchen") &&
+    s.kitchenCabinets == null
+  )
+    throw invalid("kitchenCabinets");
 }
 
 export async function submitRentalRequest(
@@ -129,6 +143,7 @@ export async function submitRentalRequest(
 
   const requestNo = requestNumber();
   const { propList, unitList } = propValueLists(isCommercial);
+  const ownerIban = s.ownerIban.trim().replace(/[\s-]/g, "").toUpperCase();
   await getWriteClient().create({
     _type: "rentalRequest",
     requestNo,
@@ -142,6 +157,7 @@ export async function submitRentalRequest(
       phone: normalizePhone(s.applicantPhone),
       nationalId: s.applicantId,
       dob: toDateString(s.applicantDob),
+      ownerIban: s.role === "owner" ? ownerIban : undefined,
     },
     counterparty: {
       counterType:
@@ -149,6 +165,7 @@ export async function submitRentalRequest(
       nationalId: s.otherId || undefined,
       phone: s.otherPhone ? normalizePhone(s.otherPhone) : undefined,
       dob: toDateString(s.otherDob),
+      ownerIban: s.role === "tenant" ? ownerIban : undefined,
       unifiedNumber: s.unifiedNumber || undefined,
       entityName: s.entityName || undefined,
       repId: s.repId || undefined,
@@ -176,7 +193,9 @@ export async function submitRentalRequest(
           : s.bathrooms || undefined,
       bathroomsCustom: s.bathroomsCustom,
       extras: storedExtras(s.extras),
-      livingRooms: s.livingRooms,
+      kitchenCabinets: s.extras.some((e) => e.kind === "kitchen")
+        ? (s.kitchenCabinets ?? undefined)
+        : undefined,
       electroMeter: s.electroMeter || undefined,
       waterMeter: s.waterMeter || undefined,
       activity: s.activity || undefined,
@@ -197,7 +216,6 @@ export async function submitRentalRequest(
       contractStart: toDateString(s.contractStart),
       payment: storedArabic(OPTION_VALUES.payment, s.payment),
       annualRent: s.annualRent,
-      feePayer: storedArabic(OPTION_VALUES.feePayer, s.feePayer),
       feeBreakdown: breakdown,
       notes: s.notes || undefined,
     },
@@ -238,16 +256,21 @@ export async function submitContactMessage(input: {
   message: string;
 }): Promise<{ ok: true }> {
   const name = input.name.trim();
-  const phone = normalizePhone(input.phone);
+  const rawPhone = input.phone.trim();
   const email = input.email?.trim() || undefined;
   const message = input.message.trim();
-  if (!name || !phone || !message) {
-    throw new Error("Missing required fields");
+  const contactErrors = validateContact({
+    name,
+    phone: rawPhone,
+    email,
+    message,
+  });
+  const firstError = Object.values(contactErrors)[0];
+  if (firstError) {
+    throw new Error(`validation: ${firstError}`);
   }
-  if (email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
-    throw new Error("Invalid email address");
-  }
-  await getWriteClient().create({
+  const phone = rawPhone;
+  const created = await getWriteClient().create({
     _type: "contactMessage",
     name,
     phone,
@@ -256,7 +279,44 @@ export async function submitContactMessage(input: {
     status: "new",
     submittedAt: new Date().toISOString(),
   });
+
+  await notifyAdminContactMessage({
+    messageId: created._id,
+    name,
+    phone,
+    email,
+    message,
+  });
+
   return { ok: true };
+}
+
+async function notifyAdminContactMessage(input: {
+  messageId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  message: string;
+}): Promise<void> {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL?.trim();
+    if (!adminEmail) {
+      console.warn("ADMIN_EMAIL is not set; skipping contact email.");
+      return;
+    }
+    const { sendContactNotification } = await import("@/lib/email");
+    await sendContactNotification({
+      to: adminEmail,
+      messageId: input.messageId,
+      name: input.name,
+      phone: input.phone,
+      email: input.email,
+      message: input.message,
+      siteUrl: SITE_URL,
+    });
+  } catch (err) {
+    console.error("Admin contact email failed:", err);
+  }
 }
 
 export async function getRequestDetail(
@@ -306,7 +366,6 @@ export async function getRequestStatus(
       submittedAt?: string;
       feeTotal?: number;
       annualRent?: number;
-      feePayer?: string;
     } | null;
     if (!data?.requestNo) {
       return null;
@@ -318,7 +377,6 @@ export async function getRequestStatus(
       submittedAt: `${data.submittedAt ?? ""}`,
       feeTotal: typeof data.feeTotal === "number" ? data.feeTotal : null,
       annualRent: typeof data.annualRent === "number" ? data.annualRent : null,
-      feePayer: `${data.feePayer ?? ""}`,
     };
   } catch {
     return null;

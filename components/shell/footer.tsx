@@ -3,7 +3,13 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { MdEmail, MdGavel, MdMail, MdPhone } from "react-icons/md";
+import {
+  MdEmail,
+  MdGavel,
+  MdMail,
+  MdPhone,
+  MdRateReview,
+} from "react-icons/md";
 import { FaBuilding, FaHome } from "react-icons/fa";
 import { HiNewspaper, HiTicket } from "react-icons/hi2";
 import { cn } from "@/lib/utils";
@@ -35,6 +41,7 @@ const quickLinks: FooterSection = {
     { title: "عقد سكني", href: "/residential", icon: <FaHome /> },
     { title: "عقد تجاري", href: "/commercial", icon: <FaBuilding /> },
     { title: "المدونة", href: "/blog", icon: <HiNewspaper /> },
+    { title: "آراء العملاء", href: "/testimonials", icon: <MdRateReview /> },
     { title: "تواصل معنا", href: "/contact", icon: <MdMail /> },
     { title: "تتبع الطلب", href: "/track", icon: <HiTicket /> },
   ],

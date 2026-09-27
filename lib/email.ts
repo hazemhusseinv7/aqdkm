@@ -6,6 +6,7 @@ import { NewsletterConfirm } from "@/emails/newsletter-confirm";
 import { NewsletterWelcome } from "@/emails/newsletter-welcome";
 import { NewPostBroadcast } from "@/emails/new-post";
 import { NewRequestNotification } from "@/emails/new-request";
+import { ContactNotification } from "@/emails/contact-notification";
 import type { RequestDetail } from "@/lib/request-form";
 
 function requireEnv(name: string): string {
@@ -90,6 +91,38 @@ export async function sendNewRequestNotification(input: {
     },
   );
   if (error) throw new Error(`Resend new-request failed: ${error.message}`);
+}
+
+export async function sendContactNotification(input: {
+  to: string;
+  messageId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  message: string;
+  siteUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  const { error } = await resend.emails.send(
+    {
+      from: requireEnv("RESEND_FROM"),
+      to: input.to,
+      replyTo: input.email || undefined,
+      subject: `رسالة تواصل جديدة من ${input.name}`,
+      react: ContactNotification({
+        name: input.name,
+        phone: input.phone,
+        email: input.email ?? null,
+        message: input.message,
+        siteUrl: input.siteUrl,
+      }),
+      tags: [{ name: "category", value: "contact-notification" }],
+    },
+    {
+      idempotencyKey: `contact-notification/${input.messageId}`,
+    },
+  );
+  if (error) throw new Error(`Resend contact failed: ${error.message}`);
 }
 
 export async function sendNewPostBroadcast(input: {

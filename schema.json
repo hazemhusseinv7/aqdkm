@@ -192,6 +192,10 @@
                     {
                       "type": "string",
                       "value": "meters"
+                    },
+                    {
+                      "type": "string",
+                      "value": "bolt"
                     }
                   ]
                 },
@@ -269,14 +273,28 @@
                 "value": {
                   "type": "string"
                 },
-                "optional": false
+                "optional": true
               },
               "city": {
                 "type": "objectAttribute",
                 "value": {
                   "type": "string"
                 },
-                "optional": false
+                "optional": true
+              },
+              "date": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": true
+              },
+              "rating": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "number"
+                },
+                "optional": true
               },
               "quote": {
                 "type": "objectAttribute",
@@ -1695,6 +1713,13 @@
         },
         "optional": true
       },
+      "regaLicenseUrl": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
       "faqs": {
         "type": "objectAttribute",
         "value": {
@@ -2312,6 +2337,13 @@
                 "type": "string"
               },
               "optional": true
+            },
+            "ownerIban": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
             }
           }
         },
@@ -2354,6 +2386,13 @@
               "optional": true
             },
             "dob": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "ownerIban": {
               "type": "objectAttribute",
               "value": {
                 "type": "string"
@@ -2514,15 +2553,42 @@
               "value": {
                 "type": "array",
                 "of": {
-                  "type": "string"
+                  "type": "object",
+                  "attributes": {
+                    "kind": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    },
+                    "count": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "number"
+                      },
+                      "optional": false
+                    }
+                  },
+                  "rest": {
+                    "type": "object",
+                    "attributes": {
+                      "_key": {
+                        "type": "objectAttribute",
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
                 }
               },
               "optional": true
             },
-            "livingRooms": {
+            "kitchenCabinets": {
               "type": "objectAttribute",
               "value": {
-                "type": "number"
+                "type": "boolean"
               },
               "optional": true
             },
@@ -2653,13 +2719,6 @@
               "type": "objectAttribute",
               "value": {
                 "type": "number"
-              },
-              "optional": true
-            },
-            "feePayer": {
-              "type": "objectAttribute",
-              "value": {
-                "type": "string"
               },
               "optional": true
             },

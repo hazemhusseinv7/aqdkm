@@ -27,14 +27,26 @@ export const testimonials = defineType({
               title: "Role",
               type: "string",
               description: "e.g. مستأجر, مالك عقار",
-              validation: (rule) => rule.required(),
             }),
             defineField({
               name: "city",
               title: "City",
               type: "string",
               description: "e.g. الرياض",
-              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "date",
+              title: "Date",
+              type: "date",
+              description: "Review date, shown when present",
+            }),
+            defineField({
+              name: "rating",
+              title: "Rating",
+              type: "number",
+              description: "1–5 stars",
+              initialValue: 5,
+              validation: (rule) => rule.min(1).max(5).integer(),
             }),
             defineField({
               name: "quote",

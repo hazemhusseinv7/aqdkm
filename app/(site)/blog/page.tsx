@@ -27,7 +27,7 @@ export async function generateMetadata({
   const page = parsePage((await searchParams).page);
   if (page > 1) {
     return {
-      title: `المدونة — صفحة ${page}`,
+      title: `المدونة - صفحة ${page}`,
       description: "مقالات وشروحات حول عقود الإيجار والتوثيق",
     };
   }

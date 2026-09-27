@@ -40,7 +40,7 @@ export type Features = {
   items?: Array<{
     title: string;
     description: string;
-    icon: "save" | "review" | "fees" | "verify" | "track" | "meters";
+    icon: "save" | "review" | "fees" | "verify" | "track" | "meters" | "bolt";
     _key: string;
   }>;
 };
@@ -53,8 +53,10 @@ export type Testimonials = {
   _rev: string;
   items?: Array<{
     name: string;
-    role: string;
-    city: string;
+    role?: string;
+    city?: string;
+    date?: string;
+    rating?: number;
     quote: string;
     _key: string;
   }>;
@@ -273,6 +275,7 @@ export type SiteSettings = {
   };
   supportPhone?: string;
   email?: string;
+  regaLicenseUrl?: string;
   faqs?: Array<{
     question: string;
     answer: Array<{
@@ -360,12 +363,14 @@ export type RentalRequest = {
     phone: string;
     nationalId: string;
     dob?: string;
+    ownerIban?: string;
   };
   counterparty?: {
     counterType: "\u0641\u0631\u062F" | "\u0645\u0646\u0634\u0623\u0629";
     nationalId?: string;
     phone?: string;
     dob?: string;
+    ownerIban?: string;
     unifiedNumber?: string;
     entityName?: string;
     repId?: string;
@@ -388,8 +393,12 @@ export type RentalRequest = {
     bedroomsCustom?: number;
     bathrooms?: string;
     bathroomsCustom?: number;
-    extras?: Array<string>;
-    livingRooms?: number;
+    extras?: Array<{
+      kind: string;
+      count: number;
+      _key: string;
+    }>;
+    kitchenCabinets?: boolean;
     electroMeter?: string;
     waterMeter?: string;
     activity?: string;
@@ -410,7 +419,6 @@ export type RentalRequest = {
     contractStart?: string;
     payment?: string;
     annualRent?: number;
-    feePayer?: string;
     feeBreakdown?: {
       years?: number;
       government?: number;
@@ -547,12 +555,13 @@ export type AllSanitySchemaTypes =
 
 // Source: sanity/lib/queries.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_id == "siteSettings"][0]{ fees, supportPhone, email, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }
+// Query: *[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }
 export type SITE_SETTINGS_QUERY_RESULT =
   | {
       fees: null;
       supportPhone: null;
       email: null;
+      regaLicenseUrl: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -562,6 +571,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       fees: null;
       supportPhone: null;
       email: string;
+      regaLicenseUrl: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -571,6 +581,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       fees: null;
       supportPhone: null;
       email: string | null;
+      regaLicenseUrl: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -589,6 +600,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       } | null;
       supportPhone: string | null;
       email: string | null;
+      regaLicenseUrl: string | null;
       gaMeasurementId: string | null;
       gtmId: string | null;
       socialLinks: Array<{
@@ -1017,7 +1029,7 @@ export type POSTS_BY_CATEGORY_QUERY_RESULT = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: REQUEST_DETAIL_QUERY
-// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob },    counterparty{      counterType, nationalId, phone, dob, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,      bathrooms, bathroomsCustom, extras, livingRooms,      electroMeter, waterMeter, activity, hasLicense, licenseNumber    },    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent, feePayer,      feeBreakdown{ years, government, company, total }, notes    }  }
+// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },    counterparty{      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,      bathrooms, bathroomsCustom, extras[]{ kind, count }, kitchenCabinets,      electroMeter, waterMeter, activity, hasLicense, licenseNumber    },    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent,      feeBreakdown{ years, government, company, total }, notes    }  }
 export type REQUEST_DETAIL_QUERY_RESULT = {
   requestNo: string;
   contractType: "commercial" | "residential";
@@ -1032,12 +1044,14 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
     phone: string;
     nationalId: string;
     dob: string | null;
+    ownerIban: string | null;
   } | null;
   counterparty: {
     counterType: "\u0641\u0631\u062F" | "\u0645\u0646\u0634\u0623\u0629";
     nationalId: string | null;
     phone: string | null;
     dob: string | null;
+    ownerIban: string | null;
     unifiedNumber: string | null;
     entityName: string | null;
     repId: string | null;
@@ -1060,8 +1074,11 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
     bedroomsCustom: number | null;
     bathrooms: string | null;
     bathroomsCustom: number | null;
-    extras: Array<string> | null;
-    livingRooms: number | null;
+    extras: Array<{
+      kind: string;
+      count: number;
+    }> | null;
+    kitchenCabinets: boolean | null;
     electroMeter: string | null;
     waterMeter: string | null;
     activity: string | null;
@@ -1082,7 +1099,6 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
     contractStart: string | null;
     payment: string | null;
     annualRent: number | null;
-    feePayer: string | null;
     feeBreakdown: {
       years: number | null;
       government: number | null;
@@ -1095,7 +1111,7 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
 
 // Source: sanity/lib/queries.ts
 // Variable: REQUEST_STATUS_QUERY
-// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    "feeTotal": terms.feeBreakdown.total,    "annualRent": terms.annualRent,    "feePayer": terms.feePayer  }
+// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    "feeTotal": terms.feeBreakdown.total,    "annualRent": terms.annualRent  }
 export type REQUEST_STATUS_QUERY_RESULT = {
   requestNo: string;
   contractType: "commercial" | "residential";
@@ -1103,7 +1119,6 @@ export type REQUEST_STATUS_QUERY_RESULT = {
   submittedAt: string;
   feeTotal: number | null;
   annualRent: number | null;
-  feePayer: string | null;
 } | null;
 
 // Source: sanity/lib/queries.ts
@@ -1154,7 +1169,7 @@ export type BROADCAST_CANDIDATE_QUERY_RESULT = {
 
 // Source: sanity/lib/queries.ts
 // Variable: TESTIMONIALS_QUERY
-// Query: *[_id == "testimonials"][0]{    items[]{ _key, name, role, city, quote }  }
+// Query: *[_id == "testimonials"][0]{    items[]{ _key, name, role, city, date, rating, quote }  }
 export type TESTIMONIALS_QUERY_RESULT =
   | {
       items: null;
@@ -1165,6 +1180,8 @@ export type TESTIMONIALS_QUERY_RESULT =
         name: null;
         role: null;
         city: null;
+        date: null;
+        rating: null;
         quote: null;
       }> | null;
     }
@@ -1172,8 +1189,10 @@ export type TESTIMONIALS_QUERY_RESULT =
       items: Array<{
         _key: string;
         name: string;
-        role: string;
-        city: string;
+        role: string | null;
+        city: string | null;
+        date: string | null;
+        rating: number | null;
         quote: string;
       }> | null;
     }
@@ -1199,7 +1218,8 @@ export type FEATURES_QUERY_RESULT =
         _key: string;
         title: string;
         description: string;
-        icon: "fees" | "meters" | "review" | "save" | "track" | "verify";
+        icon:
+          "bolt" | "fees" | "meters" | "review" | "save" | "track" | "verify";
       }> | null;
     }
   | {
@@ -1236,7 +1256,8 @@ export type LICENSES_QUERY_RESULT =
         issuer: null;
         description: string;
         number: null;
-        icon: "fees" | "meters" | "review" | "save" | "track" | "verify";
+        icon:
+          "bolt" | "fees" | "meters" | "review" | "save" | "track" | "verify";
       }> | null;
     }
   | {
@@ -1255,7 +1276,7 @@ export type LICENSES_QUERY_RESULT =
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_id == "siteSettings"][0]{ fees, supportPhone, email, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }': SITE_SETTINGS_QUERY_RESULT;
+    '*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }': SITE_SETTINGS_QUERY_RESULT;
     '*[_type == "rentalRequest"] | order(submittedAt desc){\n    _id,\n    requestNo,\n    contractType,\n    status,\n    submittedAt\n  }': REQUESTS_ALL_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt)] | order(publishedAt desc)[$offset...$end]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_INDEX_QUERY_RESULT;
     'count(*[_type == "post" && defined(slug.current) && defined(publishedAt)])': POSTS_COUNT_QUERY_RESULT;
@@ -1266,12 +1287,12 @@ declare module "@sanity/client" {
     '*[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role, bio, avatar{ alt, asset-> } },\n    body[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    }\n  }': POST_DETAIL_QUERY_RESULT;
     '*[_type == "category"] | order(title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    "postCount": count(*[_type == "post" && references(^._id) && defined(publishedAt)])\n  }': CATEGORIES_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt) && $categorySlug in categories[]->slug.current] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_BY_CATEGORY_QUERY_RESULT;
-    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob },\n    counterparty{\n      counterType, nationalId, phone, dob, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,\n      bathrooms, bathroomsCustom, extras, livingRooms,\n      electroMeter, waterMeter, activity, hasLicense, licenseNumber\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent, feePayer,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
-    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    "feeTotal": terms.feeBreakdown.total,\n    "annualRent": terms.annualRent,\n    "feePayer": terms.feePayer\n  }': REQUEST_STATUS_QUERY_RESULT;
+    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },\n    counterparty{\n      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,\n      bathrooms, bathroomsCustom, extras[]{ kind, count }, kitchenCabinets,\n      electroMeter, waterMeter, activity, hasLicense, licenseNumber\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
+    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    "feeTotal": terms.feeBreakdown.total,\n    "annualRent": terms.annualRent\n  }': REQUEST_STATUS_QUERY_RESULT;
     '*[_type == "subscriber" && email == $email][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_EMAIL_QUERY_RESULT;
     '*[_type == "subscriber" && confirmToken == $tok][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_TOKEN_QUERY_RESULT;
     '*[_type == "post" && _id == $id][0]{ _id, title, "slug": slug.current, excerpt, cover, publishedAt, broadcastSentAt, broadcastId }': BROADCAST_CANDIDATE_QUERY_RESULT;
-    '*[_id == "testimonials"][0]{\n    items[]{ _key, name, role, city, quote }\n  }': TESTIMONIALS_QUERY_RESULT;
+    '*[_id == "testimonials"][0]{\n    items[]{ _key, name, role, city, date, rating, quote }\n  }': TESTIMONIALS_QUERY_RESULT;
     '*[_id == "features"][0]{\n    items[]{ _key, title, description, icon }\n  }': FEATURES_QUERY_RESULT;
     '*[_id == "licenses"][0]{\n    items[]{ _key, title, issuer, description, number, icon }\n  }': LICENSES_QUERY_RESULT;
   }

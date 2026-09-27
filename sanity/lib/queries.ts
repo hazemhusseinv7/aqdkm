@@ -1,7 +1,7 @@
 import { defineQuery } from "groq";
 
 export const SITE_SETTINGS_QUERY = defineQuery(
-  `*[_id == "siteSettings"][0]{ fees, supportPhone, email, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }`,
+  `*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }`,
 );
 
 export const REQUESTS_ALL_QUERY = defineQuery(
@@ -129,20 +129,20 @@ export const REQUEST_DETAIL_QUERY = defineQuery(
     contractType,
     status,
     submittedAt,
-    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob },
+    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },
     counterparty{
-      counterType, nationalId, phone, dob, unifiedNumber,
+      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,
       entityName, repId, repPhone, repDob, authNumber
     },
     property{
       deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,
       unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,
-      bathrooms, bathroomsCustom, extras, livingRooms,
+      bathrooms, bathroomsCustom, extras[]{ kind, count }, kitchenCabinets,
       electroMeter, waterMeter, activity, hasLicense, licenseNumber
     },
     location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },
     terms{
-      duration, customMonths, contractStart, payment, annualRent, feePayer,
+      duration, customMonths, contractStart, payment, annualRent,
       feeBreakdown{ years, government, company, total }, notes
     }
   }`,
@@ -155,8 +155,7 @@ export const REQUEST_STATUS_QUERY = defineQuery(
     status,
     submittedAt,
     "feeTotal": terms.feeBreakdown.total,
-    "annualRent": terms.annualRent,
-    "feePayer": terms.feePayer
+    "annualRent": terms.annualRent
   }`,
 );
 
@@ -174,7 +173,7 @@ export const BROADCAST_CANDIDATE_QUERY = defineQuery(
 
 export const TESTIMONIALS_QUERY = defineQuery(
   `*[_id == "testimonials"][0]{
-    items[]{ _key, name, role, city, quote }
+    items[]{ _key, name, role, city, date, rating, quote }
   }`,
 );
 

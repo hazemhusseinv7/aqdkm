@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import {
   MdBadge,
+  MdBolt,
   MdEditNote,
   MdGavel,
   MdRateReview,
@@ -20,6 +21,7 @@ export const FEATURE_ICONS: Record<string, ComponentType<IconProps>> = {
   verify: MdBadge,
   track: HiTicket,
   meters: MdEditNote,
+  bolt: MdBolt,
 };
 
 export const LICENSE_ICONS: Record<string, ComponentType<IconProps>> = {

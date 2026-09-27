@@ -42,7 +42,7 @@ export async function syncContact(
       console.warn("[newsletter] contact create skipped:", error.message);
       return null;
     }
-    // Contact predates wiring (or was created elsewhere) — patch it up.
+    // Contact predates wiring (or was created elsewhere) - patch it up.
     if (seg) {
       const { error: segError } = await resend.contacts.segments.add({
         email,

@@ -152,6 +152,15 @@ export const siteSettings = defineType({
       validation: (rule) => rule.email().error("Enter a valid email address"),
     }),
     defineField({
+      name: "regaLicenseUrl",
+      title: "REGA license verification URL",
+      description:
+        "Shown under the homepage licenses section. Hidden when empty.",
+      type: "url",
+      group: "general",
+      validation: (rule) => rule.uri({ scheme: ["https", "http"] }),
+    }),
+    defineField({
       name: "faqs",
       title: "FAQs",
       type: "array",

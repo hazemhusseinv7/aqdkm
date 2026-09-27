@@ -7,6 +7,7 @@ import { BsCalendar2WeekFill } from "react-icons/bs";
 import { FaBuilding, FaUsers } from "react-icons/fa";
 import { FaFileContract } from "react-icons/fa";
 import {
+  MdAccountBalanceWallet,
   MdBadge,
   MdBed,
   MdCake,
@@ -26,12 +27,12 @@ import {
   MdSquareFoot,
   MdTimelapse,
   MdWaterDrop,
-  MdWeekend,
 } from "react-icons/md";
 import { PiBathtubFill } from "react-icons/pi";
 
 import {
   FIELD_LABELS,
+  EXTRA_LABELS,
   counterTypeText,
   OPTION_VALUES,
   propValueLists,
@@ -50,7 +51,7 @@ import type { RequestDetail } from "@/lib/request-form";
 
 type Detail = NonNullable<RequestDetail>;
 
-const EMPTY = "—";
+const EMPTY = "-";
 const L = FIELD_LABELS;
 
 async function copyText(text: string): Promise<boolean> {
@@ -212,6 +213,14 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           display={formatDualDate(detail.applicant.dob)}
           copy={detail.applicant.dob ?? null}
         />
+        {detail.applicant.ownerIban ? (
+          <FieldRow
+            icon={<MdAccountBalanceWallet />}
+            label={L.ownerIban.ar}
+            display={detail.applicant.ownerIban}
+            ltr
+          />
+        ) : null}
         <FieldRow
           icon={<MdGavel />}
           label={L.applicantIsAgent.ar}
@@ -233,6 +242,14 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           label={L.counterpartyType.ar}
           display={counterTypeText(c?.counterType)}
         />
+        {c?.ownerIban ? (
+          <FieldRow
+            icon={<MdAccountBalanceWallet />}
+            label={L.ownerIban.ar}
+            display={c.ownerIban}
+            ltr
+          />
+        ) : null}
         {isEntity ? (
           <>
             <FieldRow
@@ -411,11 +428,13 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           display={extrasDisplay}
           copy={extrasDisplay}
         />
-        <FieldRow
-          icon={<MdWeekend />}
-          label={L.livingRooms.ar}
-          display={p?.livingRooms != null ? `${p.livingRooms}` : null}
-        />
+        {p?.extras?.some((e) => e.kind === EXTRA_LABELS.kitchen) ? (
+          <FieldRow
+            icon={<MdKitchen />}
+            label={L.kitchenCabinets.ar}
+            display={p?.kitchenCabinets == null ? null : yesNo(p.kitchenCabinets)}
+          />
+        ) : null}
         <FieldRow
           icon={<MdLightbulb />}
           label={L.electroMeter.ar}
@@ -476,11 +495,6 @@ export function RequestDetails({ detail }: { detail: Detail }) {
             t?.annualRent != null ? <Price value={t.annualRent} /> : null
           }
           copy={priceText(t?.annualRent)}
-        />
-        <FieldRow
-          icon={<FaUsers />}
-          label={L.feePayer.ar}
-          display={lookupOption(OPTION_VALUES.feePayer, t?.feePayer)}
         />
         <FieldRow
           icon={<BiSolidCoinStack />}

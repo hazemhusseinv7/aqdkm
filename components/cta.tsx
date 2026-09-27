@@ -1,13 +1,8 @@
 "use client";
 
 import { Typography } from "@heroui/react";
-import {
-  MdCheckCircle,
-  MdPayments,
-  MdRateReview,
-  MdReceiptLong,
-  MdSave,
-} from "react-icons/md";
+import { MdCheckCircle, MdPayments, MdRateReview } from "react-icons/md";
+import { PiSpeedometerFill } from "react-icons/pi";
 import { WordAnimator } from "@/components/hero/word-animator";
 import { NewItemsLoading } from "@/components/hero/new-items-loading";
 import { FloatingBadge } from "@/components/hero/floating-badge";
@@ -17,9 +12,9 @@ import { SplitCta } from "@/components/home/split-cta";
 const rotatingWords = ["عقدك السكني", "عقدك التجاري", "عقد مكتبك", "عقد محلك"];
 
 const features = [
-  { icon: MdSave, label: "حفظ تلقائي للمسودة" },
-  { icon: MdRateReview, label: "مراجعة قبل الإرسال" },
-  { icon: MdReceiptLong, label: "عرض الرسوم مقدماً" },
+  { icon: MdRateReview, label: "توثيق رسمي عبر منصة إيجار" },
+  { icon: MdPayments, label: "ادفع بعد معاينة نسخة العقد" },
+  { icon: PiSpeedometerFill, label: "إنجاز وسرعة في التنفيذ" },
 ];
 
 export function Cta() {

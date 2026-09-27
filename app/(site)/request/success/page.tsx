@@ -9,8 +9,6 @@ import { SuccessPing } from "@/components/request/success-ping";
 import { SummaryRow } from "@/components/request/summary-row";
 import { Price } from "@/components/price";
 import { copy } from "@/lib/copy";
-import { OPTION_VALUES } from "@/lib/request-fields";
-import { lookupOption } from "@/lib/request-display";
 import { getRequestStatus } from "@/sanity/lib/actions";
 
 export const metadata = {
@@ -33,8 +31,6 @@ export default async function RequestSuccessPage({
     redirect("/track");
   }
   const isCommercial = status.contractType === "commercial";
-  const payerLabel =
-    lookupOption(OPTION_VALUES.feePayer, status.feePayer) ?? status.feePayer;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -76,7 +72,7 @@ export default async function RequestSuccessPage({
           {status.feeTotal !== null && (
             <SummaryRow
               icon={<MdReceiptLong />}
-              label={`رسوم التوثيق التقديرية (${payerLabel})`}
+              label="رسوم التوثيق التقديرية"
               highlight
             >
               <Price value={status.feeTotal} />

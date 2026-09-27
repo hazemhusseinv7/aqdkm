@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getLocalTimeZone, today } from "@internationalized/date";
-import { isAdult18, isPastDay, reviveCalendarDate } from "@/lib/calendar";
+import {
+  isAdult18,
+  isPastDay,
+  reviveCalendarDate,
+  toGregorianISO,
+} from "@/lib/calendar";
 import {
   Card,
   Button,
@@ -68,12 +73,13 @@ import {
   IconNumber,
   IconDate,
   IconSwitch,
-  IconChecks,
+  CountedChecks,
   DurationSlider,
 } from "./fields";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FieldMessage } from "@/components/ui/field-message";
 import { validators, messages, helpers } from "@/lib/validation";
+import { extrasText } from "@/lib/request-display";
 import { copy } from "@/lib/copy";
 import {
   calcFee,
@@ -89,7 +95,6 @@ import {
   roleOptions,
   durationOptions,
   paymentOptions,
-  feePayerOptions,
   residentialPropertyTypes,
   residentialUnitTypes,
   commercialPropertyTypes,
@@ -99,6 +104,28 @@ import {
   cityOptions,
 } from "@/lib/options";
 import type { FormState, Role, SerializedFormState } from "@/lib/request-form";
+
+/** Normalize stored extras: legacy string[] drafts become count-0 entries. */
+function reviveExtras(raw: unknown): { kind: string; count: number }[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((e) => {
+    if (typeof e === "string") return [{ kind: e, count: 0 }];
+    if (e && typeof e === "object") {
+      const kind = (e as { kind?: unknown }).kind;
+      const count = (e as { count?: unknown }).count;
+      if (typeof kind === "string") {
+        return [
+          {
+            kind,
+            count:
+              typeof count === "number" && count > 0 ? Math.floor(count) : 0,
+          },
+        ];
+      }
+    }
+    return [];
+  });
+}
 
 const initial: FormState = {
   role: "",
@@ -132,7 +159,7 @@ const initial: FormState = {
   contractStart: null,
   payment: "",
   annualRent: 0,
-  feePayer: "tenant",
+  ownerIban: "",
   propertyType: "",
   propertyCustom: "",
   unitType: "",
@@ -146,7 +173,7 @@ const initial: FormState = {
   bathrooms: "",
   bathroomsCustom: 0,
   extras: [],
-  livingRooms: 0,
+  kitchenCabinets: null,
   electroMeter: "",
   waterMeter: "",
   activity: "",
@@ -176,7 +203,7 @@ export function SmartForm({
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setS((p) => ({ ...p, [k]: v }));
 
-  const draftKey = `aqdkm-draft-v2-${contractType}`;
+  const draftKey = `aqdkm-draft-${contractType}`;
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 500);
@@ -188,6 +215,7 @@ export function SmartForm({
         setS({
           ...initial,
           ...parsed,
+          extras: reviveExtras(parsed.extras),
           deedDate: reviveCalendarDate(parsed.deedDate),
           applicantDob: reviveCalendarDate(parsed.applicantDob),
           otherDob: reviveCalendarDate(parsed.otherDob),
@@ -228,10 +256,6 @@ export function SmartForm({
   );
   const durationLabel =
     durationOptions.find((d) => d.value === s.duration)?.label ?? s.duration;
-  const effectivePayer = s.role || s.feePayer;
-  const payerLabel =
-    feePayerOptions.find((d) => d.value === effectivePayer)?.label ??
-    effectivePayer;
   const propList = isCommercial
     ? commercialPropertyTypes
     : residentialPropertyTypes;
@@ -263,6 +287,7 @@ export function SmartForm({
       case 1:
         if (!validators.mobile(s.applicantPhone)) return false;
         if (!validators.nationalOrIqama(s.applicantId)) return false;
+        if (!validators.iban(s.ownerIban)) return false;
         if (s.role === "tenant" && !isAdult18(s.applicantDob)) return false;
         if (
           s.role === "owner" &&
@@ -316,7 +341,12 @@ export function SmartForm({
           return false;
         if (s.floor === "other" && !validators.required(s.floorCustom))
           return false;
-        if (s.extras.includes("sitting") && !(s.livingRooms > 0)) return false;
+        if (!s.extras.every((e) => e.count >= 1)) return false;
+        if (
+          s.extras.some((e) => e.kind === "kitchen") &&
+          s.kitchenCabinets == null
+        )
+          return false;
         if (isCommercial) return true;
         if (!s.bedrooms || !s.bathrooms) return false;
         if (s.bedrooms === "other" && !(s.bedroomsCustom > 0)) return false;
@@ -332,6 +362,13 @@ export function SmartForm({
       if (!stepValid(i)) return i;
     }
     return -1;
+  };
+
+  const verifiedBefore = (target: number): boolean => {
+    for (let i = 0; i < target; i++) {
+      if (!stepValid(i)) return false;
+    }
+    return true;
   };
 
   const next = () => {
@@ -356,11 +393,11 @@ export function SmartForm({
     try {
       const payload: SerializedFormState = {
         ...s,
-        applicantDob: s.applicantDob?.toString() ?? null,
-        otherDob: s.otherDob?.toString() ?? null,
-        repDob: s.repDob?.toString() ?? null,
-        deedDate: s.deedDate?.toString() ?? null,
-        contractStart: s.contractStart?.toString() ?? null,
+        applicantDob: toGregorianISO(s.applicantDob),
+        otherDob: toGregorianISO(s.otherDob),
+        repDob: toGregorianISO(s.repDob),
+        deedDate: toGregorianISO(s.deedDate),
+        contractStart: toGregorianISO(s.contractStart),
       };
       const { requestNo: no, fee: total } = await submitRentalRequest(
         contractType,
@@ -377,11 +414,18 @@ export function SmartForm({
         description: `رقم الطلب ${no} - رسوم التوثيق التقديرية ${formatCurrency(total)}`,
       });
       router.push(`/request/success?no=${encodeURIComponent(no)}`);
-    } catch {
+    } catch (err) {
       setSubmitting(false);
-      toast("تعذر إرسال الطلب", {
-        description: "تحقق من الاتصال وحاول مجدداً - تم الاحتفاظ بالمسودة",
-      });
+      const message = err instanceof Error ? err.message : "";
+      if (message.startsWith("Invalid rental request: ")) {
+        toast("تعذر إرسال الطلب", {
+          description: "يرجى مراجعة الحقول المطلوبة - تم الاحتفاظ بالمسودة",
+        });
+      } else {
+        toast("تعذر إرسال الطلب", {
+          description: "تحقق من الاتصال وحاول مجدداً - تم الاحتفاظ بالمسودة",
+        });
+      }
     }
   };
 
@@ -403,11 +447,11 @@ export function SmartForm({
         >
           <FormStepper
             step={step}
+            verified={[0, 1, 2, 3, 4, 5].map((i) => stepValid(i))}
+            canJump={(i) => i <= step || verifiedBefore(i)}
             onJump={(i) => {
-              if (i <= step) {
-                setTouched(false);
-                setStep(i);
-              }
+              setTouched(false);
+              setStep(i);
             }}
           />
           <Separator />
@@ -568,6 +612,20 @@ export function SmartForm({
                 </div>
 
                 {s.role === "owner" && (
+                  <IconText
+                    label="IBAN المؤجر"
+                    required
+                    icon={<MdAccountBalanceWallet />}
+                    description="رقم الآيبان البنكي الدولي للمؤجر"
+                    placeholder="مثال: SA03 8000 0000 6080 1016 7519"
+                    value={s.ownerIban}
+                    onChange={(v) => set("ownerIban", v)}
+                    dir="ltr"
+                    error={err(!validators.iban(s.ownerIban), messages.iban)}
+                  />
+                )}
+
+                {s.role === "owner" && (
                   <IconSwitch
                     label="هل أنت وكيل عن المالك؟"
                     icon={<MdGavel />}
@@ -611,6 +669,7 @@ export function SmartForm({
                         aria-label="نوع الطرف الآخر"
                         selectionMode="single"
                         disallowEmptySelection
+                        fullWidth
                         selectedKeys={[s.counterType]}
                         onSelectionChange={(k) => {
                           const nextType = (Array.from(k as Set<string>)[0] ??
@@ -817,6 +876,22 @@ export function SmartForm({
                     />
                   </div>
                 )}
+                {s.role === "tenant" && (
+                  <>
+                    <Separator />
+                    <IconText
+                      label="IBAN المؤجر"
+                      required
+                      icon={<MdAccountBalanceWallet />}
+                      description="رقم الآيبان البنكي الدولي للمؤجر"
+                      placeholder="مثال: SA03 8000 0000 6080 1016 7519"
+                      value={s.ownerIban}
+                      onChange={(v) => set("ownerIban", v)}
+                      dir="ltr"
+                      error={err(!validators.iban(s.ownerIban), messages.iban)}
+                    />
+                  </>
+                )}
               </SectionCard>
             </div>
           )}
@@ -884,6 +959,7 @@ export function SmartForm({
                       aria-label="هل لديك العنوان الوطني؟"
                       selectionMode="single"
                       disallowEmptySelection
+                      fullWidth
                       selectedKeys={
                         s.locationManual === null
                           ? []
@@ -1018,6 +1094,7 @@ export function SmartForm({
                   <div className="border-border flex min-w-0 flex-col gap-3 rounded-2xl border p-4">
                     <ToggleButtonGroup
                       selectionMode="single"
+                      fullWidth
                       selectedKeys={[s.customUnit]}
                       onSelectionChange={(k) =>
                         set(
@@ -1122,6 +1199,8 @@ export function SmartForm({
                     icon={<BiSolidCoinStack />}
                     suffix={<SaudiRiyal className="size-4" />}
                     min={1}
+                    emptyWhenZero
+                    placeholder="مثال: 24000"
                     value={s.annualRent}
                     onChange={(v) => set("annualRent", v)}
                     error={err(
@@ -1185,6 +1264,8 @@ export function SmartForm({
                     required
                     icon={<MdSquareFoot />}
                     suffix="م²"
+                    emptyWhenZero
+                    placeholder="مثال: 120"
                     value={s.area}
                     onChange={(v) => set("area", v)}
                     error={err(!(s.area > 0), "يرجى إدخال مساحة أكبر من صفر")}
@@ -1342,11 +1423,28 @@ export function SmartForm({
                     </Disclosure.Heading>
                     <Disclosure.Content>
                       <div className="border-border flex flex-col gap-3 rounded-2xl border p-4">
-                        <IconChecks
+                        <CountedChecks
                           label="المرافق المتوفرة"
                           icon={<MdKitchen />}
                           values={s.extras}
-                          onChange={(v) => set("extras", v)}
+                          onChange={(v) =>
+                            setS((p) => ({
+                              ...p,
+                              extras: v,
+                              kitchenCabinets: v.some(
+                                (e) => e.kind === "kitchen",
+                              )
+                                ? p.kitchenCabinets
+                                : null,
+                            }))
+                          }
+                          errorForKind={(kind) =>
+                            err(
+                              (s.extras.find((e) => e.kind === kind)?.count ??
+                                0) < 1,
+                              "يرجى إدخال عدد أكبر من صفر",
+                            )
+                          }
                           options={[
                             {
                               value: "kitchen",
@@ -1385,19 +1483,44 @@ export function SmartForm({
                             },
                           ]}
                         />
-                        {s.extras.includes("sitting") && (
-                          <IconNumber
-                            label="عدد الصالات"
-                            required
-                            icon={<MdWeekend />}
-                            min={1}
-                            value={s.livingRooms}
-                            onChange={(v) => set("livingRooms", v)}
-                            error={err(
-                              !(s.livingRooms > 0),
-                              "يرجى إدخال عدد أكبر من صفر",
-                            )}
-                          />
+                        {s.extras.some((e) => e.kind === "kitchen") && (
+                          <div className="flex min-w-0 flex-col gap-1">
+                            <FieldLabel>هل تم تركيب خزائن المطبخ؟</FieldLabel>
+                            <div
+                              aria-invalid={
+                                touched && s.kitchenCabinets === null
+                              }
+                              className={
+                                touched && s.kitchenCabinets === null
+                                  ? "rounded-2xl ring-2 ring-[var(--danger)]"
+                                  : undefined
+                              }
+                            >
+                              <ToggleButtonGroup
+                                aria-label="هل تم تركيب خزائن المطبخ؟"
+                                selectionMode="single"
+                                disallowEmptySelection
+                                fullWidth
+                                selectedKeys={
+                                  s.kitchenCabinets === null
+                                    ? []
+                                    : [s.kitchenCabinets ? "yes" : "no"]
+                                }
+                                onSelectionChange={(k) => {
+                                  const next =
+                                    Array.from(k as Set<string>)[0] ?? "yes";
+                                  set("kitchenCabinets", next === "yes");
+                                }}
+                              >
+                                <ToggleButton id="yes">نعم</ToggleButton>
+                                <ToggleButtonGroup.Separator />
+                                <ToggleButton id="no">لا</ToggleButton>
+                              </ToggleButtonGroup>
+                            </div>
+                            {touched && s.kitchenCabinets === null ? (
+                              <FieldMessage>{messages.required}</FieldMessage>
+                            ) : null}
+                          </div>
                         )}
                       </div>
                     </Disclosure.Content>
@@ -1437,6 +1560,11 @@ export function SmartForm({
                 <SummaryRow
                   title="رقم الهوية / الإقامة لمقدم الطلب"
                   value={s.applicantId}
+                  onEdit={() => setStep(1)}
+                />
+                <SummaryRow
+                  title="IBAN المؤجر"
+                  value={s.ownerIban}
                   onEdit={() => setStep(1)}
                 />
                 <SummaryRow
@@ -1489,11 +1617,6 @@ export function SmartForm({
                   onEdit={() => setStep(3)}
                 />
                 <SummaryRow
-                  title="المتحمل لرسوم التوثيق"
-                  value={payerLabel}
-                  onEdit={() => setStep(3)}
-                />
-                <SummaryRow
                   title="نوع العقار والوحدة"
                   value={`${propLabel} / ${unitLabel}`}
                   onEdit={() => setStep(4)}
@@ -1508,6 +1631,24 @@ export function SmartForm({
                   value={s.electroMeter}
                   onEdit={() => setStep(4)}
                 />
+                <SummaryRow
+                  title="المرافق المتوفرة"
+                  value={extrasText(s.extras) ?? "-"}
+                  onEdit={() => setStep(4)}
+                />
+                {s.extras.some((e) => e.kind === "kitchen") && (
+                  <SummaryRow
+                    title="تركيب خزائن المطبخ"
+                    value={
+                      s.kitchenCabinets == null
+                        ? "-"
+                        : s.kitchenCabinets
+                          ? "نعم"
+                          : "لا"
+                    }
+                    onEdit={() => setStep(4)}
+                  />
+                )}
                 <div className="bg-accent/10 flex items-center justify-between rounded-2xl p-4">
                   <span className="flex items-center gap-2 font-semibold">
                     <MdReceiptLong className="text-accent size-5" /> إجمالي رسوم
@@ -1655,13 +1796,6 @@ export function SmartForm({
                               <strong className="tabular-nums">
                                 {formatCurrency(fee)}
                               </strong>
-                            </div>
-                            <div className="flex items-center justify-between gap-3 text-sm">
-                              <span className="text-muted flex items-center gap-1.5">
-                                <MdAccountBalanceWallet className="text-accent size-4" />
-                                المتحمل للرسوم
-                              </span>
-                              <span className="font-medium">{payerLabel}</span>
                             </div>
                           </div>
                           <p className="text-muted text-xs leading-relaxed">

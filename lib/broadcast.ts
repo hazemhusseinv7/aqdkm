@@ -27,7 +27,7 @@ interface BroadcastCandidate {
  * Send the new-post broadcast once per post via the Broadcast API. Safe to
  * call on every post webhook: drafts, already-sent posts, and future-dated
  * posts are skipped. Resend resolves recipients from the segment and enforces
- * topic preferences — Sanity only records the broadcast id + timestamp.
+ * topic preferences - Sanity only records the broadcast id + timestamp.
  * Throws on send failure with the flags unset so the next webhook retries.
  */
 export async function maybeBroadcastNewPost(

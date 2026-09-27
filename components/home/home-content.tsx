@@ -4,17 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Card,
-  Button,
   Chip,
   Typography,
   Tabs,
   Separator,
   Breadcrumbs,
   Accordion,
+  buttonVariants,
 } from "@heroui/react";
-import { MdCheckCircle, MdArrowBack, MdQuiz } from "react-icons/md";
+import {
+  MdCheckCircle,
+  MdArrowBack,
+  MdQuiz,
+  MdPayments,
+  MdRateReview,
+} from "react-icons/md";
 import { SharedElementTransition } from "react-aria-components";
-import { FaBuilding, FaFileContract, FaHome } from "react-icons/fa";
+import { FaBuilding, FaFileContract, FaHome, FaLandmark } from "react-icons/fa";
+import { PiSpeedometerFill } from "react-icons/pi";
+import { RiVerifiedBadgeFill } from "react-icons/ri";
+import { HiDocumentCheck } from "react-icons/hi2";
 import { PostCardGrid } from "@/components/blog/post-card";
 import { BlogBody } from "@/components/blog/portable-text";
 import { Hero } from "@/components/hero/hero";
@@ -36,6 +45,7 @@ export function HomeContent({
   testimonials,
   features,
   licenses,
+  regaUrl,
 }: {
   latestPosts: LATEST_POSTS_QUERY_RESULT;
   faqs: HomeFaqs;
@@ -43,6 +53,7 @@ export function HomeContent({
   testimonials: TestimonialItem[];
   features: FeatureItem[];
   licenses: LicenseItem[];
+  regaUrl: string | null;
 }) {
   const [key, setKey] = useState("res");
   const [animReady, setAnimReady] = useState(false);
@@ -115,12 +126,22 @@ export function HomeContent({
                 <TypeCard
                   href="/residential"
                   icon={<FaHome className="size-7" />}
-                  title="عقد سكني"
+                  title="عقد إيجار سكني معتمد"
                   desc="للشقق والفلل والأدوار - بما فيها تفاصيل السكن"
+                  cta="وثّق عقدك السكني الآن"
                   points={[
-                    "يتم التحقق من صحة الهوية والجوال أثناء التعبئة",
-                    "يتم عرض رسوم التوثيق التقديرية أثناء التعبئة",
-                    "يمكن إرسال الطلب دون رقم عداد المياه واستكماله لاحقاً",
+                    {
+                      text: "وسيط عقاري معتمد رسمياً عبر منصة إيجار",
+                      icon: <RiVerifiedBadgeFill />,
+                    },
+                    {
+                      text: "ادفع بعد معاينة نسخة العقد والتأكد من البيانات",
+                      icon: <MdPayments />,
+                    },
+                    {
+                      text: "توثيق إلكتروني فوري بدون الحاجة لزيارة مكتب",
+                      icon: <HiDocumentCheck />,
+                    },
                   ]}
                 />
               </Tabs.Panel>
@@ -128,12 +149,19 @@ export function HomeContent({
                 <TypeCard
                   href="/commercial"
                   icon={<FaBuilding className="size-7" />}
-                  title="عقد تجاري"
+                  title="عقد إيجار تجاري معتمد"
                   desc="للمحلات والمكاتب والمستودعات - للأفراد والمنشآت"
+                  cta="وثّق عقدك التجاري الآن"
                   points={[
-                    "مناسب للأفراد والمنشآت",
-                    "يتضمن بيانات النشاط التجاري والرخصة عند توفرها",
-                    "نموذج مخصص للوحدات التجارية",
+                    {
+                      text: "معتمد لدى بلدي، وزارة التجارة، والجهات الحكومية",
+                      icon: <FaLandmark />,
+                    },
+                    {
+                      text: "معاينة نسخة العقد أولاً قبل إتمام عملية الدفع",
+                      icon: <MdRateReview />,
+                    },
+                    { text: "إنجاز سريع ومضمون", icon: <PiSpeedometerFill /> },
                   ]}
                 />
               </Tabs.Panel>
@@ -167,7 +195,7 @@ export function HomeContent({
         )}
 
         <Testimonials items={testimonials} />
-        <Licenses items={licenses} />
+        <Licenses items={licenses} regaUrl={regaUrl} />
         <Cta />
         {latestPosts.length > 0 && (
           <>
@@ -206,13 +234,15 @@ function TypeCard({
   icon,
   title,
   desc,
+  cta,
   points,
 }: {
   href: string;
   icon: React.ReactNode;
   title: string;
   desc: string;
-  points: string[];
+  cta: string;
+  points: { text: string; icon?: React.ReactNode }[];
 }) {
   return (
     <Card variant="secondary" className="mt-3">
@@ -230,20 +260,26 @@ function TypeCard({
       </Card.Header>
       <Card.Content>
         <ul className="flex flex-col gap-1.5">
-          {points.map((p) => (
-            <li key={p} className="text-muted flex items-center gap-2 text-sm">
-              <MdCheckCircle className="text-accent size-4 shrink-0" />
-              {p}
+          {points.map((p, i) => (
+            <li
+              key={`${p.text}-${i}`}
+              className="text-muted flex items-center gap-2 text-sm"
+            >
+              <span className="text-accent inline-flex size-4 shrink-0 items-center justify-center [&>svg]:size-4">
+                {p.icon ?? <MdCheckCircle />}
+              </span>
+              {p.text}
             </li>
           ))}
         </ul>
       </Card.Content>
       <Card.Footer>
-        <Link href={href} className="w-full">
-          <Button variant="primary" className="w-full">
-            ابدأ طلب {title}
-            <MdArrowBack className="size-4" />
-          </Button>
+        <Link
+          href={href}
+          className={buttonVariants({ variant: "primary", className: "w-full" })}
+        >
+          {cta}
+          <MdArrowBack className="size-4" />
         </Link>
       </Card.Footer>
     </Card>

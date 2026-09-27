@@ -2,7 +2,7 @@
  * Single source of truth for rental-request field names.
  * Arabic strings are verbatim website-form wording; English strings match
  * the Studio titles. Consumed by the schema (bilingual titles), the track
- * detail view, and the admin notification email — add a field here once and
+ * detail view, and the admin notification email - add a field here once and
  * all three surfaces stay in sync. Dependency-free so the Studio bundle can
  * import it.
  */
@@ -65,7 +65,7 @@ export const FIELD_LABELS = {
   bathrooms: { en: "Bathrooms", ar: "الحمامات" },
   bathroomsCustom: { en: "Bathrooms (custom)", ar: "عدد الحمامات" },
   extras: { en: "Extras", ar: "المرافق المتوفرة" },
-  livingRooms: { en: "Living rooms", ar: "عدد الصالات" },
+  kitchenCabinets: { en: "Kitchen cabinets installed", ar: "تركيب خزائن المطبخ" },
   electroMeter: { en: "Electricity meter", ar: "رقم عداد الكهرباء" },
   waterMeter: { en: "Water meter", ar: "رقم عداد المياه" },
   activity: { en: "Commercial activity", ar: "النشاط التجاري" },
@@ -82,7 +82,7 @@ export const FIELD_LABELS = {
   contractStart: { en: "Contract start", ar: "تاريخ بداية العقد" },
   payment: { en: "Payment schedule", ar: "طريقة الدفع" },
   annualRent: { en: "Annual rent", ar: "الإيجار السنوي" },
-  feePayer: { en: "Fee payer", ar: "المتحمل لرسوم التوثيق" },
+  ownerIban: { en: "Landlord IBAN", ar: "IBAN المؤجر" },
   feeYears: { en: "Billed years", ar: "سنوات الاحتساب" },
   feeGovernment: { en: "Government fee", ar: "الرسوم الحكومية" },
   feeCompany: { en: "Company fee", ar: "رسوم الشركة" },
@@ -137,11 +137,6 @@ export const OPTION_VALUES = {
     { value: "semi", label: "كل 6 أشهر" },
     { value: "yearly", label: "سنوي" },
   ],
-  feePayer: [
-    { value: "owner", label: "المالك" },
-    { value: "tenant", label: "المستأجر" },
-    { value: "split", label: "مناصفة" },
-  ],
   residentialProperty: [
     { value: "building", label: "عمارة" },
     { value: "villa", label: "فيلا" },
@@ -151,10 +146,14 @@ export const OPTION_VALUES = {
     { value: "other", label: "أخرى" },
   ],
   residentialUnit: [
-    { value: "apartment", label: "شقة" },
-    { value: "floor", label: "دور" },
-    { value: "driver-room", label: "غرفة سائق" },
-    { value: "studio", label: "استوديو" },
+    { value: "shop", label: "محل" },
+    { value: "office", label: "مكتب" },
+    { value: "warehouse", label: "مستودع" },
+    { value: "showroom", label: "معرض" },
+    { value: "land", label: "أرض" },
+    { value: "kiosk", label: "كشك" },
+    { value: "workshop", label: "ورشة" },
+    { value: "factory", label: "مصنع" },
     { value: "other", label: "أخرى" },
   ],
   commercialProperty: [
@@ -247,8 +246,10 @@ export function storedArabic(
   return list.find((o) => o.value === value)?.label ?? value;
 }
 
-export function storedExtras(extras: string[]): string[] {
-  return extras.map((e) => EXTRA_LABELS[e] ?? e);
+export function storedExtras(
+  extras: { kind: string; count: number }[],
+): { kind: string; count: number }[] {
+  return extras.map((e) => ({ kind: EXTRA_LABELS[e.kind] ?? e.kind, count: e.count }));
 }
 
 export function counterTypeText(value?: string | null): string | null {

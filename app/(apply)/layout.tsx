@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 import { Toast } from "@heroui/react";
 import "../globals.css";
 import { Providers } from "@/components/shell/providers";
+import { WhatsappFloat } from "@/components/shell/whatsapp-float";
 import { Analytics } from "@/components/analytics";
 import { cn } from "@/lib/utils";
 import { client } from "@/sanity/lib/client";
@@ -39,6 +40,7 @@ export default async function ApplyLayout({
     gaMeasurementId: string | null;
     gtmId: string | null;
   } | null = null;
+  let whatsappUrl: string | null = null;
   try {
     const data = await client.fetch(
       SITE_SETTINGS_QUERY,
@@ -54,8 +56,12 @@ export default async function ApplyLayout({
           gtmId: settings.gtmId ? `${settings.gtmId}` : null,
         }
       : null;
+    whatsappUrl =
+      settings?.socialLinks?.find((l) => l.platform === "whatsapp" && l.url)
+        ?.url ?? null;
   } catch {
     analytics = null;
+    whatsappUrl = null;
   }
 
   return (
@@ -72,6 +78,7 @@ export default async function ApplyLayout({
           <main className="min-h-screen w-full flex-1 overflow-x-clip">
             {children}
           </main>
+          {whatsappUrl ? <WhatsappFloat href={whatsappUrl} /> : null}
         </Providers>
       </body>
     </html>

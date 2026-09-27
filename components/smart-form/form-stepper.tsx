@@ -1,10 +1,9 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import {
   Button,
   Chip,
-  ScrollShadow,
   Separator,
   Tooltip,
   Typography,
@@ -12,6 +11,7 @@ import {
 import {
   MdBadge,
   MdCheckCircle,
+  MdErrorOutline,
   MdHome,
   MdLocationOn,
   MdSave,
@@ -39,21 +39,44 @@ const STEP_ICONS = [
 export function FormStepper({
   step,
   total = 6,
+  verified,
+  canJump,
   onJump,
 }: {
   step: number;
   total?: number;
+  verified: boolean[];
+  canJump: (s: number) => boolean;
   onJump: (s: number) => void;
 }) {
   const CurrentIcon = STEP_ICONS[step];
+  const currentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = currentRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    try {
+      el.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        behavior: reduce ? "auto" : "smooth",
+      });
+    } catch {
+      /* non-critical: strip stays manually scrollable */
+    }
+  }, [step]);
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4 overflow-x-clip">
       <div className="hidden sm:block" role="list" aria-label="خطوات النموذج">
         <div className="flex items-start">
           {STEP_TITLES.map((t, i) => {
             const Icon = STEP_ICONS[i];
-            const done = i < step;
+            const isVerified = verified[i] ?? false;
+            const visitedInvalid = i < step && !isVerified;
             const current = i === step;
             return (
               <Fragment key={t}>
@@ -78,20 +101,28 @@ export function FormStepper({
                         aria-label={t}
                         size="md"
                         variant={
-                          done ? "primary" : current ? "secondary" : "tertiary"
+                          isVerified
+                            ? "primary"
+                            : current
+                              ? "secondary"
+                              : "tertiary"
                         }
                         className={
                           current
                             ? "bg-alt text-alt-foreground ring-alt rounded-full ring-2 ring-offset-2"
-                            : "rounded-full"
+                            : visitedInvalid
+                              ? "ring-danger rounded-full ring-2"
+                              : "rounded-full"
                         }
-                        isDisabled={i > step}
+                        isDisabled={!canJump(i)}
                         onPress={() => {
-                          if (i <= step) onJump(i);
+                          if (canJump(i)) onJump(i);
                         }}
                       >
-                        {done ? (
+                        {isVerified ? (
                           <MdCheckCircle className="size-5" />
+                        ) : visitedInvalid ? (
+                          <MdErrorOutline className="size-5" />
                         ) : (
                           <Icon className="size-5" />
                         )}
@@ -99,13 +130,19 @@ export function FormStepper({
                     </Tooltip.Trigger>
                     <Tooltip.Content showArrow>
                       <Tooltip.Arrow />
-                      <p>{done ? `العودة إلى ${t}` : t}</p>
+                      <p>
+                        {isVerified
+                          ? `العودة إلى ${t}`
+                          : visitedInvalid
+                            ? `${t} - غير مكتملة`
+                            : t}
+                      </p>
                     </Tooltip.Content>
                   </Tooltip>
                   <Typography
                     type="body-xs"
                     weight={current ? "semibold" : "normal"}
-                    color={current || done ? "default" : "muted"}
+                    color={current || isVerified ? "default" : "muted"}
                     className="hidden w-full truncate text-center md:block"
                   >
                     {t}
@@ -144,19 +181,16 @@ export function FormStepper({
             <span>حفظ تلقائي</span>
           </Chip>
         </div>
-        <ScrollShadow
-          orientation="horizontal"
-          hideScrollBar
-          className="mx-auto p-4"
+        <div
+          className="mx-auto w-full max-w-full touch-pan-x overflow-x-auto overscroll-x-contain p-4"
+          role="list"
+          aria-label="خطوات النموذج"
         >
-          <div
-            className="flex w-max items-center gap-1.5"
-            role="list"
-            aria-label="خطوات النموذج"
-          >
+          <div className="flex w-max items-center gap-1.5">
             {STEP_TITLES.map((t, i) => {
               const Icon = STEP_ICONS[i];
-              const done = i < step;
+              const isVerified = verified[i] ?? false;
+              const visitedInvalid = i < step && !isVerified;
               const current = i === step;
               return (
                 <Fragment key={t}>
@@ -169,27 +203,38 @@ export function FormStepper({
                     ) : (
                       <Separator className="w-4 shrink-0" />
                     ))}
-                  <div role="listitem">
+                  <div
+                    role="listitem"
+                    ref={current ? currentRef : undefined}
+                  >
                     <Button
                       isIconOnly
                       type="button"
                       aria-label={t}
                       size="sm"
                       variant={
-                        done ? "primary" : current ? "secondary" : "tertiary"
+                        isVerified
+                          ? "primary"
+                          : current
+                            ? "secondary"
+                            : "tertiary"
                       }
                       className={
                         current
                           ? "bg-alt text-alt-foreground ring-alt rounded-full ring-2 ring-offset-2"
-                          : "rounded-full"
+                          : visitedInvalid
+                            ? "ring-danger rounded-full ring-2"
+                            : "rounded-full"
                       }
-                      isDisabled={i > step}
+                      isDisabled={!canJump(i)}
                       onPress={() => {
-                        if (i <= step) onJump(i);
+                        if (canJump(i)) onJump(i);
                       }}
                     >
-                      {done ? (
+                      {isVerified ? (
                         <MdCheckCircle className="size-4" />
+                      ) : visitedInvalid ? (
+                        <MdErrorOutline className="size-4" />
                       ) : (
                         <Icon className="size-4" />
                       )}
@@ -199,7 +244,7 @@ export function FormStepper({
               );
             })}
           </div>
-        </ScrollShadow>
+        </div>
       </div>
     </div>
   );

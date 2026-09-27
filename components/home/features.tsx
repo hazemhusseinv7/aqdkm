@@ -23,11 +23,11 @@ export function Features({ items }: { items: FeatureItem[] }) {
           كل ما تحتاجه لتقديم طلب توثيق عقدك دون مراجعة أي جهة.
         </Typography>
       </div>
-      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
         {items.map((f) => {
           const Icon = featureIcon(f.icon);
           return (
-            <Card key={f._key} variant="secondary">
+            <Card key={f._key} variant="default">
               <Card.Header className="gap-3">
                 <span className="bg-accent text-accent-foreground flex size-12 shrink-0 items-center justify-center rounded-2xl">
                   <Icon className="size-6" />
