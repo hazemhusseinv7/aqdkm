@@ -36,6 +36,7 @@ import { Features } from "@/components/home/features";
 import type { FeatureItem } from "@/components/home/features";
 import { Licenses } from "@/components/home/licenses";
 import type { LicenseItem } from "@/components/home/licenses";
+import type { CtaFees } from "@/components/home/split-cta";
 import type { FooterSocialLink } from "@/components/shell/footer";
 
 export function HomeContent({
@@ -46,6 +47,7 @@ export function HomeContent({
   features,
   licenses,
   regaUrl,
+  ctaFees,
 }: {
   latestPosts: LATEST_POSTS_QUERY_RESULT;
   faqs: HomeFaqs;
@@ -54,6 +56,7 @@ export function HomeContent({
   features: FeatureItem[];
   licenses: LicenseItem[];
   regaUrl: string | null;
+  ctaFees: CtaFees | null;
 }) {
   const [key, setKey] = useState("res");
   const [animReady, setAnimReady] = useState(false);
@@ -83,7 +86,7 @@ export function HomeContent({
     );
   return (
     <>
-      <Hero socialLinks={socialLinks} />
+      <Hero socialLinks={socialLinks} ctaFees={ctaFees} />
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 sm:px-6">
         <Breadcrumbs className="mt-14">
           <Breadcrumbs.Item href="/">الرئيسية</Breadcrumbs.Item>
@@ -196,7 +199,7 @@ export function HomeContent({
 
         <Testimonials items={testimonials} />
         <Licenses items={licenses} regaUrl={regaUrl} />
-        <Cta />
+        <Cta ctaFees={ctaFees} />
         {latestPosts.length > 0 && (
           <>
             <Separator />
@@ -204,11 +207,17 @@ export function HomeContent({
               <Typography type="h2" weight="bold" className="mb-2">
                 من المدونة
               </Typography>
-              <PostCardGrid posts={latestPosts.slice(0, 3)} />
+              <PostCardGrid
+                posts={latestPosts.slice(0, 3)}
+                className="grid gap-4 lg:grid-cols-3"
+              />
               {latestPosts.length > 3 && (
                 <div className="relative">
                   <div className="mask-[linear-gradient(to_bottom,black_30%,transparent)]">
-                    <PostCardGrid posts={latestPosts.slice(3, 6)} />
+                    <PostCardGrid
+                      posts={latestPosts.slice(3, 6)}
+                      className="grid gap-4 lg:grid-cols-3"
+                    />
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center">
                     <Link
@@ -276,7 +285,10 @@ function TypeCard({
       <Card.Footer>
         <Link
           href={href}
-          className={buttonVariants({ variant: "primary", className: "w-full" })}
+          className={buttonVariants({
+            variant: "primary",
+            className: "w-full",
+          })}
         >
           {cta}
           <MdArrowBack className="size-4" />

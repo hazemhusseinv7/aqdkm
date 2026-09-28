@@ -55,10 +55,8 @@ export type FormState = {
   floor: string;
   floorCustom: string;
   area: number;
-  bedrooms: string;
-  bedroomsCustom: number;
-  bathrooms: string;
-  bathroomsCustom: number;
+  rooms: string;
+  roomsCustom: number;
   extras: ExtraItem[];
   kitchenCabinets: boolean | null;
   electroMeter: string;
@@ -108,10 +106,8 @@ export type RequestDetail = {
     floor?: string;
     floorCustom?: string;
     area?: number;
-    bedrooms?: string;
-    bedroomsCustom?: number;
-    bathrooms?: string;
-    bathroomsCustom?: number;
+    rooms?: string;
+    roomsCustom?: number;
     extras?: { kind?: string; count?: number }[];
     kitchenCabinets?: boolean | null;
     electroMeter?: string;

@@ -20,6 +20,7 @@ import type { FooterSocialLink } from "@/components/shell/footer";
 import type { TestimonialItem } from "@/components/home/testimonials";
 import type { FeatureItem } from "@/components/home/features";
 import type { LicenseItem } from "@/components/home/licenses";
+import type { CtaFees } from "@/components/home/split-cta";
 
 export const metadata = {
   title: "عقدكم - توثيق عقود الإيجار السكنية والتجارية",
@@ -34,6 +35,7 @@ export default async function HomePage() {
   let faqs: HomeFaqs = null;
   let socialLinks: FooterSocialLink[] | null = null;
   let regaUrl: string | null = null;
+  let ctaFees: CtaFees | null = null;
   let testimonials: TestimonialItem[] = [];
   let features: FeatureItem[] = [];
   let licenses: LicenseItem[] = [];
@@ -80,6 +82,11 @@ export default async function HomePage() {
         url: l.url ? `${l.url}` : null,
       })) ?? null;
     regaUrl = settings?.regaLicenseUrl ? `${settings.regaLicenseUrl}` : null;
+    ctaFees = {
+      note: settings?.cta?.note ?? null,
+      resFrom: settings?.cta?.residentialFrom ?? null,
+      comFrom: settings?.cta?.commercialFrom ?? null,
+    };
     testimonials = (
       (stegaClean(testimonialsData) as TESTIMONIALS_QUERY_RESULT)?.items ?? []
     ).map((t) => ({
@@ -117,6 +124,7 @@ export default async function HomePage() {
     features = [];
     licenses = [];
     regaUrl = null;
+    ctaFees = null;
   }
   return (
     <HomeContent
@@ -127,6 +135,7 @@ export default async function HomePage() {
       features={features}
       licenses={licenses}
       regaUrl={regaUrl}
+      ctaFees={ctaFees}
     />
   );
 }

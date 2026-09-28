@@ -28,7 +28,6 @@ import {
   MdTimelapse,
   MdWaterDrop,
 } from "react-icons/md";
-import { PiBathtubFill } from "react-icons/pi";
 
 import {
   FIELD_LABELS,
@@ -414,13 +413,8 @@ export function RequestDetails({ detail }: { detail: Detail }) {
         />
         <FieldRow
           icon={<MdBed />}
-          label={L.bedrooms.ar}
-          display={countText(p?.bedrooms, p?.bedroomsCustom)}
-        />
-        <FieldRow
-          icon={<PiBathtubFill />}
-          label={L.bathrooms.ar}
-          display={countText(p?.bathrooms, p?.bathroomsCustom)}
+          label={L.rooms.ar}
+          display={countText(p?.rooms, p?.roomsCustom)}
         />
         <FieldRow
           icon={<MdKitchen />}
@@ -428,7 +422,9 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           display={extrasDisplay}
           copy={extrasDisplay}
         />
-        {p?.extras?.some((e) => e.kind === EXTRA_LABELS.kitchen) ? (
+        {p?.extras?.some(
+          (e) => e.kind === "kitchen" || e.kind === EXTRA_LABELS.kitchen,
+        ) ? (
           <FieldRow
             icon={<MdKitchen />}
             label={L.kitchenCabinets.ar}

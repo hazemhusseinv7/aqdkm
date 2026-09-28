@@ -98,13 +98,9 @@ function assertValidRentalRequest(
     throw invalid("unitCustom");
   if (s.floor === "other" && !validators.required(s.floorCustom))
     throw invalid("floorCustom");
-  if (!isCommercial) {
-    if (!s.bedrooms || !s.bathrooms) throw invalid("rooms");
-    if (s.bedrooms === "other" && !(s.bedroomsCustom > 0))
-      throw invalid("bedroomsCustom");
-    if (s.bathrooms === "other" && !(s.bathroomsCustom > 0))
-      throw invalid("bathroomsCustom");
-  }
+  if (!s.rooms) throw invalid("rooms");
+  if (s.rooms === "other" && !(s.roomsCustom > 0))
+    throw invalid("roomsCustom");
   if (
     !Array.isArray(s.extras) ||
     !s.extras.every((e) => e.count >= 1)
@@ -184,14 +180,9 @@ export async function submitRentalRequest(
       floor: storedArabic(OPTION_VALUES.floor, s.floor, s.floorCustom),
       floorCustom: s.floorCustom || undefined,
       area: s.area,
-      bedrooms:
-        s.bedrooms === "other" ? String(s.bedroomsCustom) : s.bedrooms || undefined,
-      bedroomsCustom: s.bedroomsCustom,
-      bathrooms:
-        s.bathrooms === "other"
-          ? String(s.bathroomsCustom)
-          : s.bathrooms || undefined,
-      bathroomsCustom: s.bathroomsCustom,
+      rooms:
+        s.rooms === "other" ? String(s.roomsCustom) : s.rooms || undefined,
+      roomsCustom: s.roomsCustom,
       extras: storedExtras(s.extras),
       kitchenCabinets: s.extras.some((e) => e.kind === "kitchen")
         ? (s.kitchenCabinets ?? undefined)

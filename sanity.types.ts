@@ -40,7 +40,17 @@ export type Features = {
   items?: Array<{
     title: string;
     description: string;
-    icon: "save" | "review" | "fees" | "verify" | "track" | "meters" | "bolt";
+    icon:
+      | "save"
+      | "review"
+      | "fees"
+      | "verify"
+      | "track"
+      | "meters"
+      | "bolt"
+      | "payment"
+      | "verified_user"
+      | "tag";
     _key: string;
   }>;
 };
@@ -276,6 +286,11 @@ export type SiteSettings = {
   supportPhone?: string;
   email?: string;
   regaLicenseUrl?: string;
+  cta?: {
+    note?: string;
+    residentialFrom?: number;
+    commercialFrom?: number;
+  };
   faqs?: Array<{
     question: string;
     answer: Array<{
@@ -389,10 +404,8 @@ export type RentalRequest = {
     floor?: string;
     floorCustom?: string;
     area?: number;
-    bedrooms?: string;
-    bedroomsCustom?: number;
-    bathrooms?: string;
-    bathroomsCustom?: number;
+    rooms?: string;
+    roomsCustom?: number;
     extras?: Array<{
       kind: string;
       count: number;
@@ -555,13 +568,14 @@ export type AllSanitySchemaTypes =
 
 // Source: sanity/lib/queries.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }
+// Query: *[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }
 export type SITE_SETTINGS_QUERY_RESULT =
   | {
       fees: null;
       supportPhone: null;
       email: null;
       regaLicenseUrl: null;
+      cta: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -572,6 +586,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       supportPhone: null;
       email: string;
       regaLicenseUrl: null;
+      cta: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -582,6 +597,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       supportPhone: null;
       email: string | null;
       regaLicenseUrl: null;
+      cta: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -601,6 +617,11 @@ export type SITE_SETTINGS_QUERY_RESULT =
       supportPhone: string | null;
       email: string | null;
       regaLicenseUrl: string | null;
+      cta: {
+        note: string | null;
+        residentialFrom: number | null;
+        commercialFrom: number | null;
+      } | null;
       gaMeasurementId: string | null;
       gtmId: string | null;
       socialLinks: Array<{
@@ -1029,7 +1050,7 @@ export type POSTS_BY_CATEGORY_QUERY_RESULT = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: REQUEST_DETAIL_QUERY
-// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },    counterparty{      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,      bathrooms, bathroomsCustom, extras[]{ kind, count }, kitchenCabinets,      electroMeter, waterMeter, activity, hasLicense, licenseNumber    },    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent,      feeBreakdown{ years, government, company, total }, notes    }  }
+// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },    counterparty{      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, rooms, roomsCustom,      extras[]{ kind, count }, kitchenCabinets,      electroMeter, waterMeter, activity, hasLicense, licenseNumber    },    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent,      feeBreakdown{ years, government, company, total }, notes    }  }
 export type REQUEST_DETAIL_QUERY_RESULT = {
   requestNo: string;
   contractType: "commercial" | "residential";
@@ -1070,10 +1091,8 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
     floor: string | null;
     floorCustom: string | null;
     area: number | null;
-    bedrooms: string | null;
-    bedroomsCustom: number | null;
-    bathrooms: string | null;
-    bathroomsCustom: number | null;
+    rooms: string | null;
+    roomsCustom: number | null;
     extras: Array<{
       kind: string;
       count: number;
@@ -1219,7 +1238,16 @@ export type FEATURES_QUERY_RESULT =
         title: string;
         description: string;
         icon:
-          "bolt" | "fees" | "meters" | "review" | "save" | "track" | "verify";
+          | "bolt"
+          | "fees"
+          | "meters"
+          | "payment"
+          | "review"
+          | "save"
+          | "tag"
+          | "track"
+          | "verified_user"
+          | "verify";
       }> | null;
     }
   | {
@@ -1257,7 +1285,16 @@ export type LICENSES_QUERY_RESULT =
         description: string;
         number: null;
         icon:
-          "bolt" | "fees" | "meters" | "review" | "save" | "track" | "verify";
+          | "bolt"
+          | "fees"
+          | "meters"
+          | "payment"
+          | "review"
+          | "save"
+          | "tag"
+          | "track"
+          | "verified_user"
+          | "verify";
       }> | null;
     }
   | {
@@ -1276,7 +1313,7 @@ export type LICENSES_QUERY_RESULT =
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }': SITE_SETTINGS_QUERY_RESULT;
+    '*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }': SITE_SETTINGS_QUERY_RESULT;
     '*[_type == "rentalRequest"] | order(submittedAt desc){\n    _id,\n    requestNo,\n    contractType,\n    status,\n    submittedAt\n  }': REQUESTS_ALL_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt)] | order(publishedAt desc)[$offset...$end]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_INDEX_QUERY_RESULT;
     'count(*[_type == "post" && defined(slug.current) && defined(publishedAt)])': POSTS_COUNT_QUERY_RESULT;
@@ -1287,7 +1324,7 @@ declare module "@sanity/client" {
     '*[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role, bio, avatar{ alt, asset-> } },\n    body[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    }\n  }': POST_DETAIL_QUERY_RESULT;
     '*[_type == "category"] | order(title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    "postCount": count(*[_type == "post" && references(^._id) && defined(publishedAt)])\n  }': CATEGORIES_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt) && $categorySlug in categories[]->slug.current] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_BY_CATEGORY_QUERY_RESULT;
-    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },\n    counterparty{\n      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, bedrooms, bedroomsCustom,\n      bathrooms, bathroomsCustom, extras[]{ kind, count }, kitchenCabinets,\n      electroMeter, waterMeter, activity, hasLicense, licenseNumber\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
+    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },\n    counterparty{\n      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, rooms, roomsCustom,\n      extras[]{ kind, count }, kitchenCabinets,\n      electroMeter, waterMeter, activity, hasLicense, licenseNumber\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
     '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    "feeTotal": terms.feeBreakdown.total,\n    "annualRent": terms.annualRent\n  }': REQUEST_STATUS_QUERY_RESULT;
     '*[_type == "subscriber" && email == $email][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_EMAIL_QUERY_RESULT;
     '*[_type == "subscriber" && confirmToken == $tok][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_TOKEN_QUERY_RESULT;

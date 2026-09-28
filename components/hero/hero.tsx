@@ -7,17 +7,14 @@ import {
   MdGavel,
   MdHome,
   MdPayments,
-  MdRateReview,
-  MdReceiptLong,
-  MdSave,
-  MdSend,
 } from "react-icons/md";
+import { RiSendInsFill } from "react-icons/ri";
 import { FaFileContract, FaUsers } from "react-icons/fa";
 import { WordAnimator } from "./word-animator";
 import { NewItemsLoading } from "./new-items-loading";
 import { FloatingBadge } from "./floating-badge";
 import { GlowBadge } from "./glow-badge";
-import { SplitCta } from "@/components/home/split-cta";
+import { SplitCta, type CtaFees } from "@/components/home/split-cta";
 import {
   SOCIAL_PLATFORMS,
   getPlatformFallbackIcon,
@@ -26,25 +23,28 @@ import type { FooterSocialLink } from "@/components/shell/footer";
 
 const rotatingWords = ["عقدك السكني", "عقدك التجاري", "عقد مكتبك", "عقد محلك"];
 
-const features = [
-  { icon: MdSave, label: "حفظ تلقائي للمسودة" },
-  { icon: MdRateReview, label: "مراجعة قبل الإرسال" },
-  { icon: MdReceiptLong, label: "عرض الرسوم مقدماً" },
-];
-
-const steps = [
+const steps: {
+  name: string;
+  icon: React.ComponentType<{
+    className?: string;
+    "aria-hidden"?: boolean | "true" | "false";
+  }>;
+  className?: string;
+}[] = [
   { name: "صفة مقدم الطلب", icon: MdBadge },
   { name: "بيانات الأطراف", icon: FaUsers },
   { name: "الصك والموقع", icon: MdGavel },
   { name: "شروط العقد", icon: FaFileContract },
   { name: "بيانات الوحدة", icon: MdHome },
-  { name: "المراجعة والإرسال", icon: MdSend },
+  { name: "المراجعة والإرسال", icon: RiSendInsFill, className: "-scale-x-100" },
 ];
 
 export function Hero({
   socialLinks,
+  ctaFees,
 }: {
   socialLinks?: FooterSocialLink[] | null;
+  ctaFees?: CtaFees | null;
 }) {
   const links = (socialLinks ?? []).filter((l) => l.url);
 
@@ -74,12 +74,12 @@ export function Hero({
           <WordAnimator words={rotatingWords} className="text-accent" />
         </Typography>
 
-        <Typography type="body" color="muted" className="max-w-2xl">
+        <Typography type="body" color="muted" className="max-w-2xl text-center">
           بيانات الأطراف والصك والعقد بخطوات واضحة، مع حفظ تلقائي للمسودة
           ومراجعة قبل الإرسال.
         </Typography>
 
-        <SplitCta />
+        <SplitCta ctaFees={ctaFees} />
 
         <div className="flex flex-col items-center gap-3">
           <p className="text-muted text-sm font-medium">
@@ -98,7 +98,7 @@ export function Hero({
                       <div className="border-border bg-card flex size-12 items-center justify-center overflow-hidden rounded-full border shadow-xs md:size-14">
                         <Icon
                           aria-hidden="true"
-                          className="text-accent size-5"
+                          className={`text-accent size-5 ${step.className ?? ""}`}
                         />
                       </div>
                     </div>
@@ -112,15 +112,6 @@ export function Hero({
             })}
           </div>
         </div>
-
-        <ul className="text-muted flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
-          {features.map((f) => (
-            <li key={f.label} className="flex items-center gap-1.5">
-              <f.icon className="text-accent size-4" />
-              {f.label}
-            </li>
-          ))}
-        </ul>
 
         <div className="relative mx-auto w-full max-w-md">
           <FloatingBadge

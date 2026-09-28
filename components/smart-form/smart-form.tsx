@@ -168,10 +168,8 @@ const initial: FormState = {
   floor: "",
   floorCustom: "",
   area: 0,
-  bedrooms: "",
-  bedroomsCustom: 0,
-  bathrooms: "",
-  bathroomsCustom: 0,
+  rooms: "",
+  roomsCustom: 0,
   extras: [],
   kitchenCabinets: null,
   electroMeter: "",
@@ -273,10 +271,8 @@ export function SmartForm({
     s.floor === "other"
       ? s.floorCustom || "أخرى"
       : (floorOptions.find((d) => d.value === s.floor)?.label ?? s.floor);
-  const bedroomsLabel =
-    s.bedrooms === "other" ? String(s.bedroomsCustom) : s.bedrooms;
-  const bathroomsLabel =
-    s.bathrooms === "other" ? String(s.bathroomsCustom) : s.bathrooms;
+  const roomsLabel =
+    s.rooms === "other" ? String(s.roomsCustom) : s.rooms;
 
   const err = (cond: boolean, msg: string) => (touched && cond ? msg : null);
 
@@ -347,10 +343,8 @@ export function SmartForm({
           s.kitchenCabinets == null
         )
           return false;
-        if (isCommercial) return true;
-        if (!s.bedrooms || !s.bathrooms) return false;
-        if (s.bedrooms === "other" && !(s.bedroomsCustom > 0)) return false;
-        if (s.bathrooms === "other" && !(s.bathroomsCustom > 0)) return false;
+        if (!s.rooms) return false;
+        if (s.rooms === "other" && !(s.roomsCustom > 0)) return false;
         return true;
       default:
         return true;
@@ -413,7 +407,9 @@ export function SmartForm({
       toast("تم استلام الطلب بنجاح", {
         description: `رقم الطلب ${no} - رسوم التوثيق التقديرية ${formatCurrency(total)}`,
       });
-      router.push(`/request/success?no=${encodeURIComponent(no)}`);
+      router.push(
+        `/request/success?no=${encodeURIComponent(no)}&type=${contractType}`,
+      );
     } catch (err) {
       setSubmitting(false);
       const message = err instanceof Error ? err.message : "";
@@ -1270,55 +1266,28 @@ export function SmartForm({
                     onChange={(v) => set("area", v)}
                     error={err(!(s.area > 0), "يرجى إدخال مساحة أكبر من صفر")}
                   />
-                  {!isCommercial && (
-                    <>
-                      <IconSelect
-                        label="الغرف"
-                        required
-                        icon={<FaDoorOpen />}
-                        options={countOptions(<FaDoorOpen />)}
-                        value={s.bedrooms}
-                        onChange={(v) => set("bedrooms", v)}
-                        error={err(!s.bedrooms, messages.required)}
-                      />
-                      {s.bedrooms === "other" && (
-                        <IconNumber
-                          label="rooms"
-                          required
-                          icon={<FaDoorOpen />}
-                          min={1}
-                          value={s.bedroomsCustom}
-                          onChange={(v) => set("bedroomsCustom", v)}
-                          error={err(
-                            !(s.bedroomsCustom > 0),
-                            "يرجى إدخال عدد أكبر من صفر",
-                          )}
-                        />
+                  <IconSelect
+                    label="الغرف"
+                    required
+                    icon={<FaDoorOpen />}
+                    options={countOptions(<FaDoorOpen />)}
+                    value={s.rooms}
+                    onChange={(v) => set("rooms", v)}
+                    error={err(!s.rooms, messages.required)}
+                  />
+                  {s.rooms === "other" && (
+                    <IconNumber
+                      label="عدد الغرف"
+                      required
+                      icon={<FaDoorOpen />}
+                      min={1}
+                      value={s.roomsCustom}
+                      onChange={(v) => set("roomsCustom", v)}
+                      error={err(
+                        !(s.roomsCustom > 0),
+                        "يرجى إدخال عدد أكبر من صفر",
                       )}
-                      <IconSelect
-                        label="الحمامات"
-                        required
-                        icon={<PiBathtubFill />}
-                        options={countOptions(<PiBathtubFill />)}
-                        value={s.bathrooms}
-                        onChange={(v) => set("bathrooms", v)}
-                        error={err(!s.bathrooms, messages.required)}
-                      />
-                      {s.bathrooms === "other" && (
-                        <IconNumber
-                          label="عدد الحمامات"
-                          required
-                          icon={<PiBathtubFill />}
-                          min={1}
-                          value={s.bathroomsCustom}
-                          onChange={(v) => set("bathroomsCustom", v)}
-                          error={err(
-                            !(s.bathroomsCustom > 0),
-                            "يرجى إدخال عدد أكبر من صفر",
-                          )}
-                        />
-                      )}
-                    </>
+                    />
                   )}
                   <IconSelect
                     label="نوع العقار"
@@ -1481,6 +1450,11 @@ export function SmartForm({
                               label: "يوجد صالة",
                               icon: <MdWeekend />,
                             },
+                            {
+                              value: "bathrooms",
+                              label: "الحمامات",
+                              icon: <PiBathtubFill />,
+                            },
                           ]}
                         />
                         {s.extras.some((e) => e.kind === "kitchen") && (
@@ -1623,7 +1597,7 @@ export function SmartForm({
                 />
                 <SummaryRow
                   title="الدور والمساحة"
-                  value={`الدور ${floorLabel} - ${s.area} م²${isCommercial ? "" : ` - ${bedroomsLabel} غرف / ${bathroomsLabel} حمامات`}`}
+                  value={`الدور ${floorLabel} - ${s.area} م² - ${roomsLabel} غرف`}
                   onEdit={() => setStep(4)}
                 />
                 <SummaryRow

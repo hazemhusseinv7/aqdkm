@@ -250,15 +250,13 @@ export function NewRequestNotification({
               ),
             },
             {
-              label: L.bedrooms.ar,
-              display: countText(p?.bedrooms, p?.bedroomsCustom),
-            },
-            {
-              label: L.bathrooms.ar,
-              display: countText(p?.bathrooms, p?.bathroomsCustom),
+              label: L.rooms.ar,
+              display: countText(p?.rooms, p?.roomsCustom),
             },
             { label: L.extras.ar, display: extrasText(p?.extras) },
-            ...(p?.extras?.some((e) => e.kind === EXTRA_LABELS.kitchen)
+            ...(p?.extras?.some(
+              (e) => e.kind === "kitchen" || e.kind === EXTRA_LABELS.kitchen,
+            )
               ? [
                   {
                     label: L.kitchenCabinets.ar,
@@ -295,7 +293,7 @@ export function NewRequestNotification({
               label: L.duration.ar,
               display: durationText(tm?.duration, tm?.customMonths),
             },
-            ...(tm?.duration === "custom"
+            ...(tm?.duration === "custom" || tm?.duration === "مخصص"
               ? [
                   {
                     label: L.customMonths.ar,

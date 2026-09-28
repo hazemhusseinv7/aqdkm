@@ -60,10 +60,8 @@ export const FIELD_LABELS = {
   floor: { en: "Floor", ar: "الدور" },
   floorCustom: { en: "Floor (custom)", ar: "يرجى تحديد رقم الدور" },
   area: { en: "Area (sqm)", ar: "المساحة" },
-  bedrooms: { en: "Bedrooms", ar: "الغرف" },
-  bedroomsCustom: { en: "Bedrooms (custom)", ar: "عدد الغرف" },
-  bathrooms: { en: "Bathrooms", ar: "الحمامات" },
-  bathroomsCustom: { en: "Bathrooms (custom)", ar: "عدد الحمامات" },
+  rooms: { en: "Rooms", ar: "الغرف" },
+  roomsCustom: { en: "Rooms (custom)", ar: "عدد الغرف" },
   extras: { en: "Extras", ar: "المرافق المتوفرة" },
   kitchenCabinets: { en: "Kitchen cabinets installed", ar: "تركيب خزائن المطبخ" },
   electroMeter: { en: "Electricity meter", ar: "رقم عداد الكهرباء" },
@@ -233,6 +231,7 @@ export const EXTRA_LABELS: Record<string, string> = {
   extra_room: "غرفة إضافية",
   storage: "غرفة مخزن",
   sitting: "يوجد صالة",
+  bathrooms: "الحمامات",
 };
 
 /** Codes become stored Arabic: label for known codes, custom text for "other". */

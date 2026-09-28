@@ -28,7 +28,9 @@ export function PostCard({ post }: { post: BlogPostCard }) {
               ))}
             </span>
           )}
-          <h2 className="text-foreground text-lg leading-snug font-medium">{post.title}</h2>
+          <h2 className="text-foreground text-lg leading-snug font-medium">
+            {post.title}
+          </h2>
           <Card.Description className="line-clamp-2">
             {post.excerpt}
           </Card.Description>
@@ -52,9 +54,15 @@ export function PostCard({ post }: { post: BlogPostCard }) {
   );
 }
 
-export function PostCardGrid({ posts }: { posts: BlogPostCard[] }) {
+export function PostCardGrid({
+  posts,
+  className,
+}: {
+  posts: BlogPostCard[];
+  className?: string;
+}) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={className ?? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"}>
       {posts.map((post) => (
         <PostCard key={post._id} post={post} />
       ))}
@@ -66,7 +74,9 @@ export function BlogEmptyState() {
   return (
     <Card variant="secondary" className="text-center">
       <Card.Header className="flex-col items-center gap-2 pt-8">
-        <h2 className="text-foreground text-sm leading-6 font-medium">لا توجد مقالات بعد</h2>
+        <h2 className="text-foreground text-sm leading-6 font-medium">
+          لا توجد مقالات بعد
+        </h2>
         <Card.Description>سيتم نشر المقالات هنا قريباً.</Card.Description>
       </Card.Header>
     </Card>

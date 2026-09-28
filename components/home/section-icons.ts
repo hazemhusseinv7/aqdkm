@@ -1,16 +1,18 @@
 import type { ComponentType } from "react";
 import {
   MdBadge,
-  MdBolt,
   MdEditNote,
   MdGavel,
+  MdLocalOffer,
+  MdPayments,
   MdRateReview,
   MdReceiptLong,
   MdSave,
-  MdStar,
   MdStore,
+  MdVerifiedUser,
 } from "react-icons/md";
 import { HiTicket } from "react-icons/hi2";
+import { FaBoltLightning } from "react-icons/fa6";
 
 type IconProps = { className?: string };
 
@@ -21,7 +23,10 @@ export const FEATURE_ICONS: Record<string, ComponentType<IconProps>> = {
   verify: MdBadge,
   track: HiTicket,
   meters: MdEditNote,
-  bolt: MdBolt,
+  bolt: FaBoltLightning,
+  payment: MdPayments,
+  verified_user: MdVerifiedUser,
+  tag: MdLocalOffer,
 };
 
 export const LICENSE_ICONS: Record<string, ComponentType<IconProps>> = {
@@ -31,7 +36,7 @@ export const LICENSE_ICONS: Record<string, ComponentType<IconProps>> = {
 };
 
 export function featureIcon(key: string | null): ComponentType<IconProps> {
-  return (key && FEATURE_ICONS[key]) || MdStar;
+  return (key && FEATURE_ICONS[key]) || FaBoltLightning;
 }
 
 export function licenseIcon(key: string | null): ComponentType<IconProps> {

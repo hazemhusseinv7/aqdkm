@@ -30,10 +30,7 @@ export function WordAnimator({
   }, [shouldReduceMotion, words.length, interval]);
 
   return (
-    <span
-      className={cn("relative grid align-bottom", className)}
-      role="text"
-    >
+    <span className={cn("relative grid align-bottom", className)} role="text">
       <span
         aria-hidden="true"
         className="invisible col-start-1 row-start-1 whitespace-nowrap"

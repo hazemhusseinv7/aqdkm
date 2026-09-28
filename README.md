@@ -83,7 +83,7 @@ Studio lives at `/admin`. IDs are Sanity-generated; drafts stay in
 |---|---|---|
 | `rentalRequest` | document | Groups: general / parties / property / terms; statuses new → reviewing → approved → completed / cancelled; user-filled fields are **read-only**, field titles bilingual (`English / العربية`); every submit emails the all-fields table to `ADMIN_EMAIL` (skipped with a server log when unset) |
 | `contactMessage` | document | `name/phone/email/message` are **read-only** (staff never edits submissions); `status` uses the `StatusTabs` tab input; `submittedAt` read-only |
-| `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) |
+| `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) / cta (starting-fee note phrase + residential/commercial amounts, manual marketing numbers) |
 | `post` / `category` / `author` | documents | Blog group in Studio; FAQs moved from a `faq` type into `siteSettings.faqs[]` |
 | `legalPage` | document | Terms / privacy / FAQ pages: title, description, Portable Text content + Q&A accordion; footer + `/legal/[slug]` |
 | `testimonials` / `features` / `licenses` | singletons | Homepage sections: reviews (name required; role/city optional; date/rating optional), feature cards (icon picker), license cards |
@@ -136,8 +136,8 @@ Server-Action boundary rules:
   steps 0–4 first: on failure it jumps to the offending step with highlights on
   and a step-named toast, so free stepper/review navigation can never smuggle
   invalid data to submit. `submitRentalRequest` re-checks everything server-side
-  (`assertValidRentalRequest`, shared `validators`) - empty `bedrooms`/
-  `bathrooms` are rejected, not written as `""`. Dates are normalized to
+  (`assertValidRentalRequest`, shared `validators`) - empty `rooms` are
+  rejected, not written as `""`. Amenity counts must each be ≥ 1. Dates are normalized to
   Gregorian ISO at the submit boundary (the Hijri picker stores Gregorian;
   non-Gregorian input is rejected server-side).
 - Dates (`lib/calendar.ts`): wheel picker with Gregorian / Hijri (Umm al-Qura)
@@ -167,9 +167,10 @@ Server-Action boundary rules:
   track detail labels, and the admin email rows - rename once, everywhere. Result/status chips
   carry state icons; commercial contract chips use the alt-soft wash.
 - Conversion tracking: successful submit navigates to
-  `/request/success?no=REQ-…` (`noindex`), which refetches the summary and
+  `/request/success?no=REQ-…&type=residential|commercial` (`noindex`), which refetches the summary and
   pushes `{ event: "request_submitted", requestNo, contractType, value }` to
-  `dataLayer`. Use the URL itself as the Google Ads website-conversion page;
+  `dataLayer`. The `type` param is informational only (humans + URL-based
+  tooling); display and tracking always use the fetched status. Use the URL itself as the Google Ads website-conversion page;
   use the `request_submitted` event for GTM triggers. No Ads event tag is
   emitted by the app. Full setup: [Conversion tracking (GTM / Google Ads)](#conversion-tracking-gtm--google-ads).
 - Newsletter (`components/newsletter/`, `lib/newsletter-actions.ts`,
@@ -209,7 +210,7 @@ Server-Action boundary rules:
 
 ## Conversion tracking (GTM / Google Ads)
 
-Every successful submission lands on `/request/success?no=REQ-…`, which pushes
+Every successful submission lands on `/request/success?no=REQ-…&type=…`, which pushes
 one `dataLayer` event (`components/request/success-ping.tsx`):
 
 ```js
@@ -275,8 +276,7 @@ lead form; `Every` if repeat submissions per click are meaningful.
   scheme, not the in-app toggle. All brand assets live under `public/logo/`.
   Browsers cache favicons aggressively per URL: verify artwork swaps in a fresh
   profile, or version the URL (`?v=2`).
-- **Footer:** quick links (no home link - logo covers that; includes legal
-  pages + testimonials), contact column
+- **Footer:** quick links (no home link - logo covers that; includes testimonials) + separate legal-pages column, contact column
   (`tel:` phone + `mailto:` email from CMS), socials, copyright bar.
 - **Surfaces:**
 

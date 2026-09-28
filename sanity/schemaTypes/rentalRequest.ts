@@ -248,23 +248,13 @@ export const rentalRequest = defineType({
         }),
         defineField({ name: "area", title: bilingualTitle("area"), type: "number" }),
         defineField({
-          name: "bedrooms",
-          title: bilingualTitle("bedrooms"),
+          name: "rooms",
+          title: bilingualTitle("rooms"),
           type: "string",
         }),
         defineField({
-          name: "bedroomsCustom",
-          title: bilingualTitle("bedroomsCustom"),
-          type: "number",
-        }),
-        defineField({
-          name: "bathrooms",
-          title: bilingualTitle("bathrooms"),
-          type: "string",
-        }),
-        defineField({
-          name: "bathroomsCustom",
-          title: bilingualTitle("bathroomsCustom"),
+          name: "roomsCustom",
+          title: bilingualTitle("roomsCustom"),
           type: "number",
         }),
         defineField({

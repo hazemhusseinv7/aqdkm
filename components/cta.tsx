@@ -1,23 +1,16 @@
 "use client";
 
 import { Typography } from "@heroui/react";
-import { MdCheckCircle, MdPayments, MdRateReview } from "react-icons/md";
-import { PiSpeedometerFill } from "react-icons/pi";
+import { MdCheckCircle, MdPayments } from "react-icons/md";
 import { WordAnimator } from "@/components/hero/word-animator";
 import { NewItemsLoading } from "@/components/hero/new-items-loading";
 import { FloatingBadge } from "@/components/hero/floating-badge";
 import { GlowBadge } from "@/components/hero/glow-badge";
-import { SplitCta } from "@/components/home/split-cta";
+import { SplitCta, type CtaFees } from "@/components/home/split-cta";
 
 const rotatingWords = ["عقدك السكني", "عقدك التجاري", "عقد مكتبك", "عقد محلك"];
 
-const features = [
-  { icon: MdRateReview, label: "توثيق رسمي عبر منصة إيجار" },
-  { icon: MdPayments, label: "ادفع بعد معاينة نسخة العقد" },
-  { icon: PiSpeedometerFill, label: "إنجاز وسرعة في التنفيذ" },
-];
-
-export function Cta() {
+export function Cta({ ctaFees }: { ctaFees?: CtaFees | null }) {
   return (
     <section className="border-border bg-surface relative overflow-hidden rounded-3xl border before:pointer-events-none before:absolute before:inset-0 before:z-10 before:bg-[url(/images/noise.gif)] before:bg-repeat before:opacity-[0.05] before:content-['']">
       <div
@@ -42,15 +35,7 @@ export function Cta() {
           <Typography type="body" color="muted">
             قدّم طلبك بخطوات واضحة مع حفظ تلقائي للمسودة ومراجعة قبل الإرسال.
           </Typography>
-          <SplitCta />
-          <ul className="text-muted flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            {features.map((f) => (
-              <li key={f.label} className="flex items-center gap-1.5">
-                <f.icon className="text-accent size-4" />
-                {f.label}
-              </li>
-            ))}
-          </ul>
+          <SplitCta ctaFees={ctaFees} />
         </div>
 
         <div className="relative mx-auto w-full max-w-md">

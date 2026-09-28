@@ -19,6 +19,7 @@ export const siteSettings = defineType({
     { name: "general", title: "General", icon: RiSettingsFill },
     { name: "social", title: "Social Media", icon: HiLink },
     { name: "analytics", title: "Analytics", icon: HiChartBar },
+    { name: "cta", title: "CTA Buttons", icon: MdPayments },
   ],
   fields: [
     defineField({
@@ -159,6 +160,40 @@ export const siteSettings = defineType({
       type: "url",
       group: "general",
       validation: (rule) => rule.uri({ scheme: ["https", "http"] }),
+    }),
+    defineField({
+      name: "cta",
+      title: "CTA fee notes",
+      description:
+        "Starting-fee lines under the residential / commercial request buttons. Amounts are manual marketing numbers.",
+      type: "object",
+      group: "cta",
+      fields: [
+        defineField({
+          name: "note",
+          title: "Fee note phrase",
+          description: "Shared phrase shown under both buttons.",
+          type: "string",
+          initialValue: "رسوم تبدأ من",
+        }),
+        defineField({
+          name: "residentialFrom",
+          title: "Residential starting fee (SAR)",
+          description:
+            "Amount under the residential button. Hidden when empty.",
+          type: "number",
+          initialValue: 250,
+          validation: (rule) => rule.min(0),
+        }),
+        defineField({
+          name: "commercialFrom",
+          title: "Commercial starting fee (SAR)",
+          description: "Amount under the commercial button. Hidden when empty.",
+          type: "number",
+          initialValue: 400,
+          validation: (rule) => rule.min(0),
+        }),
+      ],
     }),
     defineField({
       name: "faqs",

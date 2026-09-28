@@ -196,6 +196,18 @@
                     {
                       "type": "string",
                       "value": "bolt"
+                    },
+                    {
+                      "type": "string",
+                      "value": "payment"
+                    },
+                    {
+                      "type": "string",
+                      "value": "verified_user"
+                    },
+                    {
+                      "type": "string",
+                      "value": "tag"
                     }
                   ]
                 },
@@ -1720,6 +1732,36 @@
         },
         "optional": true
       },
+      "cta": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "note": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "residentialFrom": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "number"
+              },
+              "optional": true
+            },
+            "commercialFrom": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "number"
+              },
+              "optional": true
+            }
+          }
+        },
+        "optional": true
+      },
       "faqs": {
         "type": "objectAttribute",
         "value": {
@@ -2520,28 +2562,14 @@
               },
               "optional": true
             },
-            "bedrooms": {
+            "rooms": {
               "type": "objectAttribute",
               "value": {
                 "type": "string"
               },
               "optional": true
             },
-            "bedroomsCustom": {
-              "type": "objectAttribute",
-              "value": {
-                "type": "number"
-              },
-              "optional": true
-            },
-            "bathrooms": {
-              "type": "objectAttribute",
-              "value": {
-                "type": "string"
-              },
-              "optional": true
-            },
-            "bathroomsCustom": {
+            "roomsCustom": {
               "type": "objectAttribute",
               "value": {
                 "type": "number"

@@ -12,7 +12,7 @@ import {
   TextField,
   toast,
 } from "@heroui/react";
-import { MdSend } from "react-icons/md";
+import { RiSendInsFill } from "react-icons/ri";
 import { submitContactMessage } from "@/sanity/lib/actions";
 import { validateContact, type ContactErrors } from "@/lib/validation";
 
@@ -112,12 +112,12 @@ export function ContactForm() {
       </TextField>
       <div>
         <Button type="submit" isDisabled={sending} className="min-w-32">
+          {sending ? "جارٍ الإرسال…" : "إرسال الرسالة"}
           {sending ? (
             <Spinner size="sm" />
           ) : (
-            <MdSend className="size-4 -scale-x-100" />
+            <RiSendInsFill className="size-4 -scale-x-100" />
           )}
-          {sending ? "جارٍ الإرسال…" : "إرسال الرسالة"}
         </Button>
       </div>
     </Form>

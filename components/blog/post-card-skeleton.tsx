@@ -30,7 +30,13 @@ export function PostCardSkeleton() {
   );
 }
 
-export function PostCardGridSkeleton({ count = 9 }: { count?: number }) {
+export function PostCardGridSkeleton({
+  count = 9,
+  className,
+}: {
+  count?: number;
+  className?: string;
+}) {
   return (
     <>
       <span role="status" className="sr-only">
@@ -38,7 +44,7 @@ export function PostCardGridSkeleton({ count = 9 }: { count?: number }) {
       </span>
       <div
         aria-hidden="true"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className={className ?? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"}
       >
         {Array.from({ length: count }).map((_, i) => (
           <PostCardSkeleton key={i} />

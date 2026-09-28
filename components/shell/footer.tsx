@@ -68,7 +68,7 @@ export function Footer({
     >
       <div className="bg-foreground/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
 
-      <div className="grid w-full gap-8 py-6 md:py-8 lg:grid-cols-3 lg:gap-8">
+      <div className="grid w-full gap-8 pt-6 md:pt-8 lg:grid-cols-3 lg:gap-8">
         <AnimatedContainer className="space-y-4">
           <Link href="/" aria-label="عقدكم - الرئيسية" className="inline-flex">
             <Logo />
@@ -157,33 +157,35 @@ export function Footer({
             </AnimatedContainer>
           )}
 
-          {links.length > 0 && (
-            <AnimatedContainer delay={0.4}>
-              <div className="mb-10 md:mb-0">
-                <h2 className="text-muted text-xs font-medium">تابعنا</h2>
-                <div className="mt-4 flex items-center gap-1">
-                  {links.map((l, i) => {
-                    const meta = SOCIAL_PLATFORMS[l.platform];
-                    const Icon = meta?.icon ?? getPlatformFallbackIcon();
-                    return (
-                      <a
-                        key={`${l.platform}-${i}`}
-                        href={l.url ?? undefined}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={meta?.title ?? l.platform}
-                        className="text-muted hover:bg-alt hover:text-alt-foreground inline-flex size-9 items-center justify-center rounded-full transition-colors"
-                      >
-                        <Icon className="size-4" />
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            </AnimatedContainer>
-          )}
         </div>
       </div>
+
+      {links.length > 0 && (
+        <AnimatedContainer
+          delay={0.4}
+          className="flex w-full flex-col items-center gap-3 pb-6"
+        >
+          <h2 className="text-muted text-xs font-medium">تابعنا</h2>
+          <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5">
+            {links.map((l, i) => {
+              const meta = SOCIAL_PLATFORMS[l.platform];
+              const Icon = meta?.icon ?? getPlatformFallbackIcon();
+              return (
+                <a
+                  key={`${l.platform}-${i}`}
+                  href={l.url ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={meta?.title ?? l.platform}
+                  className="text-muted hover:bg-alt hover:text-alt-foreground inline-flex size-9 items-center justify-center rounded-full transition-colors"
+                >
+                  <Icon className="size-4" />
+                </a>
+              );
+            })}
+          </div>
+        </AnimatedContainer>
+      )}
 
       <div className="via-border h-px w-full bg-linear-to-r" />
 

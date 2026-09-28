@@ -19,7 +19,10 @@ export const metadata = {
 export default async function RequestSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ no?: string }>;
+  // `type` (residential|commercial) is informational only - for humans and
+  // URL-based tooling. Display and tracking always use the fetched status;
+  // a missing or mismatched value is ignored by simply never reading it.
+  searchParams: Promise<{ no?: string; type?: string }>;
 }) {
   const { no } = await searchParams;
   const normalized = (no ?? "").trim().toUpperCase();
