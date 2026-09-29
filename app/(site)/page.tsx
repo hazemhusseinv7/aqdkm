@@ -21,11 +21,12 @@ import type { TestimonialItem } from "@/components/home/testimonials";
 import type { FeatureItem } from "@/components/home/features";
 import type { LicenseItem } from "@/components/home/licenses";
 import type { CtaFees } from "@/components/home/split-cta";
+import type { MarketingPoint } from "@/components/hero/new-items-loading";
 
 export const metadata = {
   title: "عقدكم - توثيق عقود الإيجار السكنية والتجارية",
   description:
-    "قدّم طلب توثيق عقد الإيجار بخطوات واضحة مع حفظ تلقائي للمسودة ومراجعة قبل الإرسال",
+    "قدّم طلب توثيق عقد الإيجار: توثيق رسمي عبر منصة إيجار والدفع بعد معاينة نسخة العقد",
 };
 
 export type HomeFaqs = NonNullable<SITE_SETTINGS_QUERY_RESULT>["faqs"];
@@ -36,6 +37,7 @@ export default async function HomePage() {
   let socialLinks: FooterSocialLink[] | null = null;
   let regaUrl: string | null = null;
   let ctaFees: CtaFees | null = null;
+  let points: MarketingPoint[] = [];
   let testimonials: TestimonialItem[] = [];
   let features: FeatureItem[] = [];
   let licenses: LicenseItem[] = [];
@@ -87,6 +89,9 @@ export default async function HomePage() {
       resFrom: settings?.cta?.residentialFrom ?? null,
       comFrom: settings?.cta?.commercialFrom ?? null,
     };
+    points = (settings?.marketingPoints ?? [])
+      .map((p) => ({ text: p.text ?? "", icon: p.icon ?? null }))
+      .filter((p) => p.text);
     testimonials = (
       (stegaClean(testimonialsData) as TESTIMONIALS_QUERY_RESULT)?.items ?? []
     ).map((t) => ({
@@ -125,6 +130,7 @@ export default async function HomePage() {
     licenses = [];
     regaUrl = null;
     ctaFees = null;
+    points = [];
   }
   return (
     <HomeContent
@@ -136,6 +142,7 @@ export default async function HomePage() {
       licenses={licenses}
       regaUrl={regaUrl}
       ctaFees={ctaFees}
+      points={points}
     />
   );
 }

@@ -3,6 +3,7 @@
 import {
   MdHome,
   MdVilla,
+  MdLayers,
   MdMeetingRoom,
   MdStore,
   MdWarehouse,
@@ -31,14 +32,12 @@ import {
   FaStore,
   FaWarehouse,
   FaMoneyBillWave,
+  FaCarAlt,
 } from "react-icons/fa";
 import { HiHomeModern, HiBuildingOffice } from "react-icons/hi2";
 import { BsCalendar2WeekFill } from "react-icons/bs";
 
-import {
-  OPTION_VALUES,
-  type OptionPair,
-} from "@/lib/request-fields";
+import { OPTION_VALUES, type OptionPair } from "@/lib/request-fields";
 
 export type IconOption = {
   value: string;
@@ -47,7 +46,9 @@ export type IconOption = {
 };
 
 const ic = (node: React.ReactNode) => (
-  <span className="inline-flex shrink-0 items-center text-lg [&>svg]:block [&>svg]:size-[1em]">{node}</span>
+  <span className="inline-flex shrink-0 items-center text-lg [&>svg]:block [&>svg]:size-[1em]">
+    {node}
+  </span>
 );
 
 function withIcons(
@@ -76,15 +77,12 @@ export const durationOptions: IconOption[] = withIcons(
   <BsCalendar2WeekFill />,
 );
 
-export const paymentOptions: IconOption[] = withIcons(
-  OPTION_VALUES.payment,
-  {
-    monthly: <FaMoneyBillWave />,
-    quarterly: <FaMoneyBillWave />,
-    semi: <FaMoneyBillWave />,
-    yearly: <FaMoneyBillWave />,
-  },
-);
+export const paymentOptions: IconOption[] = withIcons(OPTION_VALUES.payment, {
+  monthly: <FaMoneyBillWave />,
+  quarterly: <FaMoneyBillWave />,
+  semi: <FaMoneyBillWave />,
+  yearly: <FaMoneyBillWave />,
+});
 
 export const residentialPropertyTypes: IconOption[] = withIcons(
   OPTION_VALUES.residentialProperty,
@@ -99,16 +97,14 @@ export const residentialPropertyTypes: IconOption[] = withIcons(
 );
 
 export const residentialUnitTypes: IconOption[] = withIcons(
-  OPTION_VALUES.commercialUnit,
+  OPTION_VALUES.residentialUnit,
   {
-    shop: <FaStore />,
-    office: <MdMeetingRoom />,
-    warehouse: <FaWarehouse />,
-    showroom: <MdStore />,
-    land: <MdSquareFoot />,
-    kiosk: <MdStore />,
-    workshop: <MdWarehouse />,
-    factory: <FaBuilding />,
+    apartment: <HiHomeModern />,
+    floor: <MdLayers />,
+    "driver-room": <FaCarAlt />,
+    studio: <MdMeetingRoom />,
+    villa: <MdVilla />,
+    annex: <MdHome />,
     other: <MdEdit />,
   },
 );
@@ -173,3 +169,9 @@ export const cityOptions: IconOption[] = OPTION_VALUES.city.map((p) => ({
   ...p,
   icon: ic(<MdLocationOn />),
 }));
+
+export const activityOptions: IconOption[] =
+  OPTION_VALUES.commercialActivity.map((p) => ({
+    ...p,
+    icon: ic(<MdStore />),
+  }));

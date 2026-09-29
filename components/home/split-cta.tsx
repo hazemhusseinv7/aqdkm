@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FaBuilding, FaHome } from "react-icons/fa";
 import { Price } from "@/components/price";
+import { CurrencyText } from "@/lib/currency-text";
 
 export type CtaFees = {
   note?: string | null;
@@ -18,7 +19,9 @@ function FeeNote({
   if (amount == null || !note?.trim()) return null;
   return (
     <span className="text-primary-foreground/70 flex items-center justify-center gap-1 px-2 pt-1.5 text-xs">
-      <span>{note}</span>
+      <span>
+        <CurrencyText text={note} />
+      </span>
       <Price value={amount} iconClassName="size-3.5" />
     </span>
   );

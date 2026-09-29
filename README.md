@@ -83,17 +83,21 @@ Studio lives at `/admin`. IDs are Sanity-generated; drafts stay in
 |---|---|---|
 | `rentalRequest` | document | Groups: general / parties / property / terms; statuses new → reviewing → approved → completed / cancelled; user-filled fields are **read-only**, field titles bilingual (`English / العربية`); every submit emails the all-fields table to `ADMIN_EMAIL` (skipped with a server log when unset) |
 | `contactMessage` | document | `name/phone/email/message` are **read-only** (staff never edits submissions); `status` uses the `StatusTabs` tab input; `submittedAt` read-only |
-| `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) / cta (starting-fee note phrase + residential/commercial amounts, manual marketing numbers) |
+| `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`, `marketingPoints[]` text+icon-picker array driving the hero/CTA visuals — hidden when empty) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) / cta (starting-fee note phrase + residential/commercial amounts, manual marketing numbers) |
 | `post` / `category` / `author` | documents | Blog group in Studio; FAQs moved from a `faq` type into `siteSettings.faqs[]` |
 | `legalPage` | document | Terms / privacy / FAQ pages: title, description, Portable Text content + Q&A accordion; footer + `/legal/[slug]` |
-| `testimonials` / `features` / `licenses` | singletons | Homepage sections: reviews (name required; role/city optional; date/rating optional), feature cards (icon picker), license cards |
+| `testimonials` / `features` / `licenses` | singletons | Homepage sections: reviews (name + quote required; role/city/date/rating optional), feature cards (icon picker), license cards |
 | `subscriber` | document | Newsletter double opt-in; user fields read-only; status via radio (`pending/confirmed/unsubscribed`) |
 
 Custom Studio inputs (`sanity/lib/components/`): `PlatformSelect` (social
 tab buttons), `FeesInput` (fee matrix), `StatusInput` (configured badge),
-`StatusTabs` (message-status tabs). Studio nav (`sanity/structure.ts`):
+`StatusTabs` (message-status tabs), `RtlTextInput` (global `string`/`text`
+override rendering `dir="auto"`; defers to field-level inputs and option-list
+pickers), `RtlPortableTextInput` (hard-RTL rich-text wrapper, wired per-field
+on post body / legal content+answers / settings FAQ answers),
+`RtlTextFieldInput` (hard-RTL text wrapper, wired on post excerpt). Studio nav (`sanity/structure.ts`):
 singleton settings, Requests / Residential / Commercial (each with per-status
-filters), Messages (newest first), Newsletter + Subscribers, Blog, Legal pages,
+filters), Messages (newest first), Newsletter → Subscribers (single item), Blog, Legal pages,
 Homepage section group (Testimonials / Features / Licenses).
 
 Type generation (commit the outputs):
@@ -125,11 +129,17 @@ Server-Action boundary rules:
   a matching `SmartFormSkeleton` shown during the ~500 ms draft-restore
   window. Step 1 collects the landlord IBAN (international, mod-97 checked,
   applicant side for owners / counterparty side for tenants) and enforces 18+
-  for individual tenants only. Step 4 collects counted amenities (every checked
-  item needs a count ≥ 1) plus a conditional kitchen-cabinets نعم/لا toggle.
-  The stepper allows backward jumps plus fast-forward through verified steps,
+  for individual tenants (applicant side) and for the counterparty individual
+  on the owner side.   The commercial counterparty toggle defaults to منشأة
+  (first) with فرد second; residential has no toggle and is always فرد.
+  Step 4 collects counted amenities (every checked
+  item needs a count ≥ 1) plus a conditional kitchen-cabinets نعم/لا toggle,
+  and (commercial only) the activity + municipal-license block (license number
+  required if licensed). The stepper allows backward jumps plus fast-forward through verified steps,
   flagging visited-but-invalid steps. All toggles are full-width; rent/area
-  render empty (no numeric defaults).
+  render empty (no numeric defaults). The review step lists every collected
+  field (counterparty identity, dates, meters, license, payment) with per-row
+  edit jumps.
 - Validation lockdown: every gated field carries an `error={err(...)}` message
   (selects, numbers, dates, conditional `..."other"`/branch fields) - no
   asterisk-only fields. The review `تأكيد` button runs `validateAll()` over
@@ -141,8 +151,11 @@ Server-Action boundary rules:
   Gregorian ISO at the submit boundary (the Hijri picker stores Gregorian;
   non-Gregorian input is rejected server-side).
 - Dates (`lib/calendar.ts`): wheel picker with Gregorian / Hijri (Umm al-Qura)
-  toggle per field; display is dual (both calendars); storage and server
-  validation are Gregorian-only. `minYear`/`maxYear` are Gregorian-denominated.
+  toggle per field; the picker button shows a single date with an هـ/م suffix
+  while read surfaces (tracking detail, emails) display dual (both calendars
+  via `formatDual`); storage and server validation are Gregorian-only.
+  `minYear`/`maxYear` are Gregorian-denominated. A single `isAdultISO`
+  implementation serves client (via `toGregorianISO`) and server.
 - Fee math (`lib/fees.ts`): `years = max(1, ceil(months/12))`; first-year /
   extra-year split for both contract types (residential 125 + 125, commercial
   200 + 200 first / 400 + 400 extra) - all CMS-overridable via `FeeConfig` /
@@ -155,11 +168,18 @@ Server-Action boundary rules:
   button fed by the WhatsApp URL in Site Settings → Social Media Links; hidden
   when none is configured. Bottom-start.
 - Request tracking (`components/track/` + `getRequestStatus` /
-  `getRequestDetail`): the summary lookup returns only
+  `getRequestDetail`): submit is gated client-side (request-no format +
+  `lookupPhoneOk`) so invalid input shows field errors instead of firing the
+  lookup; both lookups run in parallel via `allSettled` so infra failures
+  render a dedicated load-error card instead of a false phone-mismatch. The
+  summary lookup returns only
   `requestNo/contractType/status/submittedAt/feeTotal/annualRent` -
   no names, IDs, phones, or deed data ever leaves Sanity. The full detail view
   additionally requires the applicant phone recorded on the request (wrong
-  phone → summary only + mismatch notice). Summary rows share
+  phone → summary only + mismatch notice); lookup phones accept local,
+  international (`+966`/`00966`/`966`), spaced, dashed, and Arabic-Indic digits
+  because both sides normalize via `normalizePhone` first. The detail view
+  shows the full fee breakdown (years/government/company/total). Summary rows share
   `components/request/summary-row.tsx` with the success page; status Arabic
   labels are centralized in `REQUEST_STATUS_AR` (`lib/request-fields.ts`).
 - Field-name convention (`lib/request-fields.ts` `FIELD_LABELS`): one
@@ -197,10 +217,16 @@ Server-Action boundary rules:
   plain-text `ر.س` (`CURRENCY_SYMBOL`, `lib/fees.ts`). Web surfaces render
   amounts with the Lucide `SaudiRiyal` icon (`components/price.tsx`, +
   `priceText()` for clipboard); mail templates keep `ر.س` text (inbox-safe).
+  CMS-authored words are swapped at render time (`lib/currency-text.tsx`):
+  `CurrencyText` for plain strings (excerpts, descriptions, quotes, captions,
+  FAQ questions), `annotateCurrencyBlocks` for Portable Text (post bodies,
+  legal content, accordion answers), `normalizeCurrencyText` for metadata.
 - Skeletons mirror their content by construction: `SmartFormSkeleton` copies
   the step-0 layout (same `max-w-5xl > Card` shell, stepper shapes, separator,
-  title row + two role cards, toolbar - no sidebar, no mobile bar);
-  the hero `NewItemsLoading` rows copy the receipt card; `PostCardGridSkeleton`
+  title row + two role cards, toolbar - no sidebar; ships an explicit mobile
+  bar: `sm:hidden` title + stepper strip);
+  the hero `NewItemsLoading` rows copy the receipt card (hidden entirely when
+  no marketing points are configured); `PostCardGridSkeleton`
   copies the blog card (cover, chips, title, excerpt, meta) with `loading.tsx`
   boundaries on `/blog` and category pages. Guard heights with
   `min-h-*` so staged transitions never jump.

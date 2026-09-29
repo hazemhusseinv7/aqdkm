@@ -13,7 +13,7 @@ import type { SITE_SETTINGS_QUERY_RESULT } from "@/sanity.types";
 export const metadata = {
   title: "طلب توثيق عقد تجاري",
   description:
-    "قدّم طلب توثيق عقد الإيجار التجاري بخطوات واضحة ومراجعة قبل الإرسال",
+    "قدّم طلب توثيق عقد الإيجار التجاري: توثيق رسمي عبر منصة إيجار والدفع بعد المعاينة",
 };
 
 export default async function CommercialPage() {

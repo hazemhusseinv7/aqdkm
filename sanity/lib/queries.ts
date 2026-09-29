@@ -1,7 +1,7 @@
 import { defineQuery } from "groq";
 
 export const SITE_SETTINGS_QUERY = defineQuery(
-  `*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }`,
+  `*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, marketingPoints[]{ text, icon }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }`,
 );
 
 export const REQUESTS_ALL_QUERY = defineQuery(

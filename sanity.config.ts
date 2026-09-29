@@ -14,6 +14,7 @@ import { schema } from "./sanity/schemaTypes";
 import { structure } from "./sanity/structure";
 import { copyFieldValueAction } from "./sanity/lib/components/CopyFieldValueAction";
 import { createNotifyPublishAction } from "./sanity/lib/notify-publish-action";
+import { RtlTextInput } from "./sanity/lib/components/RtlTextInput";
 
 export default defineConfig({
   basePath: "/admin",
@@ -27,6 +28,11 @@ export default defineConfig({
     // https://www.sanity.io/docs/the-vision-plugin
     visionTool({ defaultApiVersion: apiVersion }),
   ],
+  form: {
+    components: {
+      input: RtlTextInput,
+    },
+  },
   document: {
     // Posts: first-ever publish also emails subscribers ("Publish &
     // notify"); edits publish silently. Other types keep default actions.

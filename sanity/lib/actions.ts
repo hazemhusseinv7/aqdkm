@@ -1,13 +1,22 @@
 "use server";
 
-import type { RequestDetail, RequestStatus, SerializedFormState } from "@/lib/request-form";
+import type {
+  RequestDetail,
+  RequestStatus,
+  SerializedFormState,
+} from "@/lib/request-form";
 import {
   calcFeeBreakdown,
   durationToMonths,
   feeConfigFromSettings,
   type ContractType,
 } from "@/lib/fees";
-import { isAdultISO, isPastDayISO, normalizePhone, validateContact, validators } from "@/lib/validation";
+import {
+  isAdultISO,
+  normalizePhone,
+  validateContact,
+  validators,
+} from "@/lib/validation";
 import { SITE_URL } from "@/lib/blog";
 import {
   counterTypeText,
@@ -58,10 +67,15 @@ function assertValidRentalRequest(
     throw invalid("applicantDob");
   if (s.role === "owner" && s.isAgent && !validators.required(s.agencyNumber))
     throw invalid("agencyNumber");
-  if (isCommercial && s.counterType !== "entity" && s.counterType !== "individual")
+  if (
+    isCommercial &&
+    s.counterType !== "entity" &&
+    s.counterType !== "individual"
+  )
     throw invalid("counterType");
   if (isCommercial && s.counterType === "entity") {
-    if (!validators.unifiedNumber(s.unifiedNumber)) throw invalid("unifiedNumber");
+    if (!validators.unifiedNumber(s.unifiedNumber))
+      throw invalid("unifiedNumber");
     if (!validators.nationalOrIqama(s.repId)) throw invalid("repId");
     if (!validators.mobile(s.repPhone)) throw invalid("repPhone");
   } else {
@@ -82,16 +96,13 @@ function assertValidRentalRequest(
   if (s.postalCode.trim() !== "" && !validators.postal(s.postalCode))
     throw invalid("postalCode");
   if (!s.contractStart) throw invalid("contractStart");
-  if (isPastDayISO(s.contractStart)) throw invalid("contractStartPast");
   if (s.duration === "custom" && !(s.customMonths >= 1))
     throw invalid("customMonths");
-  if (!(s.annualRent > 0) || !s.duration || !s.payment)
-    throw invalid("terms");
+  if (!(s.annualRent > 0) || !s.duration || !s.payment) throw invalid("terms");
   if (!s.propertyType || !s.unitType || !s.floor) throw invalid("property");
   if (!validators.required(s.unitNumber)) throw invalid("unitNumber");
   if (!(s.area > 0)) throw invalid("area");
-  if (!validators.required(s.electroMeter))
-    throw invalid("electroMeter");
+  if (!validators.required(s.electroMeter)) throw invalid("electroMeter");
   if (s.propertyType === "other" && !validators.required(s.propertyCustom))
     throw invalid("propertyCustom");
   if (s.unitType === "other" && !validators.required(s.unitCustom))
@@ -99,17 +110,16 @@ function assertValidRentalRequest(
   if (s.floor === "other" && !validators.required(s.floorCustom))
     throw invalid("floorCustom");
   if (!s.rooms) throw invalid("rooms");
-  if (s.rooms === "other" && !(s.roomsCustom > 0))
-    throw invalid("roomsCustom");
+  if (s.rooms === "other" && !(s.roomsCustom > 0)) throw invalid("roomsCustom");
+  if (isCommercial && !s.activity) throw invalid("activity");
+  if (isCommercial && s.hasLicense && !validators.required(s.licenseNumber))
+    throw invalid("licenseNumber");
   if (
     !Array.isArray(s.extras) ||
-    !s.extras.every((e) => e.count >= 1)
+    !s.extras.every((e) => e.kind && e.count >= 1)
   )
     throw invalid("extras");
-  if (
-    s.extras.some((e) => e.kind === "kitchen") &&
-    s.kitchenCabinets == null
-  )
+  if (s.extras.some((e) => e.kind === "kitchen") && s.kitchenCabinets == null)
     throw invalid("kitchenCabinets");
 }
 
@@ -162,12 +172,30 @@ export async function submitRentalRequest(
       phone: s.otherPhone ? normalizePhone(s.otherPhone) : undefined,
       dob: toDateString(s.otherDob),
       ownerIban: s.role === "tenant" ? ownerIban : undefined,
-      unifiedNumber: s.unifiedNumber || undefined,
-      entityName: s.entityName || undefined,
-      repId: s.repId || undefined,
-      repPhone: s.repPhone ? normalizePhone(s.repPhone) : undefined,
-      repDob: toDateString(s.repDob),
-      authNumber: s.authNumber || undefined,
+      unifiedNumber:
+        isCommercial && s.counterType === "entity"
+          ? s.unifiedNumber || undefined
+          : undefined,
+      entityName:
+        isCommercial && s.counterType === "entity"
+          ? s.entityName || undefined
+          : undefined,
+      repId:
+        isCommercial && s.counterType === "entity"
+          ? s.repId || undefined
+          : undefined,
+      repPhone:
+        isCommercial && s.counterType === "entity" && s.repPhone
+          ? normalizePhone(s.repPhone)
+          : undefined,
+      repDob:
+        isCommercial && s.counterType === "entity"
+          ? toDateString(s.repDob)
+          : undefined,
+      authNumber:
+        isCommercial && s.counterType === "entity"
+          ? s.authNumber || undefined
+          : undefined,
     },
     property: {
       deedNumber: s.deedNumber || undefined,
@@ -180,9 +208,8 @@ export async function submitRentalRequest(
       floor: storedArabic(OPTION_VALUES.floor, s.floor, s.floorCustom),
       floorCustom: s.floorCustom || undefined,
       area: s.area,
-      rooms:
-        s.rooms === "other" ? String(s.roomsCustom) : s.rooms || undefined,
-      roomsCustom: s.roomsCustom,
+      rooms: s.rooms === "other" ? String(s.roomsCustom) : s.rooms || undefined,
+      roomsCustom: s.rooms === "other" ? s.roomsCustom : undefined,
       extras: storedExtras(s.extras),
       kitchenCabinets: s.extras.some((e) => e.kind === "kitchen")
         ? (s.kitchenCabinets ?? undefined)
@@ -202,7 +229,10 @@ export async function submitRentalRequest(
       postalCode: s.postalCode || undefined,
     },
     terms: {
-      duration: s.duration === "custom" ? "مخصص" : storedArabic(OPTION_VALUES.duration, s.duration),
+      duration:
+        s.duration === "custom"
+          ? "مخصص"
+          : storedArabic(OPTION_VALUES.duration, s.duration),
       customMonths: s.customMonths,
       contractStart: toDateString(s.contractStart),
       payment: storedArabic(OPTION_VALUES.payment, s.payment),
@@ -338,7 +368,6 @@ export async function getRequestDetail(
     return null;
   }
 }
-
 
 export async function getRequestStatus(
   requestNo: string,

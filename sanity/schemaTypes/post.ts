@@ -1,4 +1,6 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { RtlPortableTextInput } from "../lib/components/RtlPortableTextInput";
+import { RtlTextFieldInput } from "../lib/components/RtlTextFieldInput";
 import { MdFolder, MdInfo } from "react-icons/md";
 import { RiArticleFill } from "react-icons/ri";
 
@@ -40,6 +42,7 @@ export const post = defineType({
       title: "Excerpt",
       type: "text",
       group: "general",
+      components: { input: RtlTextFieldInput },
       validation: (rule) =>
         rule.required().max(160).warning("Keep it under 160 characters"),
     }),
@@ -71,6 +74,7 @@ export const post = defineType({
       title: "Body",
       type: "array",
       group: "content",
+      components: { input: RtlPortableTextInput },
       of: [
         defineArrayMember({
           type: "block",

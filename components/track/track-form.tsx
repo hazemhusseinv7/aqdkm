@@ -28,6 +28,7 @@ import {
 } from "react-icons/md";
 import { formatPostDate } from "@/lib/blog";
 import { REQUEST_STATUS_AR } from "@/lib/request-fields";
+import { lookupPhoneOk } from "@/lib/validation";
 import { getRequestDetail, getRequestStatus } from "@/sanity/lib/actions";
 import type { RequestDetail, RequestStatus } from "@/lib/request-form";
 import { RequestDetails } from "@/components/request/request-details";
@@ -59,29 +60,39 @@ export function TrackForm() {
   const [result, setResult] = useState<RequestStatus>(null);
   const [detail, setDetail] = useState<RequestDetail>(null);
   const [phoneMismatch, setPhoneMismatch] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const requestNo = `${new FormData(form).get("requestNo") ?? ""}`;
     const applicantPhone = `${new FormData(form).get("applicantPhone") ?? ""}`;
-    setSearching(true);
-    try {
-      const [status, full] = await Promise.all([
-        getRequestStatus(requestNo),
-        getRequestDetail(requestNo, applicantPhone),
-      ]);
-      setResult(status);
-      setDetail(full);
-      setPhoneMismatch(status !== null && full === null);
-    } catch {
-      setResult(null);
-      setDetail(null);
-      setPhoneMismatch(false);
-    } finally {
-      setSearched(true);
-      setSearching(false);
+    setResult(null);
+    setDetail(null);
+    setPhoneMismatch(false);
+    setLoadError(false);
+    setSearched(false);
+    if (
+      !/^REQ-\d{4}-\d{6}$/i.test(requestNo.trim()) ||
+      !lookupPhoneOk(applicantPhone)
+    ) {
+      return;
     }
+    setSearching(true);
+    const [statusRes, fullRes] = await Promise.allSettled([
+      getRequestStatus(requestNo),
+      getRequestDetail(requestNo, applicantPhone),
+    ]);
+    const failed =
+      statusRes.status === "rejected" || fullRes.status === "rejected";
+    const status = statusRes.status === "fulfilled" ? statusRes.value : null;
+    const full = fullRes.status === "fulfilled" ? fullRes.value : null;
+    setResult(status);
+    setDetail(full);
+    setPhoneMismatch(!failed && status !== null && full === null);
+    setLoadError(failed);
+    setSearched(true);
+    setSearching(false);
   };
 
   const isCommercial = result?.contractType === "commercial";
@@ -115,7 +126,7 @@ export function TrackForm() {
           name="applicantPhone"
           validate={(value) => {
             if (!value) return null;
-            if (!/^0\d[\d\s-]{7,}$/.test(value.trim())) {
+            if (!lookupPhoneOk(value)) {
               return "رقم الجوال غير صالح";
             }
             return null;
@@ -213,7 +224,23 @@ export function TrackForm() {
         </Card>
       )}
 
-      {searched && !searching && !result && (
+      {searched && !searching && loadError && (
+        <Card variant="secondary" className="text-center">
+          <Card.Header className="flex-col items-center gap-2 pt-8">
+            <span className="bg-danger/15 text-danger flex size-14 items-center justify-center rounded-full">
+              <MdSearchOff className="size-8" />
+            </span>
+            <h2 className="text-foreground text-sm leading-6 font-medium">
+              تعذر تحميل البيانات
+            </h2>
+            <Card.Description>
+              حدث خطأ أثناء الاتصال، يرجى المحاولة مجدداً.
+            </Card.Description>
+          </Card.Header>
+        </Card>
+      )}
+
+      {searched && !searching && !loadError && !result && (
         <Card variant="secondary" className="text-center">
           <Card.Header className="flex-col items-center gap-2 pt-8">
             <span className="bg-accent/15 text-accent flex size-14 items-center justify-center rounded-full">

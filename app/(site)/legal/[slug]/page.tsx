@@ -4,10 +4,16 @@ import { MdQuiz } from "react-icons/md";
 import { stegaClean } from "next-sanity";
 import { client } from "@/sanity/lib/client";
 import { BLOG_CACHE_TAG } from "@/lib/constants";
-import { LEGAL_PAGE_QUERY } from "@/sanity/lib/queries";
-import type { LEGAL_PAGE_QUERY_RESULT } from "@/sanity.types";
+import { LEGAL_PAGE_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
+import type {
+  LEGAL_PAGE_QUERY_RESULT,
+  SITE_SETTINGS_QUERY_RESULT,
+} from "@/sanity.types";
 import { BlogBody } from "@/components/blog/portable-text";
+import { CurrencyText, normalizeCurrencyText } from "@/lib/currency-text";
 import { Cta } from "@/components/cta";
+import type { CtaFees } from "@/components/home/split-cta";
+import type { MarketingPoint } from "@/components/hero/new-items-loading";
 
 export async function generateMetadata({
   params,
@@ -21,7 +27,7 @@ export async function generateMetadata({
   }
   return {
     title: page.title,
-    description: page.description,
+    description: normalizeCurrencyText(page.description),
   };
 }
 
@@ -47,6 +53,29 @@ export default async function LegalPage({
     notFound();
   }
   const accordion = page.accordion ?? [];
+  let ctaFees: CtaFees | null = null;
+  let points: MarketingPoint[] = [];
+  try {
+    const settingsData = await client.fetch(
+      SITE_SETTINGS_QUERY,
+      {},
+      { next: { tags: [BLOG_CACHE_TAG, "siteSettings"] } },
+    );
+    const settings = stegaClean(settingsData) as SITE_SETTINGS_QUERY_RESULT;
+    if (settings) {
+      ctaFees = {
+        note: settings.cta?.note ?? null,
+        resFrom: settings.cta?.residentialFrom ?? null,
+        comFrom: settings.cta?.commercialFrom ?? null,
+      };
+      points = (settings.marketingPoints ?? [])
+        .map((p) => ({ text: p.text ?? "", icon: p.icon ?? null }))
+        .filter((p) => p.text);
+    }
+  } catch {
+    ctaFees = null;
+    points = [];
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -60,7 +89,7 @@ export default async function LegalPage({
           {page.title}
         </Typography>
         <Typography type="body" color="muted">
-          {page.description}
+          <CurrencyText text={page.description} />
         </Typography>
       </div>
 
@@ -73,11 +102,11 @@ export default async function LegalPage({
           {accordion.map((s) => (
             <Accordion.Item key={s._key} id={s._key}>
               <Accordion.Heading>
-                <Accordion.Trigger className="gap-2">
-                  <MdQuiz className="text-accent size-4" />
-                  {s.question}
-                  <Accordion.Indicator />
-                </Accordion.Trigger>
+                  <Accordion.Trigger className="gap-2">
+                    <MdQuiz className="text-accent size-4" />
+                    <CurrencyText text={s.question} />
+                    <Accordion.Indicator />
+                  </Accordion.Trigger>
               </Accordion.Heading>
               <Accordion.Panel>
                 <Accordion.Body>
@@ -89,7 +118,7 @@ export default async function LegalPage({
         </Accordion>
       )}
 
-      <Cta />
+      <Cta ctaFees={ctaFees} points={points} />
     </div>
   );
 }

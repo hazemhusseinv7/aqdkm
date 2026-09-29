@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getLocalTimeZone, today } from "@internationalized/date";
 import {
-  isAdult18,
-  isPastDay,
   reviveCalendarDate,
   toGregorianISO,
+  formatDual,
 } from "@/lib/calendar";
 import {
   Card,
@@ -53,16 +52,16 @@ import {
   MdWeekend,
   MdLightbulb,
   MdWaterDrop,
-  MdBed,
   MdReceiptLong,
+  MdStore,
 } from "react-icons/md";
 import { TbAirConditioning } from "react-icons/tb";
-
+import { HiHomeModern } from "react-icons/hi2";
 import { FaUsers, FaBuilding, FaFileContract, FaHome } from "react-icons/fa";
 import { BsCalendar2WeekFill } from "react-icons/bs";
 import { FaDoorOpen } from "react-icons/fa6";
 import { BiSolidCoinStack } from "react-icons/bi";
-import { PiFanFill, PiBathtubFill } from "react-icons/pi";
+import { PiFanFill, PiBathtubFill, PiWarehouseFill } from "react-icons/pi";
 import { FormStepper, STEP_TITLES } from "./form-stepper";
 import { SmartFormSkeleton } from "./smart-form-skeleton";
 import { SectionCard } from "./section-card";
@@ -78,7 +77,7 @@ import {
 } from "./fields";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FieldMessage } from "@/components/ui/field-message";
-import { validators, messages, helpers } from "@/lib/validation";
+import { validators, messages, helpers, isAdultISO } from "@/lib/validation";
 import { extrasText } from "@/lib/request-display";
 import { copy } from "@/lib/copy";
 import {
@@ -102,14 +101,15 @@ import {
   floorOptions,
   countOptions,
   cityOptions,
+  activityOptions,
 } from "@/lib/options";
 import type { FormState, Role, SerializedFormState } from "@/lib/request-form";
 
-/** Normalize stored extras: legacy string[] drafts become count-0 entries. */
+/** Normalize stored extras: legacy string[] drafts become count-1 entries. */
 function reviveExtras(raw: unknown): { kind: string; count: number }[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((e) => {
-    if (typeof e === "string") return [{ kind: e, count: 0 }];
+    if (typeof e === "string") return [{ kind: e, count: 1 }];
     if (e && typeof e === "object") {
       const kind = (e as { kind?: unknown }).kind;
       const count = (e as { count?: unknown }).count;
@@ -134,11 +134,10 @@ const initial: FormState = {
   applicantPhone: "",
   applicantId: "",
   applicantDob: null,
-  otherName: "",
   otherId: "",
   otherPhone: "",
   otherDob: null,
-  counterType: "",
+  counterType: "individual",
   unifiedNumber: "",
   entityName: "",
   repId: "",
@@ -178,7 +177,6 @@ const initial: FormState = {
   hasLicense: false,
   licenseNumber: "",
   notes: "",
-  agree: false,
 };
 
 export function SmartForm({
@@ -190,7 +188,12 @@ export function SmartForm({
 }) {
   const isCommercial = contractType === "commercial";
   const router = useRouter();
-  const [s, setS] = useState<FormState>(initial);
+  // Residential has no counterparty-type toggle: the counterparty is
+  // always an individual. Commercial defaults to entity (toggle first).
+  const [s, setS] = useState<FormState>({
+    ...initial,
+    counterType: isCommercial ? "entity" : "individual",
+  });
   const [step, setStep] = useState(0);
   const [touched, setTouched] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -198,6 +201,7 @@ export function SmartForm({
   const [draftRestored, setDraftRestored] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const skipSave = useRef(false);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setS((p) => ({ ...p, [k]: v }));
 
@@ -213,6 +217,9 @@ export function SmartForm({
         setS({
           ...initial,
           ...parsed,
+          counterType: isCommercial
+            ? parsed.counterType || "entity"
+            : "individual",
           extras: reviveExtras(parsed.extras),
           deedDate: reviveCalendarDate(parsed.deedDate),
           applicantDob: reviveCalendarDate(parsed.applicantDob),
@@ -234,7 +241,12 @@ export function SmartForm({
   useEffect(() => {
     if (!loading) {
       try {
-        localStorage.setItem(draftKey, JSON.stringify(s));
+        if (skipSave.current) {
+          skipSave.current = false;
+          localStorage.removeItem(draftKey);
+        } else {
+          localStorage.setItem(draftKey, JSON.stringify(s));
+        }
       } catch {
         /* ignore */
       }
@@ -254,6 +266,14 @@ export function SmartForm({
   );
   const durationLabel =
     durationOptions.find((d) => d.value === s.duration)?.label ?? s.duration;
+  const paymentLabel =
+    paymentOptions.find((d) => d.value === s.payment)?.label ?? s.payment;
+  const activityLabel =
+    activityOptions.find((d) => d.value === s.activity)?.label ?? s.activity;
+  const dateLabel = (d: typeof s.deedDate) => {
+    if (!d) return "-";
+    return formatDual(toGregorianISO(d) ?? "") ?? "-";
+  };
   const propList = isCommercial
     ? commercialPropertyTypes
     : residentialPropertyTypes;
@@ -271,8 +291,7 @@ export function SmartForm({
     s.floor === "other"
       ? s.floorCustom || "أخرى"
       : (floorOptions.find((d) => d.value === s.floor)?.label ?? s.floor);
-  const roomsLabel =
-    s.rooms === "other" ? String(s.roomsCustom) : s.rooms;
+  const roomsLabel = s.rooms === "other" ? String(s.roomsCustom) : s.rooms;
 
   const err = (cond: boolean, msg: string) => (touched && cond ? msg : null);
 
@@ -284,11 +303,12 @@ export function SmartForm({
         if (!validators.mobile(s.applicantPhone)) return false;
         if (!validators.nationalOrIqama(s.applicantId)) return false;
         if (!validators.iban(s.ownerIban)) return false;
-        if (s.role === "tenant" && !isAdult18(s.applicantDob)) return false;
+        if (s.role === "tenant" && !isAdultISO(toGregorianISO(s.applicantDob)))
+          return false;
         if (
           s.role === "owner" &&
           s.counterType !== "entity" &&
-          !isAdult18(s.otherDob)
+          !isAdultISO(toGregorianISO(s.otherDob))
         )
           return false;
         if (
@@ -320,7 +340,7 @@ export function SmartForm({
           (s.postalCode.trim() === "" || validators.postal(s.postalCode))
         );
       case 3:
-        if (!s.contractStart || isPastDay(s.contractStart)) return false;
+        if (!s.contractStart) return false;
         if (s.duration === "custom" && !(s.customMonths >= 1)) return false;
         return s.annualRent > 0 && !!s.duration && !!s.payment;
       case 4:
@@ -337,7 +357,7 @@ export function SmartForm({
           return false;
         if (s.floor === "other" && !validators.required(s.floorCustom))
           return false;
-        if (!s.extras.every((e) => e.count >= 1)) return false;
+        if (!s.extras.every((e) => e.kind && e.count >= 1)) return false;
         if (
           s.extras.some((e) => e.kind === "kitchen") &&
           s.kitchenCabinets == null
@@ -345,6 +365,13 @@ export function SmartForm({
           return false;
         if (!s.rooms) return false;
         if (s.rooms === "other" && !(s.roomsCustom > 0)) return false;
+        if (isCommercial && !s.activity) return false;
+        if (
+          isCommercial &&
+          s.hasLicense &&
+          !validators.required(s.licenseNumber)
+        )
+          return false;
         return true;
       default:
         return true;
@@ -464,7 +491,17 @@ export function SmartForm({
                 type="button"
                 variant="tertiary"
                 onPress={() => {
-                  setS(initial);
+                  skipSave.current = true;
+                  try {
+                    localStorage.removeItem(draftKey);
+                  } catch {
+                    /* ignore */
+                  }
+                  setS({
+                    ...initial,
+                    counterType: isCommercial ? "entity" : "individual",
+                    contractStart: today(getLocalTimeZone()),
+                  });
                   setDraftRestored(false);
                   toast("تم تجاهل المسودة المحفوظة");
                 }}
@@ -586,7 +623,8 @@ export function SmartForm({
                     onChange={(v) => set("applicantDob", v)}
                     maxYear={new Date().getFullYear()}
                     error={err(
-                      s.role === "tenant" && !isAdult18(s.applicantDob),
+                      s.role === "tenant" &&
+                        !isAdultISO(toGregorianISO(s.applicantDob)),
                       messages.adult,
                     )}
                   />
@@ -669,13 +707,12 @@ export function SmartForm({
                         selectedKeys={[s.counterType]}
                         onSelectionChange={(k) => {
                           const nextType = (Array.from(k as Set<string>)[0] ??
-                            "individual") as "individual" | "entity";
+                            "entity") as "individual" | "entity";
                           setS((p) => ({
                             ...p,
                             counterType: nextType,
                             ...(nextType === "entity"
                               ? {
-                                  otherName: "",
                                   otherId: "",
                                   otherPhone: "",
                                   otherDob: null,
@@ -691,12 +728,12 @@ export function SmartForm({
                           }));
                         }}
                       >
-                        <ToggleButton id="individual">
-                          <FaUsers /> فرد
-                        </ToggleButton>
                         <ToggleButton id="entity">
-                          <ToggleButtonGroup.Separator />
                           <FaBuilding /> منشأة
+                        </ToggleButton>
+                        <ToggleButton id="individual">
+                          <ToggleButtonGroup.Separator />
+                          <FaUsers /> فرد
                         </ToggleButton>
                       </ToggleButtonGroup>
                     </div>
@@ -799,7 +836,8 @@ export function SmartForm({
                           onChange={(v) => set("otherDob", v)}
                           maxYear={new Date().getFullYear()}
                           error={err(
-                            s.role === "owner" && !isAdult18(s.otherDob),
+                            s.role === "owner" &&
+                              !isAdultISO(toGregorianISO(s.otherDob)),
                             messages.adult,
                           )}
                         />
@@ -851,7 +889,8 @@ export function SmartForm({
                       onChange={(v) => set("otherDob", v)}
                       maxYear={new Date().getFullYear()}
                       error={err(
-                        s.role === "owner" && !isAdult18(s.otherDob),
+                        s.role === "owner" &&
+                          !isAdultISO(toGregorianISO(s.otherDob)),
                         messages.adult,
                       )}
                     />
@@ -1066,10 +1105,8 @@ export function SmartForm({
                     onChange={(v) => set("contractStart", v)}
                     required
                     error={err(
-                      !s.contractStart || isPastDay(s.contractStart),
-                      !s.contractStart
-                        ? "يرجى اختيار تاريخ بداية العقد"
-                        : messages.pastStart,
+                      !s.contractStart,
+                      "يرجى اختيار تاريخ بداية العقد",
                     )}
                   />
                   <IconSelect
@@ -1344,8 +1381,53 @@ export function SmartForm({
                 </div>
               </SectionCard>
 
+              {isCommercial && (
+                <SectionCard
+                  icon={<MdStore />}
+                  title="النشاط والترخيص"
+                  description="النشاط التجاري والرخصة البلدية"
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <IconSelect
+                      label="النشاط التجاري"
+                      required
+                      icon={<MdStore />}
+                      options={activityOptions}
+                      value={s.activity}
+                      onChange={(v) => set("activity", v)}
+                      placeholder="اختر النشاط…"
+                      error={err(!s.activity, messages.required)}
+                    />
+                    <IconSwitch
+                      label="الرخصة البلدية"
+                      description="هل يوجد رخصة بلدية سارية؟"
+                      checked={s.hasLicense}
+                      onChange={(v) => {
+                        set("hasLicense", v);
+                        if (!v) set("licenseNumber", "");
+                      }}
+                    />
+                    {s.hasLicense && (
+                      <IconText
+                        label="رقم الرخصة"
+                        required
+                        icon={<MdNumbers />}
+                        placeholder="يرجى إدخال رقم الرخصة البلدية"
+                        value={s.licenseNumber}
+                        onChange={(v) => set("licenseNumber", v)}
+                        dir="ltr"
+                        error={err(
+                          !validators.required(s.licenseNumber),
+                          messages.required,
+                        )}
+                      />
+                    )}
+                  </div>
+                </SectionCard>
+              )}
+
               <SectionCard
-                icon={<MdBed />}
+                icon={<HiHomeModern />}
                 title="تفاصيل الوحدة"
                 description="المرافق والعدادات"
               >
@@ -1443,7 +1525,7 @@ export function SmartForm({
                             {
                               value: "storage",
                               label: "غرفة مخزن",
-                              icon: <MdBed />,
+                              icon: <PiWarehouseFill />,
                             },
                             {
                               value: "sitting",
@@ -1536,6 +1618,73 @@ export function SmartForm({
                   value={s.applicantId}
                   onEdit={() => setStep(1)}
                 />
+                {s.applicantDob && (
+                  <SummaryRow
+                    title="تاريخ ميلاد مقدم الطلب"
+                    value={dateLabel(s.applicantDob)}
+                    onEdit={() => setStep(1)}
+                  />
+                )}
+                {isCommercial && (
+                  <SummaryRow
+                    title="نوع الطرف الآخر"
+                    value={s.counterType === "entity" ? "منشأة" : "فرد"}
+                    onEdit={() => setStep(1)}
+                  />
+                )}
+                {s.counterType === "entity" ? (
+                  <>
+                    <SummaryRow
+                      title="الرقم الموحد للمنشأة"
+                      value={s.unifiedNumber}
+                      onEdit={() => setStep(1)}
+                    />
+                    <SummaryRow
+                      title="هوية المفوّض بالتوقيع"
+                      value={s.repId}
+                      onEdit={() => setStep(1)}
+                    />
+                    <SummaryRow
+                      title="جوال المفوّض بالتوقيع"
+                      value={s.repPhone}
+                      onEdit={() => setStep(1)}
+                    />
+                    {s.repDob && (
+                      <SummaryRow
+                        title="تاريخ ميلاد المفوّض بالتوقيع"
+                        value={dateLabel(s.repDob)}
+                        onEdit={() => setStep(1)}
+                      />
+                    )}
+                    {s.authNumber && (
+                      <SummaryRow
+                        title="رقم التفويض أو الوكالة"
+                        value={s.authNumber}
+                        onEdit={() => setStep(1)}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <SummaryRow
+                      title="رقم الهوية / الإقامة للطرف الآخر"
+                      value={s.otherId}
+                      onEdit={() => setStep(1)}
+                    />
+                    <SummaryRow
+                      title="جوال الطرف الآخر"
+                      value={s.otherPhone}
+                      onEdit={() => setStep(1)}
+                    />
+                    {s.otherDob && (
+                      <SummaryRow
+                        title="تاريخ ميلاد الطرف الآخر"
+                        value={dateLabel(s.otherDob)}
+                        onEdit={() => setStep(1)}
+                      />
+                    )}
+                  </>
+                )}
                 <SummaryRow
                   title="IBAN المؤجر"
                   value={s.ownerIban}
@@ -1544,6 +1693,11 @@ export function SmartForm({
                 <SummaryRow
                   title="رقم الصك"
                   value={s.deedNumber}
+                  onEdit={() => setStep(2)}
+                />
+                <SummaryRow
+                  title="تاريخ الصك"
+                  value={dateLabel(s.deedDate)}
                   onEdit={() => setStep(2)}
                 />
                 {s.locationManual === true && (
@@ -1586,6 +1740,16 @@ export function SmartForm({
                   onEdit={() => setStep(3)}
                 />
                 <SummaryRow
+                  title="تاريخ بداية العقد"
+                  value={dateLabel(s.contractStart)}
+                  onEdit={() => setStep(3)}
+                />
+                <SummaryRow
+                  title="الدفعات"
+                  value={paymentLabel}
+                  onEdit={() => setStep(3)}
+                />
+                <SummaryRow
                   title="الإيجار السنوي"
                   value={formatCurrency(s.annualRent)}
                   onEdit={() => setStep(3)}
@@ -1605,6 +1769,13 @@ export function SmartForm({
                   value={s.electroMeter}
                   onEdit={() => setStep(4)}
                 />
+                {s.waterMeter && (
+                  <SummaryRow
+                    title="رقم عداد المياه"
+                    value={s.waterMeter}
+                    onEdit={() => setStep(4)}
+                  />
+                )}
                 <SummaryRow
                   title="المرافق المتوفرة"
                   value={extrasText(s.extras) ?? "-"}
@@ -1622,6 +1793,27 @@ export function SmartForm({
                     }
                     onEdit={() => setStep(4)}
                   />
+                )}
+                {isCommercial && (
+                  <>
+                    <SummaryRow
+                      title="النشاط التجاري"
+                      value={activityLabel}
+                      onEdit={() => setStep(4)}
+                    />
+                    <SummaryRow
+                      title="الرخصة البلدية"
+                      value={s.hasLicense ? "نعم" : "لا"}
+                      onEdit={() => setStep(4)}
+                    />
+                    {s.hasLicense && (
+                      <SummaryRow
+                        title="رقم الرخصة"
+                        value={s.licenseNumber}
+                        onEdit={() => setStep(4)}
+                      />
+                    )}
+                  </>
                 )}
                 <div className="bg-accent/10 flex items-center justify-between rounded-2xl p-4">
                   <span className="flex items-center gap-2 font-semibold">

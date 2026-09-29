@@ -21,7 +21,6 @@ export type FormState = {
   applicantPhone: string;
   applicantId: string;
   applicantDob: CalendarDate | null;
-  otherName: string;
   otherId: string;
   otherPhone: string;
   otherDob: CalendarDate | null;
@@ -65,7 +64,6 @@ export type FormState = {
   hasLicense: boolean;
   licenseNumber: string;
   notes: string;
-  agree: boolean;
 };
 
 export type RequestDetail = {

@@ -13,6 +13,7 @@ import {
 import { MdArrowBack, MdLocationOn } from "react-icons/md";
 import { TimelineAnimation } from "@/components/ui/timeline-animation";
 import { formatDualDate } from "@/lib/request-display";
+import { CurrencyText } from "@/lib/currency-text";
 import { cn } from "@/lib/utils";
 
 type Tone = "default" | "accent" | "deep";
@@ -145,7 +146,7 @@ export function TestimonialCard({
             className="me-1 inline size-4 opacity-60"
             aria-hidden="true"
           />
-          {item.quote}
+          <CurrencyText text={item.quote} />
           <FaQuoteLeft
             className="ms-1 inline size-4 opacity-60"
             aria-hidden="true"

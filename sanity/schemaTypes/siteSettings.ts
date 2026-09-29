@@ -8,6 +8,7 @@ import {
 } from "../lib/socialPlatforms";
 import PlatformSelect from "../lib/components/PlatformSelect";
 import FeesInput from "../lib/components/FeesInput";
+import { RtlPortableTextInput } from "../lib/components/RtlPortableTextInput";
 import StatusInput from "../lib/components/StatusInput";
 
 export const siteSettings = defineType({
@@ -196,6 +197,56 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({
+      name: "marketingPoints",
+      title: "Marketing points (hero + CTA)",
+      description:
+        "Bullet lines with icons shown in the hero/CTA visuals. When empty, both are hidden.",
+      type: "array",
+      group: "general",
+      of: [
+        defineArrayMember({
+          type: "object",
+          fields: [
+            defineField({
+              name: "text",
+              title: "Text",
+              type: "string",
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "icon",
+              title: "Icon",
+              type: "string",
+              options: {
+                list: [
+                  { title: "Save (draft)", value: "save" },
+                  { title: "Review (check)", value: "review" },
+                  { title: "Receipt (fees)", value: "fees" },
+                  { title: "Badge (verification)", value: "verify" },
+                  { title: "Ticket (tracking)", value: "track" },
+                  { title: "Note (meters)", value: "meters" },
+                  { title: "Bolt (speed)", value: "bolt" },
+                  {
+                    title: "Payment card (pay after review)",
+                    value: "payment",
+                  },
+                  {
+                    title: "Verified user (certified)",
+                    value: "verified_user",
+                  },
+                  { title: "Price tag (best prices)", value: "tag" },
+                ],
+              },
+              validation: (rule) => rule.required(),
+            }),
+          ],
+          preview: {
+            select: { title: "text", subtitle: "icon" },
+          },
+        }),
+      ],
+    }),
+    defineField({
       name: "faqs",
       title: "FAQs",
       type: "array",
@@ -215,6 +266,7 @@ export const siteSettings = defineType({
               name: "answer",
               title: "Answer",
               type: "array",
+              components: { input: RtlPortableTextInput },
               of: [
                 defineArrayMember({
                   type: "block",

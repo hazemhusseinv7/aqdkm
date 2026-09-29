@@ -3,14 +3,23 @@
 import { Typography } from "@heroui/react";
 import { MdCheckCircle, MdPayments } from "react-icons/md";
 import { WordAnimator } from "@/components/hero/word-animator";
-import { NewItemsLoading } from "@/components/hero/new-items-loading";
+import {
+  NewItemsLoading,
+  type MarketingPoint,
+} from "@/components/hero/new-items-loading";
 import { FloatingBadge } from "@/components/hero/floating-badge";
 import { GlowBadge } from "@/components/hero/glow-badge";
 import { SplitCta, type CtaFees } from "@/components/home/split-cta";
 
 const rotatingWords = ["عقدك السكني", "عقدك التجاري", "عقد مكتبك", "عقد محلك"];
 
-export function Cta({ ctaFees }: { ctaFees?: CtaFees | null }) {
+export function Cta({
+  ctaFees,
+  points,
+}: {
+  ctaFees?: CtaFees | null;
+  points?: MarketingPoint[] | null;
+}) {
   return (
     <section className="border-border bg-surface relative overflow-hidden rounded-3xl border before:pointer-events-none before:absolute before:inset-0 before:z-10 before:bg-[url(/images/noise.gif)] before:bg-repeat before:opacity-[0.05] before:content-['']">
       <div
@@ -33,7 +42,8 @@ export function Cta({ ctaFees }: { ctaFees?: CtaFees | null }) {
             <WordAnimator words={rotatingWords} className="text-accent" />
           </Typography>
           <Typography type="body" color="muted">
-            قدّم طلبك بخطوات واضحة مع حفظ تلقائي للمسودة ومراجعة قبل الإرسال.
+            قدّم طلبك بخطوات واضحة: توثيق رسمي عبر منصة إيجار، والدفع بعد
+            معاينة نسخة العقد.
           </Typography>
           <SplitCta ctaFees={ctaFees} />
         </div>
@@ -51,7 +61,7 @@ export function Cta({ ctaFees }: { ctaFees?: CtaFees | null }) {
             label="متابعة برقم الطلب"
             duration={5}
           />
-          <NewItemsLoading />
+          <NewItemsLoading points={points} />
         </div>
       </div>
     </section>

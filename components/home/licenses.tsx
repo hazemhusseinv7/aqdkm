@@ -1,5 +1,6 @@
 import { Card, Chip, Typography } from "@heroui/react";
 import { MdBadge, MdOpenInNew } from "react-icons/md";
+import { CurrencyText } from "@/lib/currency-text";
 import { licenseIcon } from "@/components/home/section-icons";
 
 export type LicenseItem = {
@@ -49,7 +50,9 @@ export function Licenses({
                 </Chip>
               </Card.Header>
               <Card.Content className="gap-2">
-                <Card.Description>{l.description}</Card.Description>
+                <Card.Description>
+                  <CurrencyText text={l.description} />
+                </Card.Description>
                 {l.number && (
                   <p className="text-sm font-medium">
                     رقم الترخيص: <span dir="ltr">{l.number}</span>

@@ -8,14 +8,18 @@ import {
   CATEGORIES_QUERY,
   POSTS_COUNT_QUERY,
   POSTS_INDEX_QUERY,
+  SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import type {
   CATEGORIES_QUERY_RESULT,
   POSTS_INDEX_QUERY_RESULT,
+  SITE_SETTINGS_QUERY_RESULT,
 } from "@/sanity.types";
 import { BlogEmptyState, PostCardGrid } from "@/components/blog/post-card";
 import { Cta } from "@/components/cta";
 import { BlogPagination } from "@/components/blog/blog-pagination";
+import type { CtaFees } from "@/components/home/split-cta";
+import type { MarketingPoint } from "@/components/hero/new-items-loading";
 
 const PAGE_SIZE = 9;
 
@@ -53,7 +57,7 @@ export default async function BlogIndexPage({
     notFound();
   }
   const offset = (page - 1) * PAGE_SIZE;
-  const [postsData, catsData, countData] = await Promise.all([
+  const [postsData, catsData, countData, settingsData] = await Promise.all([
     client.fetch(
       POSTS_INDEX_QUERY,
       { offset, end: offset + PAGE_SIZE },
@@ -69,9 +73,25 @@ export default async function BlogIndexPage({
       {},
       { next: { tags: [BLOG_CACHE_TAG, "post"] } },
     ),
-  ]).catch(() => [null, null, null]);
+    client.fetch(
+      SITE_SETTINGS_QUERY,
+      {},
+      { next: { tags: [BLOG_CACHE_TAG, "siteSettings"] } },
+    ),
+  ]).catch(() => [null, null, null, null]);
   const posts = (stegaClean(postsData) as POSTS_INDEX_QUERY_RESULT) ?? [];
   const categories = (stegaClean(catsData) as CATEGORIES_QUERY_RESULT) ?? [];
+  const settings = stegaClean(settingsData) as SITE_SETTINGS_QUERY_RESULT;
+  const ctaFees: CtaFees | null = settings
+    ? {
+        note: settings.cta?.note ?? null,
+        resFrom: settings.cta?.residentialFrom ?? null,
+        comFrom: settings.cta?.commercialFrom ?? null,
+      }
+    : null;
+  const points: MarketingPoint[] = (settings?.marketingPoints ?? [])
+    .map((p) => ({ text: p.text ?? "", icon: p.icon ?? null }))
+    .filter((p) => p.text);
   const total = typeof countData === "number" ? countData : posts.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   if (page > totalPages) {
@@ -115,7 +135,7 @@ export default async function BlogIndexPage({
 
       {totalPages > 1 && <BlogPagination page={page} totalPages={totalPages} />}
 
-      <Cta />
+      <Cta ctaFees={ctaFees} points={points} />
     </div>
   );
 }

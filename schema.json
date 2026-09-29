@@ -1762,6 +1762,85 @@
         },
         "optional": true
       },
+      "marketingPoints": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "text": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "icon": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "union",
+                  "of": [
+                    {
+                      "type": "string",
+                      "value": "save"
+                    },
+                    {
+                      "type": "string",
+                      "value": "review"
+                    },
+                    {
+                      "type": "string",
+                      "value": "fees"
+                    },
+                    {
+                      "type": "string",
+                      "value": "verify"
+                    },
+                    {
+                      "type": "string",
+                      "value": "track"
+                    },
+                    {
+                      "type": "string",
+                      "value": "meters"
+                    },
+                    {
+                      "type": "string",
+                      "value": "bolt"
+                    },
+                    {
+                      "type": "string",
+                      "value": "payment"
+                    },
+                    {
+                      "type": "string",
+                      "value": "verified_user"
+                    },
+                    {
+                      "type": "string",
+                      "value": "tag"
+                    }
+                  ]
+                },
+                "optional": false
+              }
+            },
+            "rest": {
+              "type": "object",
+              "attributes": {
+                "_key": {
+                  "type": "objectAttribute",
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "optional": true
+      },
       "faqs": {
         "type": "objectAttribute",
         "value": {

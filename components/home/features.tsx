@@ -1,6 +1,7 @@
 import { Typography } from "@heroui/react";
 import { Card } from "@heroui/react";
 import { featureIcon } from "@/components/home/section-icons";
+import { CurrencyText } from "@/lib/currency-text";
 
 export type FeatureItem = {
   _key: string;
@@ -35,7 +36,9 @@ export function Features({ items }: { items: FeatureItem[] }) {
                 <Card.Title>{f.title}</Card.Title>
               </Card.Header>
               <Card.Content>
-                <Card.Description>{f.description}</Card.Description>
+                <Card.Description>
+                  <CurrencyText text={f.description} />
+                </Card.Description>
               </Card.Content>
             </Card>
           );

@@ -4,6 +4,7 @@ import { MdPerson } from "react-icons/md";
 import { BsCalendar2WeekFill } from "react-icons/bs";
 import type { POSTS_INDEX_QUERY_RESULT } from "@/sanity.types";
 import { formatPostDate } from "@/lib/blog";
+import { CurrencyText } from "@/lib/currency-text";
 import { PostCover } from "./post-cover";
 
 export type BlogPostCard = POSTS_INDEX_QUERY_RESULT[number];
@@ -32,7 +33,7 @@ export function PostCard({ post }: { post: BlogPostCard }) {
             {post.title}
           </h2>
           <Card.Description className="line-clamp-2">
-            {post.excerpt}
+            <CurrencyText text={post.excerpt} />
           </Card.Description>
         </Card.Header>
         <Card.Content className="mt-auto">

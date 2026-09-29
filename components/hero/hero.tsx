@@ -11,7 +11,7 @@ import {
 import { RiSendInsFill } from "react-icons/ri";
 import { FaFileContract, FaUsers } from "react-icons/fa";
 import { WordAnimator } from "./word-animator";
-import { NewItemsLoading } from "./new-items-loading";
+import { NewItemsLoading, type MarketingPoint } from "./new-items-loading";
 import { FloatingBadge } from "./floating-badge";
 import { GlowBadge } from "./glow-badge";
 import { SplitCta, type CtaFees } from "@/components/home/split-cta";
@@ -42,9 +42,11 @@ const steps: {
 export function Hero({
   socialLinks,
   ctaFees,
+  points,
 }: {
   socialLinks?: FooterSocialLink[] | null;
   ctaFees?: CtaFees | null;
+  points?: MarketingPoint[] | null;
 }) {
   const links = (socialLinks ?? []).filter((l) => l.url);
 
@@ -75,8 +77,8 @@ export function Hero({
         </Typography>
 
         <Typography type="body" color="muted" className="max-w-2xl text-center">
-          بيانات الأطراف والصك والعقد بخطوات واضحة، مع حفظ تلقائي للمسودة
-          ومراجعة قبل الإرسال.
+          بيانات الأطراف والصك والعقد بخطوات واضحة: توثيق رسمي عبر منصة
+          إيجار، والدفع بعد معاينة نسخة العقد.
         </Typography>
 
         <SplitCta ctaFees={ctaFees} />
@@ -126,7 +128,7 @@ export function Hero({
             label="متابعة برقم الطلب"
             duration={5}
           />
-          <NewItemsLoading />
+          <NewItemsLoading points={points} />
         </div>
 
         {links.length > 0 && (

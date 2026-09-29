@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { MdRateReview, MdReceiptLong, MdSave } from "react-icons/md";
 import { cn } from "@/lib/utils";
+import { featureIcon } from "@/components/home/section-icons";
+import { CurrencyText } from "@/lib/currency-text";
+
+export type MarketingPoint = {
+  text: string;
+  icon: string | null;
+};
 
 const STAGE_DELAYS = [500, 1100];
 
@@ -30,7 +36,7 @@ function SkeletonRows() {
   );
 }
 
-function FinalCard() {
+function FinalCard({ points }: { points: MarketingPoint[] }) {
   return (
     <div className="border-border bg-surface relative flex flex-col gap-2 overflow-hidden rounded-2xl border p-3">
       <Image
@@ -49,23 +55,39 @@ function FinalCard() {
         height={348}
         className="pointer-events-none absolute inset-e-0 -bottom-8.5 hidden size-28 opacity-20 select-none dark:block"
       />
-      <span className="flex items-center gap-1.5 text-sm font-medium">
-        <MdRateReview className="text-accent size-4 shrink-0" />
-        مراجعة قبل الإرسال
-      </span>
-      <span className="text-muted flex items-center gap-1.5 text-xs">
-        <MdReceiptLong className="text-accent size-3.5 shrink-0" />
-        عرض الرسوم مقدماً
-      </span>
-      <span className="text-muted flex items-center gap-1.5 text-xs">
-        <MdSave className="text-accent size-3.5 shrink-0" />
-        حفظ تلقائي للمسودة
-      </span>
+      {points.map((point, i) => {
+        const Icon = featureIcon(point.icon);
+        return (
+          <span
+            key={point.text}
+            className={
+              i === 0
+                ? "flex items-center gap-1.5 text-sm font-medium"
+                : "text-muted flex items-center gap-1.5 text-xs"
+            }
+          >
+            <Icon
+              className={
+                i === 0
+                  ? "text-accent size-4 shrink-0"
+                  : "text-accent size-3.5 shrink-0"
+              }
+            />
+            <CurrencyText text={point.text} />
+          </span>
+        );
+      })}
     </div>
   );
 }
 
-export function NewItemsLoading({ className }: { className?: string }) {
+export function NewItemsLoading({
+  className,
+  points,
+}: {
+  className?: string;
+  points?: MarketingPoint[] | null;
+}) {
   const shouldReduceMotion = useReducedMotion();
   const [stage, setStage] = useState(shouldReduceMotion ? 2 : 0);
 
@@ -76,6 +98,8 @@ export function NewItemsLoading({ className }: { className?: string }) {
     );
     return () => timers.forEach(clearTimeout);
   }, [shouldReduceMotion]);
+
+  if (!points?.length) return null;
 
   return (
     <div className={cn("min-h-24", className)} aria-live="polite">
@@ -95,7 +119,7 @@ export function NewItemsLoading({ className }: { className?: string }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
         >
-          <FinalCard />
+          <FinalCard points={points} />
         </motion.div>
       )}
     </div>

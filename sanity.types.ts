@@ -291,6 +291,21 @@ export type SiteSettings = {
     residentialFrom?: number;
     commercialFrom?: number;
   };
+  marketingPoints?: Array<{
+    text: string;
+    icon:
+      | "save"
+      | "review"
+      | "fees"
+      | "verify"
+      | "track"
+      | "meters"
+      | "bolt"
+      | "payment"
+      | "verified_user"
+      | "tag";
+    _key: string;
+  }>;
   faqs?: Array<{
     question: string;
     answer: Array<{
@@ -568,7 +583,7 @@ export type AllSanitySchemaTypes =
 
 // Source: sanity/lib/queries.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }
+// Query: *[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, marketingPoints[]{ text, icon }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }
 export type SITE_SETTINGS_QUERY_RESULT =
   | {
       fees: null;
@@ -576,6 +591,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       email: null;
       regaLicenseUrl: null;
       cta: null;
+      marketingPoints: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -587,6 +603,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       email: string;
       regaLicenseUrl: null;
       cta: null;
+      marketingPoints: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -598,6 +615,7 @@ export type SITE_SETTINGS_QUERY_RESULT =
       email: string | null;
       regaLicenseUrl: null;
       cta: null;
+      marketingPoints: null;
       gaMeasurementId: null;
       gtmId: null;
       socialLinks: null;
@@ -622,6 +640,20 @@ export type SITE_SETTINGS_QUERY_RESULT =
         residentialFrom: number | null;
         commercialFrom: number | null;
       } | null;
+      marketingPoints: Array<{
+        text: string;
+        icon:
+          | "bolt"
+          | "fees"
+          | "meters"
+          | "payment"
+          | "review"
+          | "save"
+          | "tag"
+          | "track"
+          | "verified_user"
+          | "verify";
+      }> | null;
       gaMeasurementId: string | null;
       gtmId: string | null;
       socialLinks: Array<{
@@ -1313,7 +1345,7 @@ export type LICENSES_QUERY_RESULT =
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }': SITE_SETTINGS_QUERY_RESULT;
+    '*[_id == "siteSettings"][0]{ fees, supportPhone, email, regaLicenseUrl, cta{ note, residentialFrom, commercialFrom }, marketingPoints[]{ text, icon }, gaMeasurementId, gtmId, socialLinks[]{ platform, url }, faqs[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } } }': SITE_SETTINGS_QUERY_RESULT;
     '*[_type == "rentalRequest"] | order(submittedAt desc){\n    _id,\n    requestNo,\n    contractType,\n    status,\n    submittedAt\n  }': REQUESTS_ALL_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt)] | order(publishedAt desc)[$offset...$end]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_INDEX_QUERY_RESULT;
     'count(*[_type == "post" && defined(slug.current) && defined(publishedAt)])': POSTS_COUNT_QUERY_RESULT;

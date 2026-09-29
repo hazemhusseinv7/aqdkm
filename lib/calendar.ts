@@ -102,21 +102,8 @@ export function formatDual(iso: string): string | null {
   return `${hijriFmt.format(d)} / ${gregFmt.format(d)}`;
 }
 
-export function isAdult18(date: CalendarDate | null): boolean {
-  if (!date) return false;
-  const g = toCalendar(date, GREGORIAN);
-  const cutoff = today(getLocalTimeZone()).subtract({ years: 18 });
-  return g.compare(cutoff) <= 0;
-}
-
 /** Serialize any calendar date as Gregorian ISO (Sanity + server validators are Gregorian-only). */
 export function toGregorianISO(date: CalendarDate | null): string | null {
   if (!date) return null;
   return toCalendar(date, GREGORIAN).toString();
-}
-
-export function isPastDay(date: CalendarDate | null): boolean {
-  if (!date) return false;
-  const g = toCalendar(date, GREGORIAN);
-  return g.compare(today(getLocalTimeZone())) < 0;
 }

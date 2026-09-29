@@ -4,12 +4,11 @@ import { useState } from "react";
 import { toast } from "@heroui/react";
 import { BiSolidCoinStack } from "react-icons/bi";
 import { BsCalendar2WeekFill } from "react-icons/bs";
-import { FaBuilding, FaUsers } from "react-icons/fa";
-import { FaFileContract } from "react-icons/fa";
+import { FaFileContract, FaBuilding, FaUsers } from "react-icons/fa";
+import { FaDoorOpen } from "react-icons/fa6";
 import {
   MdAccountBalanceWallet,
   MdBadge,
-  MdBed,
   MdCake,
   MdCheck,
   MdContentCopy,
@@ -412,7 +411,7 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           )}
         />
         <FieldRow
-          icon={<MdBed />}
+          icon={<FaDoorOpen />}
           label={L.rooms.ar}
           display={countText(p?.rooms, p?.roomsCustom)}
         />
@@ -428,7 +427,9 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           <FieldRow
             icon={<MdKitchen />}
             label={L.kitchenCabinets.ar}
-            display={p?.kitchenCabinets == null ? null : yesNo(p.kitchenCabinets)}
+            display={
+              p?.kitchenCabinets == null ? null : yesNo(p.kitchenCabinets)
+            }
           />
         ) : null}
         <FieldRow
@@ -443,24 +444,32 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           display={p?.waterMeter ?? null}
           ltr
         />
-        <FieldRow
-          icon={<MdHome />}
-          label={L.activity.ar}
-          display={p?.activity ?? null}
-        />
-        <FieldRow
-          icon={<MdBadge />}
-          label={L.hasLicense.ar}
-          display={
-            p?.hasLicense == null ? null : p.hasLicense ? "يوجد" : "لا يوجد"
-          }
-        />
-        <FieldRow
-          icon={<MdBadge />}
-          label={L.licenseNumber.ar}
-          display={p?.licenseNumber ?? null}
-          ltr
-        />
+        {isCommercial && (
+          <>
+            <FieldRow
+              icon={<MdHome />}
+              label={L.activity.ar}
+              display={p?.activity ?? null}
+            />
+            <FieldRow
+              icon={<MdBadge />}
+              label={L.hasLicense.ar}
+              display={
+                p?.hasLicense == null
+                  ? null
+                  : p.hasLicense
+                    ? "يوجد"
+                    : "لا يوجد"
+              }
+            />
+            <FieldRow
+              icon={<MdBadge />}
+              label={L.licenseNumber.ar}
+              display={p?.licenseNumber ?? null}
+              ltr
+            />
+          </>
+        )}
       </Section>
 
       <Section icon={<MdTimelapse />} title="مدة العقد">
@@ -492,6 +501,30 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           }
           copy={priceText(t?.annualRent)}
         />
+        {t?.feeBreakdown?.years != null && (
+          <FieldRow
+            icon={<BiSolidCoinStack />}
+            label={L.feeYears.ar}
+            display={`${t.feeBreakdown.years}`}
+            copy={`${t.feeBreakdown.years}`}
+          />
+        )}
+        {t?.feeBreakdown?.government != null && (
+          <FieldRow
+            icon={<BiSolidCoinStack />}
+            label={L.feeGovernment.ar}
+            display={<Price value={t.feeBreakdown.government} />}
+            copy={priceText(t.feeBreakdown.government)}
+          />
+        )}
+        {t?.feeBreakdown?.company != null && (
+          <FieldRow
+            icon={<BiSolidCoinStack />}
+            label={L.feeCompany.ar}
+            display={<Price value={t.feeBreakdown.company} />}
+            copy={priceText(t.feeBreakdown.company)}
+          />
+        )}
         <FieldRow
           icon={<BiSolidCoinStack />}
           label={L.feeTotal.ar}

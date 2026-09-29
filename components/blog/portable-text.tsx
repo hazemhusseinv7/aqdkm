@@ -8,6 +8,12 @@ import type {
   POST_DETAIL_QUERY_RESULT,
   SITE_SETTINGS_QUERY_RESULT,
 } from "@/sanity.types";
+import {
+  annotateCurrencyBlocks,
+  CURRENCY_MARK,
+  CurrencyIcon,
+  CurrencyText,
+} from "@/lib/currency-text";
 
 type Body = NonNullable<POST_DETAIL_QUERY_RESULT>["body"];
 type SettingsFaqs = NonNullable<SITE_SETTINGS_QUERY_RESULT>["faqs"];
@@ -56,6 +62,11 @@ const components: PortableTextComponents = {
         {children}
       </a>
     ),
+    [CURRENCY_MARK]: () => (
+      <span className="inline-flex items-center">
+        <CurrencyIcon />
+      </span>
+    ),
   },
   types: {
     image: ({ value }) => {
@@ -77,7 +88,7 @@ const components: PortableTextComponents = {
           </span>
           {value?.caption ? (
             <figcaption className="text-muted text-center text-sm">
-              {value.caption as string}
+              <CurrencyText text={value.caption as string} />
             </figcaption>
           ) : null}
         </figure>
@@ -90,7 +101,9 @@ export function BlogBody({ body }: { body: Body | SettingsFaqAnswer }) {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <PortableText
-        value={body as unknown as PortableTextBlock[]}
+        value={annotateCurrencyBlocks(
+          body as unknown as PortableTextBlock[],
+        )}
         components={components}
       />
     </div>

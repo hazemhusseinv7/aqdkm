@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { RtlPortableTextInput } from "../lib/components/RtlPortableTextInput";
 import { MdGavel } from "react-icons/md";
 
 export const legalPage = defineType({
@@ -37,6 +38,7 @@ export const legalPage = defineType({
       name: "content",
       title: "Content",
       type: "array",
+      components: { input: RtlPortableTextInput },
       of: [
         defineArrayMember({
           type: "block",
@@ -110,6 +112,7 @@ export const legalPage = defineType({
               name: "answer",
               title: "Answer",
               type: "array",
+              components: { input: RtlPortableTextInput },
               of: [
                 defineArrayMember({
                   type: "block",

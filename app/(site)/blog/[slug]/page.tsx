@@ -7,15 +7,19 @@ import { notFound } from "next/navigation";
 import { stegaClean } from "next-sanity";
 import { client } from "@/sanity/lib/client";
 import { BLOG_CACHE_TAG } from "@/lib/constants";
-import { POST_DETAIL_QUERY, POST_SLUGS_QUERY } from "@/sanity/lib/queries";
+import { POST_DETAIL_QUERY, POST_SLUGS_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 import type {
   POST_DETAIL_QUERY_RESULT,
   POST_SLUGS_QUERY_RESULT,
+  SITE_SETTINGS_QUERY_RESULT,
 } from "@/sanity.types";
 import { BlogBody } from "@/components/blog/portable-text";
 import { Cta } from "@/components/cta";
 import { PostCover } from "@/components/blog/post-cover";
 import { formatPostDate, postCoverImage } from "@/lib/blog";
+import { normalizeCurrencyText, CurrencyText } from "@/lib/currency-text";
+import type { CtaFees } from "@/components/home/split-cta";
+import type { MarketingPoint } from "@/components/hero/new-items-loading";
 
 export async function generateStaticParams() {
   try {
@@ -46,12 +50,13 @@ export async function generateMetadata({
     const post = stegaClean(data) as POST_DETAIL_QUERY_RESULT;
     if (!post) return { title: "المقال غير موجود" };
     const cover = postCoverImage(post.cover);
+    const description = normalizeCurrencyText(post.excerpt);
     return {
       title: `${post.title} | المدونة`,
-      description: post.excerpt,
+      description,
       openGraph: {
         title: post.title,
-        description: post.excerpt,
+        description,
         ...(cover ? { images: [{ url: cover.src }] } : {}),
       },
     };
@@ -67,20 +72,41 @@ export default async function BlogPostPage({
 }) {
   const { slug } = await params;
   let post: POST_DETAIL_QUERY_RESULT = null;
+  let ctaFees: CtaFees | null = null;
+  let points: MarketingPoint[] = [];
   try {
-    const data = await client.fetch(
-      POST_DETAIL_QUERY,
-      { slug },
-      { next: { tags: [BLOG_CACHE_TAG, "post"] } },
-    );
-    post = stegaClean(data) as POST_DETAIL_QUERY_RESULT;
+    const [postData, settingsData] = await Promise.all([
+      client.fetch(
+        POST_DETAIL_QUERY,
+        { slug },
+        { next: { tags: [BLOG_CACHE_TAG, "post"] } },
+      ),
+      client.fetch(
+        SITE_SETTINGS_QUERY,
+        {},
+        { next: { tags: [BLOG_CACHE_TAG, "siteSettings"] } },
+      ),
+    ]);
+    post = stegaClean(postData) as POST_DETAIL_QUERY_RESULT;
+    const settings = stegaClean(settingsData) as SITE_SETTINGS_QUERY_RESULT;
+    if (settings) {
+      ctaFees = {
+        note: settings.cta?.note ?? null,
+        resFrom: settings.cta?.residentialFrom ?? null,
+        comFrom: settings.cta?.commercialFrom ?? null,
+      };
+      points = (settings.marketingPoints ?? [])
+        .map((p) => ({ text: p.text ?? "", icon: p.icon ?? null }))
+        .filter((p) => p.text);
+    }
   } catch {
     post = null;
   }
   if (!post) notFound();
 
   return (
-    <article className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
+    <>
+      <article className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
       <Breadcrumbs>
         <Breadcrumbs.Item href="/">الرئيسية</Breadcrumbs.Item>
         <Breadcrumbs.Item href="/blog">المدونة</Breadcrumbs.Item>
@@ -132,7 +158,7 @@ export default async function BlogPostPage({
         />
         {post.cover?.caption && (
           <figcaption className="text-muted text-center text-sm">
-            {post.cover.caption}
+            <CurrencyText text={post.cover.caption} />
           </figcaption>
         )}
       </figure>
@@ -147,7 +173,9 @@ export default async function BlogPostPage({
             </span>
             <div>
               <Card.Title>{post.author.name}</Card.Title>
-              <Card.Description>{post.author.bio}</Card.Description>
+              <Card.Description>
+                <CurrencyText text={post.author.bio} />
+              </Card.Description>
             </div>
           </Card.Header>
         </Card>
@@ -159,8 +187,10 @@ export default async function BlogPostPage({
           العودة إلى المدونة
         </span>
       </Link>
-
-      <Cta />
     </article>
+      <div className="mx-auto w-full max-w-6xl px-4 pb-8 sm:px-6">
+        <Cta ctaFees={ctaFees} points={points} />
+      </div>
+    </>
   );
 }

@@ -23,6 +23,7 @@ import { SharedElementTransition } from "react-aria-components";
 import { FaBuilding, FaFileContract, FaHome, FaLandmark } from "react-icons/fa";
 import { PiSpeedometerFill } from "react-icons/pi";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
+import { CurrencyText } from "@/lib/currency-text";
 import { HiDocumentCheck } from "react-icons/hi2";
 import { PostCardGrid } from "@/components/blog/post-card";
 import { BlogBody } from "@/components/blog/portable-text";
@@ -37,6 +38,7 @@ import type { FeatureItem } from "@/components/home/features";
 import { Licenses } from "@/components/home/licenses";
 import type { LicenseItem } from "@/components/home/licenses";
 import type { CtaFees } from "@/components/home/split-cta";
+import type { MarketingPoint } from "@/components/hero/new-items-loading";
 import type { FooterSocialLink } from "@/components/shell/footer";
 
 export function HomeContent({
@@ -48,6 +50,7 @@ export function HomeContent({
   licenses,
   regaUrl,
   ctaFees,
+  points,
 }: {
   latestPosts: LATEST_POSTS_QUERY_RESULT;
   faqs: HomeFaqs;
@@ -57,6 +60,7 @@ export function HomeContent({
   licenses: LicenseItem[];
   regaUrl: string | null;
   ctaFees: CtaFees | null;
+  points: MarketingPoint[];
 }) {
   const [key, setKey] = useState("res");
   const [animReady, setAnimReady] = useState(false);
@@ -86,7 +90,7 @@ export function HomeContent({
     );
   return (
     <>
-      <Hero socialLinks={socialLinks} ctaFees={ctaFees} />
+      <Hero socialLinks={socialLinks} ctaFees={ctaFees} points={points} />
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 sm:px-6">
         <Breadcrumbs className="mt-14">
           <Breadcrumbs.Item href="/">الرئيسية</Breadcrumbs.Item>
@@ -183,7 +187,7 @@ export function HomeContent({
                 <Accordion.Heading>
                   <Accordion.Trigger className="gap-2">
                     <MdQuiz className="text-accent size-4" />
-                    {f.question}
+                    <CurrencyText text={f.question} />
                     <Accordion.Indicator />
                   </Accordion.Trigger>
                 </Accordion.Heading>
@@ -199,7 +203,7 @@ export function HomeContent({
 
         <Testimonials items={testimonials} />
         <Licenses items={licenses} regaUrl={regaUrl} />
-        <Cta ctaFees={ctaFees} />
+        <Cta ctaFees={ctaFees} points={points} />
         {latestPosts.length > 0 && (
           <>
             <Separator />
