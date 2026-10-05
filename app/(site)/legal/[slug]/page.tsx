@@ -11,6 +11,7 @@ import type {
 } from "@/sanity.types";
 import { BlogBody } from "@/components/blog/portable-text";
 import { CurrencyText, normalizeCurrencyText } from "@/lib/currency-text";
+import { decodeSlugParam } from "@/lib/blog";
 import { Cta } from "@/components/cta";
 import type { CtaFees } from "@/components/home/split-cta";
 import type { MarketingPoint } from "@/components/hero/new-items-loading";
@@ -20,7 +21,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlugParam(rawSlug);
   const page = await getLegalPage(slug);
   if (!page) {
     return { title: "صفحة غير موجودة" };
@@ -47,7 +49,8 @@ export default async function LegalPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlugParam(rawSlug);
   const page = await getLegalPage(slug);
   if (!page) {
     notFound();
@@ -102,11 +105,11 @@ export default async function LegalPage({
           {accordion.map((s) => (
             <Accordion.Item key={s._key} id={s._key}>
               <Accordion.Heading>
-                  <Accordion.Trigger className="gap-2">
-                    <MdQuiz className="text-accent size-4" />
-                    <CurrencyText text={s.question} />
-                    <Accordion.Indicator />
-                  </Accordion.Trigger>
+                <Accordion.Trigger className="gap-2">
+                  <MdQuiz className="text-accent size-4" />
+                  <CurrencyText text={s.question} />
+                  <Accordion.Indicator />
+                </Accordion.Trigger>
               </Accordion.Heading>
               <Accordion.Panel>
                 <Accordion.Body>

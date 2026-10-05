@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { arabicSlugify, validateArabicSlug } from "../lib/arabicSlug";
 import { RtlPortableTextInput } from "../lib/components/RtlPortableTextInput";
 import { MdGavel } from "react-icons/md";
 
@@ -18,15 +19,8 @@ export const legalPage = defineType({
       name: "slug",
       title: "Slug",
       type: "slug",
-      options: { source: "title", maxLength: 96 },
-      validation: (rule) =>
-        rule.required().custom((slug) => {
-          if (!slug?.current) return "Required";
-          if (!/^[a-z0-9-]+$/.test(slug.current)) {
-            return "Slug must be lowercase with hyphens only";
-          }
-          return true;
-        }),
+      options: { source: "title", maxLength: 96, slugify: arabicSlugify },
+      validation: (rule) => rule.required().custom(validateArabicSlug),
     }),
     defineField({
       name: "description",

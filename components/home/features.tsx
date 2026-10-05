@@ -31,7 +31,7 @@ export function Features({ items }: { items: FeatureItem[] }) {
             <Card key={f._key} variant="default">
               <Card.Header className="gap-3">
                 <span className="bg-accent text-accent-foreground flex size-12 shrink-0 items-center justify-center rounded-2xl">
-                  <Icon className="size-6" />
+                  <Icon className="size-6" aria-hidden="true" />
                 </span>
                 <Card.Title>{f.title}</Card.Title>
               </Card.Header>

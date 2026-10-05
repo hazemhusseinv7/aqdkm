@@ -14,6 +14,7 @@ import {
   CurrencyIcon,
   CurrencyText,
 } from "@/lib/currency-text";
+import { renderCodeHtml } from "@/lib/code-html";
 
 type Body = NonNullable<POST_DETAIL_QUERY_RESULT>["body"];
 type SettingsFaqs = NonNullable<SITE_SETTINGS_QUERY_RESULT>["faqs"];
@@ -69,6 +70,14 @@ const components: PortableTextComponents = {
     ),
   },
   types: {
+    code: ({ value }) => {
+      const rawHtml =
+        typeof (value as { code?: unknown } | undefined)?.code === "string"
+          ? (value as { code: string }).code
+          : "";
+      if (!rawHtml.trim()) return null;
+      return <>{renderCodeHtml(rawHtml)}</>;
+    },
     image: ({ value }) => {
       const src = value?.asset?.url as string | undefined;
       if (!src) return null;
@@ -101,9 +110,7 @@ export function BlogBody({ body }: { body: Body | SettingsFaqAnswer }) {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <PortableText
-        value={annotateCurrencyBlocks(
-          body as unknown as PortableTextBlock[],
-        )}
+        value={annotateCurrencyBlocks(body as unknown as PortableTextBlock[])}
         components={components}
       />
     </div>

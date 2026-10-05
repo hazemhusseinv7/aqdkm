@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { RiWhatsappFill } from "react-icons/ri";
 
 export function WhatsappFloat({ href }: { href: string }) {
@@ -17,7 +17,7 @@ export function WhatsappFloat({ href }: { href: string }) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <RiWhatsappFill className="size-7" />
+      <RiWhatsappFill className="size-7" aria-hidden="true" />
     </motion.a>
   );
 }

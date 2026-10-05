@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { buttonVariants } from "@heroui/react";
-import type { Variants } from "framer-motion";
+import type { Variants } from "motion/react";
 import {
   FaQuoteLeft,
   FaQuoteRight,

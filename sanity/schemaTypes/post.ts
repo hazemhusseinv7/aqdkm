@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { arabicSlugify, validateArabicSlug } from "../lib/arabicSlug";
 import { RtlPortableTextInput } from "../lib/components/RtlPortableTextInput";
 import { RtlTextFieldInput } from "../lib/components/RtlTextFieldInput";
 import { MdFolder, MdInfo } from "react-icons/md";
@@ -27,15 +28,8 @@ export const post = defineType({
       title: "Slug",
       type: "slug",
       group: "general",
-      options: { source: "title", maxLength: 96 },
-      validation: (rule) =>
-        rule.required().custom((slug) => {
-          if (!slug?.current) return "Required";
-          if (!/^[a-z0-9-]+$/.test(slug.current)) {
-            return "Slug must be lowercase with hyphens only";
-          }
-          return true;
-        }),
+      options: { source: "title", maxLength: 96, slugify: arabicSlugify },
+      validation: (rule) => rule.required().custom(validateArabicSlug),
     }),
     defineField({
       name: "excerpt",
@@ -124,6 +118,11 @@ export const post = defineType({
             }),
             defineField({ name: "caption", title: "Caption", type: "string" }),
           ],
+        }),
+        defineArrayMember({
+          type: "code",
+          title: "HTML",
+          options: { language: "html", withFilename: false },
         }),
       ],
       validation: (rule) => rule.required().min(1),

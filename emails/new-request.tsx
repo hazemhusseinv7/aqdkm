@@ -269,24 +269,6 @@ export function NewRequestNotification({
               : []),
             { label: L.electroMeter.ar, display: p?.electroMeter ?? null },
             { label: L.waterMeter.ar, display: p?.waterMeter ?? null },
-            ...(isCommercial
-              ? [
-                  { label: L.activity.ar, display: p?.activity ?? null },
-                  {
-                    label: L.hasLicense.ar,
-                    display:
-                      p?.hasLicense == null
-                        ? null
-                        : p.hasLicense
-                          ? "يوجد"
-                          : "لا يوجد",
-                  },
-                  {
-                    label: L.licenseNumber.ar,
-                    display: p?.licenseNumber ?? null,
-                  },
-                ]
-              : []),
           ]}
         />
         <MailSection

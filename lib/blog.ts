@@ -1,9 +1,15 @@
-import type {
-  POSTS_INDEX_QUERY_RESULT,
-} from "@/sanity.types";
+import type { POSTS_INDEX_QUERY_RESULT } from "@/sanity.types";
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+export function decodeSlugParam(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
 
 export function formatPostDate(iso: string): string {
   return new Intl.DateTimeFormat("ar-SA", {

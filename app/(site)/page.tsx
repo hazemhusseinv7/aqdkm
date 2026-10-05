@@ -23,6 +23,8 @@ import type { LicenseItem } from "@/components/home/licenses";
 import type { CtaFees } from "@/components/home/split-cta";
 import type { MarketingPoint } from "@/components/hero/new-items-loading";
 
+export const revalidate = 3600;
+
 export const metadata = {
   title: "عقدكم - توثيق عقود الإيجار السكنية والتجارية",
   description:

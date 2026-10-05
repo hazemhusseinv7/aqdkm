@@ -44,17 +44,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [
       ...staticRoutes,
       ...slugs.map((slug) => ({
-        url: `${SITE_URL}/blog/${slug}`,
+        url: `${SITE_URL}/blog/${encodeURI(slug)}`,
         lastModified: new Date(),
       })),
       ...categories.map((c) => ({
-        url: `${SITE_URL}/blog/category/${c.slug}`,
+        url: `${SITE_URL}/blog/category/${encodeURI(c.slug)}`,
         lastModified: new Date(),
       })),
       ...legalPages
         .filter((p) => p.slug)
         .map((p) => ({
-          url: `${SITE_URL}/legal/${p.slug}`,
+          url: `${SITE_URL}/legal/${encodeURI(p.slug as string)}`,
           lastModified: new Date(),
         })),
     ];

@@ -237,6 +237,9 @@ export type Post = {
         _type: "image";
         _key: string;
       }
+    | ({
+        _key: string;
+      } & Code)
   >;
   categories?: Array<
     {
@@ -429,9 +432,6 @@ export type RentalRequest = {
     kitchenCabinets?: boolean;
     electroMeter?: string;
     waterMeter?: string;
-    activity?: string;
-    hasLicense?: boolean;
-    licenseNumber?: string;
   };
   location?: {
     locationManual?: boolean;
@@ -455,6 +455,14 @@ export type RentalRequest = {
     };
     notes?: string;
   };
+};
+
+export type Code = {
+  _type: "code";
+  language?: string;
+  filename?: string;
+  code?: string;
+  highlightedLines?: Array<number>;
 };
 
 export type SanityImagePaletteSwatch = {
@@ -572,6 +580,7 @@ export type AllSanitySchemaTypes =
   | Subscriber
   | ContactMessage
   | RentalRequest
+  | Code
   | SanityImagePaletteSwatch
   | SanityImagePalette
   | SanityImageDimensions
@@ -990,6 +999,15 @@ export type POST_DETAIL_QUERY_RESULT = {
       }
     | {
         _key: string;
+        _type: "code";
+        language?: string;
+        filename?: string;
+        code?: string;
+        highlightedLines?: Array<number>;
+        markDefs: null;
+      }
+    | {
+        _key: string;
         _type: "image";
         asset: {
           _id: string;
@@ -1082,7 +1100,7 @@ export type POSTS_BY_CATEGORY_QUERY_RESULT = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: REQUEST_DETAIL_QUERY
-// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },    counterparty{      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, rooms, roomsCustom,      extras[]{ kind, count }, kitchenCabinets,      electroMeter, waterMeter, activity, hasLicense, licenseNumber    },    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent,      feeBreakdown{ years, government, company, total }, notes    }  }
+// Query: *[_type == "rentalRequest" && requestNo == $requestNo][0]{    requestNo,    contractType,    status,    submittedAt,    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },    counterparty{      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,      entityName, repId, repPhone, repDob, authNumber    },    property{      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,      unitNumber, floor, floorCustom, area, rooms, roomsCustom,      extras[]{ kind, count }, kitchenCabinets,      electroMeter, waterMeter    },    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },    terms{      duration, customMonths, contractStart, payment, annualRent,      feeBreakdown{ years, government, company, total }, notes    }  }
 export type REQUEST_DETAIL_QUERY_RESULT = {
   requestNo: string;
   contractType: "commercial" | "residential";
@@ -1132,9 +1150,6 @@ export type REQUEST_DETAIL_QUERY_RESULT = {
     kitchenCabinets: boolean | null;
     electroMeter: string | null;
     waterMeter: string | null;
-    activity: string | null;
-    hasLicense: boolean | null;
-    licenseNumber: string | null;
   } | null;
   location: {
     locationManual: boolean | null;
@@ -1356,7 +1371,7 @@ declare module "@sanity/client" {
     '*[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role, bio, avatar{ alt, asset-> } },\n    body[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    }\n  }': POST_DETAIL_QUERY_RESULT;
     '*[_type == "category"] | order(title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    "postCount": count(*[_type == "post" && references(^._id) && defined(publishedAt)])\n  }': CATEGORIES_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt) && $categorySlug in categories[]->slug.current] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_BY_CATEGORY_QUERY_RESULT;
-    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },\n    counterparty{\n      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, rooms, roomsCustom,\n      extras[]{ kind, count }, kitchenCabinets,\n      electroMeter, waterMeter, activity, hasLicense, licenseNumber\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
+    '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },\n    counterparty{\n      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,\n      entityName, repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, rooms, roomsCustom,\n      extras[]{ kind, count }, kitchenCabinets,\n      electroMeter, waterMeter\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;
     '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    "feeTotal": terms.feeBreakdown.total,\n    "annualRent": terms.annualRent\n  }': REQUEST_STATUS_QUERY_RESULT;
     '*[_type == "subscriber" && email == $email][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_EMAIL_QUERY_RESULT;
     '*[_type == "subscriber" && confirmToken == $tok][0]{ _id, email, status, confirmToken, tokenExpiresAt, resendContactId }': SUBSCRIBER_BY_TOKEN_QUERY_RESULT;

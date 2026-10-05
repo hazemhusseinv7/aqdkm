@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Variants } from "framer-motion";
+import type { Variants } from "motion/react";
 import { BlogPagination } from "@/components/blog/blog-pagination";
 import {
   TestimonialCard,

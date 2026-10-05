@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import {
   MdEmail,
   MdGavel,
@@ -179,7 +179,7 @@ export function Footer({
                   aria-label={meta?.title ?? l.platform}
                   className="text-muted hover:bg-alt hover:text-alt-foreground inline-flex size-9 items-center justify-center rounded-full transition-colors"
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-4" aria-hidden="true" />
                 </a>
               );
             })}

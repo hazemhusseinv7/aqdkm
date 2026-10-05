@@ -135,7 +135,7 @@ export default async function ContactPage() {
                         aria-label={meta?.title ?? platform}
                         className="text-muted hover:bg-alt hover:text-alt-foreground inline-flex size-10 items-center justify-center rounded-full transition-colors"
                       >
-                        <Icon className="size-4" />
+                        <Icon className="size-4" aria-hidden="true" />
                       </a>
                     );
                   })}

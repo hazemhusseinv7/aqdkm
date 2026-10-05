@@ -7,12 +7,14 @@
 import { visionTool } from "@sanity/vision";
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
+import { codeInput } from "@sanity/code-input";
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import { apiVersion, dataset, projectId } from "./sanity/env";
 import { schema } from "./sanity/schemaTypes";
 import { structure } from "./sanity/structure";
 import { copyFieldValueAction } from "./sanity/lib/components/CopyFieldValueAction";
+import { AdvancedRequestsTool } from "./sanity/lib/components/BulkRequestsTool";
 import { createNotifyPublishAction } from "./sanity/lib/notify-publish-action";
 import { RtlTextInput } from "./sanity/lib/components/RtlTextInput";
 
@@ -24,9 +26,17 @@ export default defineConfig({
   schema,
   plugins: [
     structureTool({ structure }),
+    codeInput(),
     // Vision is for querying with GROQ from inside the Studio
     // https://www.sanity.io/docs/the-vision-plugin
     visionTool({ defaultApiVersion: apiVersion }),
+  ],
+  tools: [
+    {
+      name: "advanced",
+      title: "Advanced",
+      component: AdvancedRequestsTool,
+    },
   ],
   form: {
     components: {

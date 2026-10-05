@@ -111,9 +111,6 @@ function assertValidRentalRequest(
     throw invalid("floorCustom");
   if (!s.rooms) throw invalid("rooms");
   if (s.rooms === "other" && !(s.roomsCustom > 0)) throw invalid("roomsCustom");
-  if (isCommercial && !s.activity) throw invalid("activity");
-  if (isCommercial && s.hasLicense && !validators.required(s.licenseNumber))
-    throw invalid("licenseNumber");
   if (
     !Array.isArray(s.extras) ||
     !s.extras.every((e) => e.kind && e.count >= 1)
@@ -216,9 +213,6 @@ export async function submitRentalRequest(
         : undefined,
       electroMeter: s.electroMeter || undefined,
       waterMeter: s.waterMeter || undefined,
-      activity: s.activity || undefined,
-      hasLicense: s.hasLicense,
-      licenseNumber: s.licenseNumber || undefined,
     },
     location: {
       locationManual: s.locationManual,

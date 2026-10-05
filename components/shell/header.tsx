@@ -89,7 +89,7 @@ export function Header() {
                       : "text-foreground/70 hover:text-foreground hover:bg-default",
                   )}
                 >
-                  <Icon className="size-4 shrink-0" />
+                  <Icon className="size-4 shrink-0" aria-hidden="true" />
                   {link.label}
                 </Link>
               );

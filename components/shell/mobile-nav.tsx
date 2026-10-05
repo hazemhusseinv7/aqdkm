@@ -43,7 +43,11 @@ export function MobileNav({
         variant="secondary"
         onPress={() => setOpen(!open)}
       >
-        {open ? <X className="size-4" /> : <Menu className="size-4" />}
+        {open ? (
+          <X className="size-4" aria-hidden="true" />
+        ) : (
+          <Menu className="size-4" aria-hidden="true" />
+        )}
       </Button>
       {open && (
         <Portal className="top-14" id="mobile-menu">
@@ -72,7 +76,7 @@ export function MobileNav({
                         : "text-foreground/70 hover:text-foreground hover:bg-default",
                     )}
                   >
-                    <Icon className="size-5 shrink-0" />
+                    <Icon className="size-5 shrink-0" aria-hidden="true" />
                     {link.label}
                   </Link>
                 );

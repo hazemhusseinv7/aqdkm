@@ -60,9 +60,6 @@ export type FormState = {
   kitchenCabinets: boolean | null;
   electroMeter: string;
   waterMeter: string;
-  activity: string;
-  hasLicense: boolean;
-  licenseNumber: string;
   notes: string;
 };
 
@@ -110,9 +107,6 @@ export type RequestDetail = {
     kitchenCabinets?: boolean | null;
     electroMeter?: string;
     waterMeter?: string;
-    activity?: string;
-    hasLicense?: boolean;
-    licenseNumber?: string;
   };
   location?: {
     locationManual?: boolean | null;

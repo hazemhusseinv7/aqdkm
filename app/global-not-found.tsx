@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
-import { Card, Toast } from "@heroui/react";
-import { MdSearchOff } from "react-icons/md";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Toast } from "@heroui/react";
 import "./globals.css";
 import { Header } from "@/components/shell/header";
 import { Footer } from "@/components/shell/footer";
 import { WhatsappFloat } from "@/components/shell/whatsapp-float";
+import { NotFoundCard } from "@/components/shell/not-found-card";
 import { Providers } from "@/components/shell/providers";
 import { Analytics } from "@/components/analytics";
-import { cn } from "@/lib/utils";
 import { client } from "@/sanity/lib/client";
 import { BLOG_CACHE_TAG } from "@/lib/constants";
 import {
@@ -25,12 +23,11 @@ import type {
   FooterSocialLink,
 } from "@/components/shell/footer";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
 const arabic = IBM_Plex_Sans_Arabic({
   variable: "--font-arabic",
   subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -99,7 +96,7 @@ export default async function GlobalNotFound() {
     <html
       lang="ar"
       dir="rtl"
-      className={cn(arabic.variable, inter.variable)}
+      className={arabic.variable}
       suppressHydrationWarning
     >
       <body className="site-shell flex min-h-full flex-col antialiased">
@@ -109,27 +106,7 @@ export default async function GlobalNotFound() {
           <Header />
           <main className="min-h-screen w-full flex-1 overflow-x-clip">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-16 sm:px-6">
-              <Card variant="secondary" className="mx-auto max-w-2xl text-center">
-                <Card.Header className="flex-col items-center gap-2 pt-8">
-                  <span className="bg-accent/15 text-accent flex size-14 items-center justify-center rounded-full">
-                    <MdSearchOff className="size-8" />
-                  </span>
-                  <h1 className="text-foreground text-sm leading-6 font-medium">
-                    الصفحة غير موجودة
-                  </h1>
-                  <Card.Description>
-                    الرابط الذي تحاول الوصول إليه غير متوفر أو تم نقله.
-                  </Card.Description>
-                </Card.Header>
-                <Card.Footer className="justify-center pb-8">
-                  <Link
-                    href="/"
-                    className="bg-primary text-primary-foreground inline-flex h-10 items-center justify-center gap-2 rounded-3xl px-4 text-sm font-medium whitespace-nowrap transition-transform outline-none hover:brightness-110 focus-visible:brightness-110 active:scale-[0.98]"
-                  >
-                    العودة إلى الرئيسية
-                  </Link>
-                </Card.Footer>
-              </Card>
+              <NotFoundCard />
             </div>
           </main>
           <Footer

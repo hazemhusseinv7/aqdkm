@@ -21,6 +21,7 @@ import { FaBuilding, FaHome } from "react-icons/fa";
 import type { StructureBuilder, StructureResolver } from "sanity/structure";
 
 import { apiVersion } from "./env";
+import { STATUSES as REQUEST_STATUSES } from "./schemaTypes/rentalRequest";
 
 // https://www.sanity.io/docs/structure-builder-cheat-sheet
 const SINGLETONS = ["siteSettings", "testimonials", "features", "licenses"];
@@ -48,13 +49,19 @@ function singletonItem(
     .child(S.document().schemaType(typeName).documentId(typeName).title(title));
 }
 
-const STATUSES = [
-  { id: "new", title: "New", icon: MdInbox },
-  { id: "reviewing", title: "Under review", icon: MdHourglassTop },
-  { id: "approved", title: "Approved", icon: MdCheckCircle },
-  { id: "completed", title: "Completed", icon: MdDoneAll },
-  { id: "cancelled", title: "Cancelled", icon: MdCancel },
-];
+const STATUS_ICONS = {
+  new: MdInbox,
+  reviewing: MdHourglassTop,
+  approved: MdCheckCircle,
+  completed: MdDoneAll,
+  cancelled: MdCancel,
+} as const;
+
+const STATUSES = REQUEST_STATUSES.map((s) => ({
+  id: s.value,
+  title: s.title,
+  icon: STATUS_ICONS[s.value as keyof typeof STATUS_ICONS],
+}));
 
 function statusItems(S: StructureBuilder, contractType?: string) {
   return STATUSES.map((status) =>

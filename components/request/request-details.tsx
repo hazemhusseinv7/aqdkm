@@ -444,32 +444,6 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           display={p?.waterMeter ?? null}
           ltr
         />
-        {isCommercial && (
-          <>
-            <FieldRow
-              icon={<MdHome />}
-              label={L.activity.ar}
-              display={p?.activity ?? null}
-            />
-            <FieldRow
-              icon={<MdBadge />}
-              label={L.hasLicense.ar}
-              display={
-                p?.hasLicense == null
-                  ? null
-                  : p.hasLicense
-                    ? "يوجد"
-                    : "لا يوجد"
-              }
-            />
-            <FieldRow
-              icon={<MdBadge />}
-              label={L.licenseNumber.ar}
-              display={p?.licenseNumber ?? null}
-              ltr
-            />
-          </>
-        )}
       </Section>
 
       <Section icon={<MdTimelapse />} title="مدة العقد">

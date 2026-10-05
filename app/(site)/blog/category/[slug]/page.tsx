@@ -12,6 +12,7 @@ import type {
   POSTS_BY_CATEGORY_QUERY_RESULT,
 } from "@/sanity.types";
 import { BlogEmptyState, PostCardGrid } from "@/components/blog/post-card";
+import { decodeSlugParam } from "@/lib/blog";
 
 export const metadata = {
   title: "تصنيفات المدونة",
@@ -37,7 +38,8 @@ export default async function BlogCategoryPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlugParam(rawSlug);
   let categories: CATEGORIES_QUERY_RESULT = [];
   let posts: POSTS_BY_CATEGORY_QUERY_RESULT = [];
   try {

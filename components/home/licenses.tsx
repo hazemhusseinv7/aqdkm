@@ -39,14 +39,14 @@ export function Licenses({
             <Card key={l._key} variant="default">
               <Card.Header className="gap-3">
                 <span className="bg-accent text-accent-foreground flex size-12 shrink-0 items-center justify-center rounded-2xl">
-                  <Icon className="size-6" />
+                  <Icon className="size-6" aria-hidden="true" />
                 </span>
                 <div>
                   <Card.Title>{l.title}</Card.Title>
                   <Card.Description>{l.issuer}</Card.Description>
                 </div>
                 <Chip color="success" variant="soft" className="ms-auto">
-                  <MdBadge /> معتمد
+                  <MdBadge aria-hidden="true" /> معتمد
                 </Chip>
               </Card.Header>
               <Card.Content className="gap-2">
@@ -71,7 +71,7 @@ export function Licenses({
           className="text-accent inline-flex items-center gap-1 text-sm font-medium hover:underline"
         >
           تحقق من التراخيص عبر الهيئة العامة للعقار
-          <MdOpenInNew className="size-4" />
+          <MdOpenInNew className="size-4" aria-hidden="true" />
         </a>
       )}
     </section>

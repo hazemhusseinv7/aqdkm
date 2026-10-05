@@ -4,7 +4,7 @@ import { HiTicket } from "react-icons/hi2";
 
 import { bilingualTitle } from "../../lib/request-fields";
 
-const STATUSES = [
+export const STATUSES = [
   { title: "New", value: "new" },
   { title: "Under review", value: "reviewing" },
   { title: "Approved", value: "approved" },
@@ -240,13 +240,21 @@ export const rentalRequest = defineType({
           title: bilingualTitle("unitNumber"),
           type: "string",
         }),
-        defineField({ name: "floor", title: bilingualTitle("floor"), type: "string" }),
+        defineField({
+          name: "floor",
+          title: bilingualTitle("floor"),
+          type: "string",
+        }),
         defineField({
           name: "floorCustom",
           title: bilingualTitle("floorCustom"),
           type: "string",
         }),
-        defineField({ name: "area", title: bilingualTitle("area"), type: "number" }),
+        defineField({
+          name: "area",
+          title: bilingualTitle("area"),
+          type: "number",
+        }),
         defineField({
           name: "rooms",
           title: bilingualTitle("rooms"),
@@ -296,21 +304,6 @@ export const rentalRequest = defineType({
           title: bilingualTitle("waterMeter"),
           type: "string",
         }),
-        defineField({
-          name: "activity",
-          title: bilingualTitle("activity"),
-          type: "string",
-        }),
-        defineField({
-          name: "hasLicense",
-          title: bilingualTitle("hasLicense"),
-          type: "boolean",
-        }),
-        defineField({
-          name: "licenseNumber",
-          title: bilingualTitle("licenseNumber"),
-          type: "string",
-        }),
       ],
     }),
     defineField({
@@ -331,7 +324,11 @@ export const rentalRequest = defineType({
           type: "url",
           validation: (rule) => rule.uri({ scheme: ["http", "https"] }),
         }),
-        defineField({ name: "city", title: bilingualTitle("city"), type: "string" }),
+        defineField({
+          name: "city",
+          title: bilingualTitle("city"),
+          type: "string",
+        }),
         defineField({
           name: "buildingNumber",
           title: bilingualTitle("buildingNumber"),
@@ -413,7 +410,11 @@ export const rentalRequest = defineType({
             }),
           ],
         }),
-        defineField({ name: "notes", title: bilingualTitle("notes"), type: "text" }),
+        defineField({
+          name: "notes",
+          title: bilingualTitle("notes"),
+          type: "text",
+        }),
       ],
     }),
   ],

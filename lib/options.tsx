@@ -169,9 +169,3 @@ export const cityOptions: IconOption[] = OPTION_VALUES.city.map((p) => ({
   ...p,
   icon: ic(<MdLocationOn />),
 }));
-
-export const activityOptions: IconOption[] =
-  OPTION_VALUES.commercialActivity.map((p) => ({
-    ...p,
-    icon: ic(<MdStore />),
-  }));

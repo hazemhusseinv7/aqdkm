@@ -21,7 +21,7 @@ export function Cta({
   points?: MarketingPoint[] | null;
 }) {
   return (
-    <section className="border-border bg-surface relative overflow-hidden rounded-3xl border before:pointer-events-none before:absolute before:inset-0 before:z-10 before:bg-[url(/images/noise.gif)] before:bg-repeat before:opacity-[0.05] before:content-['']">
+    <section className="border-border bg-surface relative overflow-hidden rounded-3xl border before:pointer-events-none before:absolute before:inset-0 before:z-10 before:bg-[url(/images/noise.webp)] before:bg-repeat before:opacity-[0.05] before:content-['']">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(color-mix(in_oklab,var(--accent)_30%,transparent)_1px,transparent_1px)] mask-[radial-gradient(70%_70%_at_50%_30%,black,transparent)] bg-size-[22px_22px]"

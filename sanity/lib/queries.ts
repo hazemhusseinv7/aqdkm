@@ -138,7 +138,7 @@ export const REQUEST_DETAIL_QUERY = defineQuery(
       deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,
       unitNumber, floor, floorCustom, area, rooms, roomsCustom,
       extras[]{ kind, count }, kitchenCabinets,
-      electroMeter, waterMeter, activity, hasLicense, licenseNumber
+      electroMeter, waterMeter
     },
     location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },
     terms{

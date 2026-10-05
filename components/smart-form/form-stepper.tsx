@@ -120,11 +120,11 @@ export function FormStepper({
                         }}
                       >
                         {isVerified ? (
-                          <MdCheckCircle className="size-5" />
+                          <MdCheckCircle className="size-5" aria-hidden="true" />
                         ) : visitedInvalid ? (
-                          <MdErrorOutline className="size-5" />
+                          <MdErrorOutline className="size-5" aria-hidden="true" />
                         ) : (
-                          <Icon className="size-5" />
+                          <Icon className="size-5" aria-hidden="true" />
                         )}
                       </Button>
                     </Tooltip.Trigger>
@@ -232,11 +232,11 @@ export function FormStepper({
                       }}
                     >
                       {isVerified ? (
-                        <MdCheckCircle className="size-4" />
+                        <MdCheckCircle className="size-4" aria-hidden="true" />
                       ) : visitedInvalid ? (
-                        <MdErrorOutline className="size-4" />
+                        <MdErrorOutline className="size-4" aria-hidden="true" />
                       ) : (
-                        <Icon className="size-4" />
+                        <Icon className="size-4" aria-hidden="true" />
                       )}
                     </Button>
                   </div>

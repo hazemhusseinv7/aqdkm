@@ -51,7 +51,7 @@ export function Hero({
   const links = (socialLinks ?? []).filter((l) => l.url);
 
   return (
-    <section className="relative -mt-14 flex min-h-svh w-full flex-col justify-center overflow-hidden px-4 pt-14 pb-20 before:pointer-events-none before:absolute before:inset-0 before:z-10 before:bg-[url(/images/noise.gif)] before:bg-repeat before:opacity-[0.05] before:content-[''] sm:px-6 md:-mt-12.5">
+    <section className="relative -mt-14 flex min-h-svh w-full flex-col justify-center overflow-hidden px-4 pt-14 pb-20 before:pointer-events-none before:absolute before:inset-0 before:z-10 before:bg-[url(/images/noise.webp)] before:bg-repeat before:opacity-[0.05] before:content-[''] sm:px-6 md:-mt-12.5">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(color-mix(in_oklab,var(--accent)_30%,transparent)_1px,transparent_1px)] mask-[radial-gradient(70%_70%_at_50%_30%,black,transparent)] bg-size-[22px_22px]"
@@ -145,7 +145,7 @@ export function Hero({
                   aria-label={meta?.title ?? l.platform}
                   className="text-muted hover:bg-alt hover:text-alt-foreground inline-flex size-10 items-center justify-center rounded-full transition-colors"
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-4" aria-hidden="true" />
                 </a>
               );
             })}

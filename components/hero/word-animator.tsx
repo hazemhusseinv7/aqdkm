@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export function WordAnimator({
@@ -49,7 +49,7 @@ export function WordAnimator({
           <span className="border-border bg-default relative inline-block overflow-hidden rounded-md border pe-3">
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-10 bg-[url(/images/noise.gif)] opacity-10"
+              className="pointer-events-none absolute inset-0 z-10 bg-[url(/images/noise.webp)] opacity-10"
             />
             <span className="from-accent/70 to-accent bg-linear-to-t bg-clip-text text-transparent">
               {words[shouldReduceMotion ? 0 : index]}

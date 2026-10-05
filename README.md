@@ -8,7 +8,7 @@ documentation requests through guided smart forms, with a Sanity CMS backend
 
 | Route | Content |
 |---|---|
-| `/` | Full-screen hero, contract-type tabs (TypeCards linking to both smart forms), Features, CMS FAQs, Testimonials + Licenses + CTA, blog teaser |
+| `/` | Full-screen hero, contract-type tabs (TypeCards linking to both smart forms), Features, CMS FAQs, Testimonials + Licenses + CTA, blog teaser (tag-purge freshness primary, ISR `revalidate = 3600` backstop) |
 | `/residential` | Residential smart form (standalone page) |
 | `/commercial` | Commercial smart form (standalone page) |
 | `/contact` | Contact info (phone / email / socials from CMS) + contact form |
@@ -17,11 +17,11 @@ documentation requests through guided smart forms, with a Sanity CMS backend
 | `/testimonials` | Customer reviews, client-paginated grid (12/page) + CTA |
 | `/legal/[slug]` | CMS legal pages (terms / privacy / FAQ) with accordion + CTA |
 | `/blog` | Blog index + category chips, numbered `?page=` pagination (9/page, SEO anchors) |
-| `/blog/[slug]` | Article page (SSG) with related CTA |
+| `/blog/[slug]` | Article page (SSG) with related CTA; the post renders inside a surface container card |
 | `/blog/category/[slug]` | Category page (SSG) |
 | `/newsletter/confirm` | Double opt-in confirmation (explicit click, token + expiry) |
 | `/newsletter/unsubscribe` | One-step unsubscribe (email prefilled from link) |
-| `POST /api/revalidate` | Sanity webhook: signature-checked cache revalidation (blog + type tags; request/contact/subscriber docs ignored) |
+| `POST /api/revalidate` | Sanity webhook: signature-checked tag-scoped revalidation (per-type tag map, `{ expire: 0 }` immediate expiry; drafts + request/contact/subscriber docs ignored) |
 | `POST /api/broadcast/send` | Studio "Publish & notify": token + zod-guarded single-post broadcast |
 | `/admin/[[...tool]]` | Embedded Sanity Studio (isolated root layout, no site chrome) |
 
@@ -30,17 +30,19 @@ Three root layouts keep URLs unchanged: `app/(site)/layout.tsx` (full
 `app/(apply)/layout.tsx` (minimal chromeless shell for the form pages, with
 WhatsApp float and no footer), and `app/admin/layout.tsx` (bare
 `<html>`/`<body>` shell, no `lang`/`dir`, no site chrome - the Studio brings
-its own English LTR UI; never force RTL on it). The admin favicon resolves
-via the `app/favicon.ico` convention; the site uses explicit metadata icons
-(`public/logo/favicon*.ico`).
-`main` is unconstrained; each page owns its `max-w-6xl` container.
+its own English LTR UI; never force RTL on it). All three shells share the
+`app/favicon.ico` convention.
+`main` is unconstrained; each page owns its `max-w-6xl` container. Unknown
+routes render a shared `NotFoundCard` (`components/shell/not-found-card.tsx`)
+via `app/(site)/not-found.tsx` and the root `app/global-not-found.tsx`.
 
 ## Stack & toolchain
 
 - Next.js `16.3.5`, React 19, TypeScript (strict, `tsc --noEmit` clean)
 - HeroUI v3 compound API only (`@heroui/react`) - docs: `heroui.com/docs/react/...`
 - Tailwind CSS v4, `tw-animate-css`, `framer-motion@13.3.0`
-- Sanity: `next-sanity`, `@sanity/client@7`, `groq@6`, `@portabletext/react@8`
+- Sanity: `next-sanity`, `@sanity/client@7`, `groq@6`, `@portabletext/react@8`,
+  `@sanity/code-input` (HTML block editor), `isomorphic-dompurify` (HTML sanitizer)
 - `next-themes` (class strategy + animated sun/moon toggle), `react-icons` only
   (`md`/`fa`/`fa6`/`ri`/`bs`/`pi`/`bi`/`hi2`/`si` - `si` solely for the header
   home icon); `lucide-react` is used for the mobile-menu `Menu`/`X` icons and
@@ -84,8 +86,8 @@ Studio lives at `/admin`. IDs are Sanity-generated; drafts stay in
 | `rentalRequest` | document | Groups: general / parties / property / terms; statuses new → reviewing → approved → completed / cancelled; user-filled fields are **read-only**, field titles bilingual (`English / العربية`); every submit emails the all-fields table to `ADMIN_EMAIL` (skipped with a server log when unset) |
 | `contactMessage` | document | `name/phone/email/message` are **read-only** (staff never edits submissions); `status` uses the `StatusTabs` tab input; `submittedAt` read-only |
 | `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`, `marketingPoints[]` text+icon-picker array driving the hero/CTA visuals — hidden when empty) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) / cta (starting-fee note phrase + residential/commercial amounts, manual marketing numbers) |
-| `post` / `category` / `author` | documents | Blog group in Studio; FAQs moved from a `faq` type into `siteSettings.faqs[]` |
-| `legalPage` | document | Terms / privacy / FAQ pages: title, description, Portable Text content + Q&A accordion; footer + `/legal/[slug]` |
+| `post` / `category` / `author` | documents | Blog group in Studio; post bodies accept text, images, and `code` (HTML) blocks; FAQs live in `siteSettings.faqs[]`; slugs accept Arabic (auto-slugified + validated, decoded at render, sitemap-encoded) |
+| `legalPage` | document | Terms / privacy / FAQ pages: title, description, Portable Text content + Q&A accordion; footer + `/legal/[slug]` (Arabic slugs, same as posts) |
 | `testimonials` / `features` / `licenses` | singletons | Homepage sections: reviews (name + quote required; role/city/date/rating optional), feature cards (icon picker), license cards |
 | `subscriber` | document | Newsletter double opt-in; user fields read-only; status via radio (`pending/confirmed/unsubscribed`) |
 
@@ -95,7 +97,12 @@ tab buttons), `FeesInput` (fee matrix), `StatusInput` (configured badge),
 override rendering `dir="auto"`; defers to field-level inputs and option-list
 pickers), `RtlPortableTextInput` (hard-RTL rich-text wrapper, wired per-field
 on post body / legal content+answers / settings FAQ answers),
-`RtlTextFieldInput` (hard-RTL text wrapper, wired on post excerpt). Studio nav (`sanity/structure.ts`):
+`RtlTextFieldInput` (hard-RTL text wrapper, wired on post excerpt). The
+`Advanced` tool tab (same folder) manages requests in bulk: checkbox
+multi-select over a status/type-filtered list, bulk status changes and bulk
+deletes (typed-count confirm) executed as single all-or-nothing transactions
+under the editor's own login. Request `STATUSES` are exported once from the
+`rentalRequest` schema and reused by `structure.ts` and the tool. Studio nav (`sanity/structure.ts`):
 singleton settings, Requests / Residential / Commercial (each with per-status
 filters), Messages (newest first), Newsletter → Subscribers (single item), Blog, Legal pages,
 Homepage section group (Testimonials / Features / Licenses).
@@ -133,12 +140,11 @@ Server-Action boundary rules:
   on the owner side.   The commercial counterparty toggle defaults to منشأة
   (first) with فرد second; residential has no toggle and is always فرد.
   Step 4 collects counted amenities (every checked
-  item needs a count ≥ 1) plus a conditional kitchen-cabinets نعم/لا toggle,
-  and (commercial only) the activity + municipal-license block (license number
-  required if licensed). The stepper allows backward jumps plus fast-forward through verified steps,
+  item needs a count ≥ 1) plus a conditional kitchen-cabinets نعم/لا toggle.
+  The stepper allows backward jumps plus fast-forward through verified steps,
   flagging visited-but-invalid steps. All toggles are full-width; rent/area
   render empty (no numeric defaults). The review step lists every collected
-  field (counterparty identity, dates, meters, license, payment) with per-row
+  field (counterparty identity, dates, meters, payment) with per-row
   edit jumps.
 - Validation lockdown: every gated field carries an `error={err(...)}` message
   (selects, numbers, dates, conditional `..."other"`/branch fields) - no
@@ -207,20 +213,31 @@ Server-Action boundary rules:
   idempotency. No webhook auto-send by design (single Sanity webhook is
   revalidate-only).
 - Cache revalidation (`app/api/revalidate/route.ts`): Sanity webhook POST with
-  `SANITY_REVALIDATE_SECRET` signature; revalidates `blog` + document-type tags.
-  Private high-frequency types (`rentalRequest`, `contactMessage`, `subscriber`)
-  are guard-ignored. Reads carry `next.tags` (`siteSettings`/`post`/`category`),
-  so the webhook actually invalidates. Manual step: create the webhook in the
-  Sanity dashboard with a GROQ filter on published documents.
+  `SANITY_REVALIDATE_SECRET` signature; expires per-type fetch tags with
+  `{ expire: 0 }` (blocking regen on next visit, no background dependency):
+  `post`/`author`→`blog`+`post`, `category`→`blog`+`category`,
+  `legalPage`→`blog`+`legalPage`, `siteSettings`→`blog`+`siteSettings`,
+  `testimonials`→`blog`+`testimonial`, `features`→`blog`+`feature`,
+  `licenses`→`blog`+`license`, anything else→`blog`.
+  Draft autosaves (`drafts.*`), `rentalRequest`, `contactMessage` and
+  `subscriber` writes are guard-ignored in code. Reads carry `next.tags`
+  (`blog` plus the specific tag on every CMS fetch), so the webhook
+  actually invalidates. Manual dashboard steps: point the webhook at the
+  production origin, keep the GROQ filter on published documents
+  (`!(_id in path("drafts.**"))`), and rotate `SANITY_REVALIDATE_SECRET`
+  in the dashboard + host env together if ever exposed.
 - Currency: `Intl.NumberFormat("ar-SA-u-nu-latn", { style: "currency",
   currency: "SAR", maximumFractionDigits: 0 })`, currency part replaced by
   plain-text `ر.س` (`CURRENCY_SYMBOL`, `lib/fees.ts`). Web surfaces render
   amounts with the Lucide `SaudiRiyal` icon (`components/price.tsx`, +
   `priceText()` for clipboard); mail templates keep `ر.س` text (inbox-safe).
   CMS-authored words are swapped at render time (`lib/currency-text.tsx`):
-  `CurrencyText` for plain strings (excerpts, descriptions, quotes, captions,
-  FAQ questions), `annotateCurrencyBlocks` for Portable Text (post bodies,
-  legal content, accordion answers), `normalizeCurrencyText` for metadata.
+   `CurrencyText` for plain strings (excerpts, descriptions, quotes, captions,
+   FAQ questions), `annotateCurrencyBlocks` for Portable Text (post bodies,
+   legal content, accordion answers), `normalizeCurrencyText` for metadata.
+   Raw-HTML `code` blocks render through `lib/code-html.tsx` (sanitize, then
+   the same icon swap; pasted `<table>`s become real HeroUI Tables via the
+   `components/blog/html-table.tsx` client island).
 - Skeletons mirror their content by construction: `SmartFormSkeleton` copies
   the step-0 layout (same `max-w-5xl > Card` shell, stepper shapes, separator,
   title row + two role cards, toolbar - no sidebar; ships an explicit mobile
@@ -296,12 +313,11 @@ lead form; `Every` if repeat submissions per click are meaningful.
   (`h-8 w-auto`) beside the عقدكم wordmark; used in header + linked footer
   logo. The blog-cover medallion embeds the same mark as a watermark
   (`<image href="/logo/logo.svg">`, maqrat-blog pattern).
-- **Favicons:** `public/logo/favicon.ico` (light) + `public/logo/favicon-alt.ico`
-  (dark), wired via the Metadata `icons.icon` array with
-  `media: "(prefers-color-scheme: dark)"` on the dark entry - follows the *OS*
-  scheme, not the in-app toggle. All brand assets live under `public/logo/`.
-  Browsers cache favicons aggressively per URL: verify artwork swaps in a fresh
-  profile, or version the URL (`?v=2`).
+- **Favicons:** `app/favicon.ico` covers the site, form, and Studio shells.
+  Light/dark variants plug into the metadata `icons.icon` array with a
+  `media: "(prefers-color-scheme: dark)"` entry on the dark variant - following
+  the *OS* scheme, not the in-app toggle. Browsers cache favicons aggressively
+  per URL: verify artwork swaps in a fresh profile, or version the URL (`?v=2`).
 - **Footer:** quick links (no home link - logo covers that; includes testimonials) + separate legal-pages column, contact column
   (`tel:` phone + `mailto:` email from CMS), socials, copyright bar.
 - **Surfaces:**
@@ -317,7 +333,7 @@ lead form; `Every` if repeat submissions per click are meaningful.
 - **Background system:** `.site-shell` (grain + top glow + banded wash). Light
   mode overrides to a near-white base with three discrete green light sources;
   the hero adds its own strong top glow (45%) + soft bottom glow (25%) plus a
-  dot grid and `noise.gif` overlay.
+  dot grid and `noise.webp` overlay.
 - **Radius:** `--radius: 0.75rem` (`rounded-2xl` dominant; `rounded-3xl` fee/summary
   cards; `rounded-full` pills/avatars; header pill `md:rounded-md`).
 - **Header:** reference geometry - `max-w-4xl` → scrolled `md:max-w-3xl`

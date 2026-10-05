@@ -53,7 +53,6 @@ import {
   MdLightbulb,
   MdWaterDrop,
   MdReceiptLong,
-  MdStore,
 } from "react-icons/md";
 import { TbAirConditioning } from "react-icons/tb";
 import { HiHomeModern } from "react-icons/hi2";
@@ -101,7 +100,6 @@ import {
   floorOptions,
   countOptions,
   cityOptions,
-  activityOptions,
 } from "@/lib/options";
 import type { FormState, Role, SerializedFormState } from "@/lib/request-form";
 
@@ -173,9 +171,6 @@ const initial: FormState = {
   kitchenCabinets: null,
   electroMeter: "",
   waterMeter: "",
-  activity: "",
-  hasLicense: false,
-  licenseNumber: "",
   notes: "",
 };
 
@@ -268,8 +263,6 @@ export function SmartForm({
     durationOptions.find((d) => d.value === s.duration)?.label ?? s.duration;
   const paymentLabel =
     paymentOptions.find((d) => d.value === s.payment)?.label ?? s.payment;
-  const activityLabel =
-    activityOptions.find((d) => d.value === s.activity)?.label ?? s.activity;
   const dateLabel = (d: typeof s.deedDate) => {
     if (!d) return "-";
     return formatDual(toGregorianISO(d) ?? "") ?? "-";
@@ -365,13 +358,6 @@ export function SmartForm({
           return false;
         if (!s.rooms) return false;
         if (s.rooms === "other" && !(s.roomsCustom > 0)) return false;
-        if (isCommercial && !s.activity) return false;
-        if (
-          isCommercial &&
-          s.hasLicense &&
-          !validators.required(s.licenseNumber)
-        )
-          return false;
         return true;
       default:
         return true;
@@ -1381,51 +1367,6 @@ export function SmartForm({
                 </div>
               </SectionCard>
 
-              {isCommercial && (
-                <SectionCard
-                  icon={<MdStore />}
-                  title="النشاط والترخيص"
-                  description="النشاط التجاري والرخصة البلدية"
-                >
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <IconSelect
-                      label="النشاط التجاري"
-                      required
-                      icon={<MdStore />}
-                      options={activityOptions}
-                      value={s.activity}
-                      onChange={(v) => set("activity", v)}
-                      placeholder="اختر النشاط…"
-                      error={err(!s.activity, messages.required)}
-                    />
-                    <IconSwitch
-                      label="الرخصة البلدية"
-                      description="هل يوجد رخصة بلدية سارية؟"
-                      checked={s.hasLicense}
-                      onChange={(v) => {
-                        set("hasLicense", v);
-                        if (!v) set("licenseNumber", "");
-                      }}
-                    />
-                    {s.hasLicense && (
-                      <IconText
-                        label="رقم الرخصة"
-                        required
-                        icon={<MdNumbers />}
-                        placeholder="يرجى إدخال رقم الرخصة البلدية"
-                        value={s.licenseNumber}
-                        onChange={(v) => set("licenseNumber", v)}
-                        dir="ltr"
-                        error={err(
-                          !validators.required(s.licenseNumber),
-                          messages.required,
-                        )}
-                      />
-                    )}
-                  </div>
-                </SectionCard>
-              )}
-
               <SectionCard
                 icon={<HiHomeModern />}
                 title="تفاصيل الوحدة"
@@ -1793,27 +1734,6 @@ export function SmartForm({
                     }
                     onEdit={() => setStep(4)}
                   />
-                )}
-                {isCommercial && (
-                  <>
-                    <SummaryRow
-                      title="النشاط التجاري"
-                      value={activityLabel}
-                      onEdit={() => setStep(4)}
-                    />
-                    <SummaryRow
-                      title="الرخصة البلدية"
-                      value={s.hasLicense ? "نعم" : "لا"}
-                      onEdit={() => setStep(4)}
-                    />
-                    {s.hasLicense && (
-                      <SummaryRow
-                        title="رقم الرخصة"
-                        value={s.licenseNumber}
-                        onEdit={() => setStep(4)}
-                      />
-                    )}
-                  </>
                 )}
                 <div className="bg-accent/10 flex items-center justify-between rounded-2xl p-4">
                   <span className="flex items-center gap-2 font-semibold">
