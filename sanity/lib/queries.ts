@@ -177,6 +177,12 @@ export const TESTIMONIALS_QUERY = defineQuery(
   }`,
 );
 
+export const TESTIMONIALS_PREVIEW_QUERY = defineQuery(
+  `*[_id == "testimonials"][0]{
+    items[0...7]{ _key, name, role, city, date, rating, quote }
+  }`,
+);
+
 export const FEATURES_QUERY = defineQuery(
   `*[_id == "features"][0]{
     items[]{ _key, title, description, icon }

@@ -4,7 +4,7 @@ import { BLOG_CACHE_TAG } from "@/lib/constants";
 import {
   LATEST_POSTS_QUERY,
   SITE_SETTINGS_QUERY,
-  TESTIMONIALS_QUERY,
+  TESTIMONIALS_PREVIEW_QUERY,
   FEATURES_QUERY,
   LICENSES_QUERY,
 } from "@/sanity/lib/queries";
@@ -22,8 +22,6 @@ import type { FeatureItem } from "@/components/home/features";
 import type { LicenseItem } from "@/components/home/licenses";
 import type { CtaFees } from "@/components/home/split-cta";
 import type { MarketingPoint } from "@/components/hero/new-items-loading";
-
-export const revalidate = 3600;
 
 export const metadata = {
   title: "عقدكم - توثيق عقود الإيجار السكنية والتجارية",
@@ -62,7 +60,7 @@ export default async function HomePage() {
         { next: { tags: [BLOG_CACHE_TAG, "siteSettings"] } },
       ),
       client.fetch(
-        TESTIMONIALS_QUERY,
+        TESTIMONIALS_PREVIEW_QUERY,
         {},
         { next: { tags: [BLOG_CACHE_TAG, "testimonial"] } },
       ),

@@ -1,34 +1,17 @@
 "use client";
 
 import { Table } from "@heroui/react";
-import { CurrencyIcon } from "@/lib/currency-text";
 
-export type HtmlTableData = { headers: string[]; rows: string[][] };
+import type { HtmlNode } from "@/lib/sanitize-html";
+import { renderTree } from "@/lib/sanitize-html";
 
-const TOKEN_SPLIT = /(ريالات|ريالين|ريال|riyals?\b)/gi;
-const TOKEN_TEST = /^(?:ريالات|ريالين|ريال|riyals?)$/i;
+export type HtmlTableData = {
+  headers: HtmlNode[][];
+  rows: HtmlNode[][][];
+};
 
-function cellNodes(html: string, keyBase: string) {
-  return (
-    <>
-      {html.split(TOKEN_SPLIT).map((part, i) =>
-        part === "" ? null : TOKEN_TEST.test(part) ? (
-          <span
-            key={`${keyBase}-${i}`}
-            className="ms-1 inline-flex items-center"
-          >
-            <CurrencyIcon />
-          </span>
-        ) : (
-          <span
-            key={`${keyBase}-${i}`}
-            className="contents"
-            dangerouslySetInnerHTML={{ __html: part }}
-          />
-        ),
-      )}
-    </>
-  );
+function CellNodes({ nodes, id }: { nodes: HtmlNode[]; id: string }) {
+  return <>{renderTree(nodes, id)}</>;
 }
 
 export function BlogHtmlTable({ data }: { data: HtmlTableData }) {
@@ -37,25 +20,25 @@ export function BlogHtmlTable({ data }: { data: HtmlTableData }) {
   const rows = data.rows.map((cells) =>
     cells.length >= width
       ? cells.slice(0, width)
-      : [...cells, ...Array<string>(width - cells.length).fill("")],
+      : [...cells, ...Array<HtmlNode[]>(width - cells.length).fill([])],
   );
   return (
     <div className="overflow-x-auto">
       <Table>
         <Table.Content aria-label="جدول">
           <Table.Header>
-            {data.headers.map((html, i) => (
+            {data.headers.map((nodes, i) => (
               <Table.Column key={`c${i}`}>
-                {cellNodes(html, `h${i}`)}
+                <CellNodes nodes={nodes} id={`h${i}`} />
               </Table.Column>
             ))}
           </Table.Header>
           <Table.Body>
             {rows.map((cells, ri) => (
               <Table.Row key={`r${ri}`}>
-                {cells.map((cell, ci) => (
+                {cells.map((nodes, ci) => (
                   <Table.Cell key={`c${ci}`}>
-                    {cellNodes(cell, `r${ri}c${ci}`)}
+                    <CellNodes nodes={nodes} id={`r${ri}c${ci}`} />
                   </Table.Cell>
                 ))}
               </Table.Row>

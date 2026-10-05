@@ -63,11 +63,16 @@ const components: PortableTextComponents = {
         {children}
       </a>
     ),
-    [CURRENCY_MARK]: () => (
-      <span className="inline-flex items-center">
-        <CurrencyIcon />
-      </span>
-    ),
+    [CURRENCY_MARK]: ({ children }) => {
+      const rest =
+        typeof children === "string" ? children.replace("￾", "") : "";
+      return (
+        <span className="whitespace-nowrap">
+          <CurrencyIcon />
+          {rest}
+        </span>
+      );
+    },
   },
   types: {
     code: ({ value }) => {

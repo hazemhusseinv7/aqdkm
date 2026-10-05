@@ -1,98 +1,119 @@
-import { Fragment, type ReactNode } from "react";
-import DOMPurify from "isomorphic-dompurify";
-import { CurrencyIcon } from "@/lib/currency-text";
+import type { ReactNode } from "react";
+
+import type { HtmlNode } from "@/lib/sanitize-html";
+import { parseTree, renderTree } from "@/lib/sanitize-html";
 import { BlogHtmlTable } from "@/components/blog/html-table";
 import type { HtmlTableData } from "@/components/blog/html-table";
 
-const TOKEN_RE = /ريالات|ريالين|ريال|riyals?\b/gi;
-const CODE_CURRENCY_MARKER = "￾";
+type TableRow = { headed: boolean; cells: HtmlNode[][] };
 
-function markTokens(html: string): string {
-  return html
-    .split(/(<[^>]*>)/g)
-    .map((part, i) =>
-      i % 2 === 0 ? part.replace(TOKEN_RE, CODE_CURRENCY_MARKER) : part,
-    )
-    .join("");
+function elementChildren(node: HtmlNode): HtmlNode[] {
+  return node.kind === "el" ? node.children : [];
 }
 
-function richNodes(html: string, keyBase: string): ReactNode {
-  return (
-    <>
-      {html.split(CODE_CURRENCY_MARKER).map((part, i) => (
-        <Fragment key={`${keyBase}-${i}`}>
-          {i > 0 && (
-            <span className="ms-1 inline-flex items-center">
-              <CurrencyIcon />
-            </span>
-          )}
-          {part ? (
-            <span
-              className="contents"
-              dangerouslySetInnerHTML={{ __html: part }}
-            />
-          ) : null}
-        </Fragment>
-      ))}
-    </>
+function rowCells(tr: HtmlNode): HtmlNode[][] | null {
+  if (tr.kind !== "el" || tr.tag !== "tr") return null;
+  const cells = tr.children.filter(
+    (c): c is Extract<HtmlNode, { kind: "el" }> =>
+      c.kind === "el" && (c.tag === "td" || c.tag === "th"),
   );
+  if (cells.length === 0) return null;
+  const headed = cells.every((c) => c.tag === "th");
+  return cells.map((c) => c.children);
 }
 
-type ParsedTable = { headers: string[]; rows: string[][] };
-
-function parseTable(tableHtml: string): ParsedTable | null {
-  const rowMatches = [
-    ...tableHtml.matchAll(/<tr[\s\S]*?>([\s\S]*?)<\/tr\s*>/gi),
-  ];
-  const rows = rowMatches
-    .map((m) => {
-      const cells = [
-        ...m[1].matchAll(/<(th|td)[\s\S]*?>([\s\S]*?)<\/\1\s*>/gi),
-      ];
-      return {
-        headed:
-          cells.length > 0 && cells.every((c) => c[1].toLowerCase() === "th"),
-        texts: cells.map((c) => c[2]),
-      };
-    })
-    .filter((r) => r.texts.length > 0);
-  if (rows.length === 0) return null;
-  const headerRow = rows.find((r) => r.headed) ?? rows[0];
+function extractTable(table: HtmlNode): HtmlTableData | null {
+  if (table.kind !== "el" || table.tag !== "table") return null;
+  const rows: TableRow[] = [];
+  for (const child of table.children) {
+    if (child.kind !== "el") continue;
+    if (
+      child.tag === "thead" ||
+      child.tag === "tbody" ||
+      child.tag === "tfoot"
+    ) {
+      for (const tr of child.children) {
+        const cells = rowCells(tr);
+        if (cells && tr.kind === "el") {
+          const tags = tr.children.filter((c) => c.kind === "el");
+          rows.push({
+            headed:
+              tags.length > 0 &&
+              tags.every((c) => c.kind === "el" && c.tag === "th"),
+            cells,
+          });
+        }
+      }
+    } else if (child.tag === "tr") {
+      const cells = rowCells(child);
+      if (cells) {
+        const tags = child.children.filter((c) => c.kind === "el");
+        rows.push({
+          headed:
+            tags.length > 0 &&
+            tags.every((c) => c.kind === "el" && c.tag === "th"),
+          cells,
+        });
+      }
+    }
+  }
+  const nonEmpty = rows.filter((r) => r.cells.length > 0);
+  if (nonEmpty.length === 0) return null;
+  const headerRow = nonEmpty.find((r) => r.headed) ?? nonEmpty[0];
   return {
-    headers: headerRow.texts,
-    rows: rows.filter((r) => r !== headerRow).map((r) => r.texts),
+    headers: headerRow.cells,
+    rows: nonEmpty.filter((r) => r !== headerRow).map((r) => r.cells),
   };
 }
 
 export function renderCodeHtml(dirty: string): ReactNode {
-  const clean = DOMPurify.sanitize(dirty, { USE_PROFILES: { html: true } });
-  if (!clean.trim()) return null;
-  const parts = clean.split(/(<table[\s\S]*?<\/table\s*>)/gi);
-  if (parts.length === 1) {
-    return (
-      <div dir="auto" className="leading-8">
-        {richNodes(markTokens(clean), "c")}
-      </div>
-    );
+  let nodes: HtmlNode[];
+  try {
+    nodes = parseTree(dirty);
+  } catch {
+    return null;
   }
+  if (
+    !nodes.some((n) => n.kind === "el" || (n.kind === "text" && n.text.trim()))
+  ) {
+    return null;
+  }
+  const out: ReactNode[] = [];
+  let run: HtmlNode[] = [];
+  const flushRun = (key: string) => {
+    if (run.length > 0) {
+      out.push(
+        <div key={key} dir="auto" className="leading-8">
+          {renderTree(run, key)}
+        </div>,
+      );
+      run = [];
+    }
+  };
+  let k = 0;
+  for (const node of nodes) {
+    if (node.kind === "el" && node.tag === "table") {
+      flushRun(`h${k}`);
+      const data = extractTable(node);
+      if (data && data.headers.length > 0) {
+        out.push(<BlogHtmlTable key={`t${k}`} data={data} />);
+      } else {
+        out.push(
+          <div key={`t${k}`} dir="auto" className="leading-8">
+            {renderTree([node], `t${k}`)}
+          </div>,
+        );
+      }
+    } else {
+      run.push(node);
+    }
+    k++;
+  }
+  flushRun(`h${k}`);
+  if (out.length === 0) return null;
   return (
     <div dir="auto" className="leading-8">
-      {parts.map((part, i) => {
-        if (i % 2 === 0) {
-          return part ? (
-            <div key={i}>{richNodes(markTokens(part), `h${i}`)}</div>
-          ) : null;
-        }
-        const parsed = parseTable(part);
-        if (!parsed || parsed.headers.length === 0) {
-          return <div key={i}>{richNodes(markTokens(part), `h${i}`)}</div>;
-        }
-        const data: HtmlTableData = {
-          headers: parsed.headers,
-          rows: parsed.rows,
-        };
-        return <BlogHtmlTable key={i} data={data} />;
-      })}
+      {out}
     </div>
   );
 }

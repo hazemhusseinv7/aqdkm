@@ -8,7 +8,7 @@ documentation requests through guided smart forms, with a Sanity CMS backend
 
 | Route | Content |
 |---|---|
-| `/` | Full-screen hero, contract-type tabs (TypeCards linking to both smart forms), Features, CMS FAQs, Testimonials + Licenses + CTA, blog teaser (tag-purge freshness primary, ISR `revalidate = 3600` backstop) |
+| `/` | Full-screen hero, contract-type tabs (TypeCards linking to both smart forms), Features, CMS FAQs, Testimonials + Licenses + CTA, blog teaser (tagged `client.fetch` reads, blanket path-purge on publish) |
 | `/residential` | Residential smart form (standalone page) |
 | `/commercial` | Commercial smart form (standalone page) |
 | `/contact` | Contact info (phone / email / socials from CMS) + contact form |
@@ -21,7 +21,7 @@ documentation requests through guided smart forms, with a Sanity CMS backend
 | `/blog/category/[slug]` | Category page (SSG) |
 | `/newsletter/confirm` | Double opt-in confirmation (explicit click, token + expiry) |
 | `/newsletter/unsubscribe` | One-step unsubscribe (email prefilled from link) |
-| `POST /api/revalidate` | Sanity webhook: signature-checked tag-scoped revalidation (per-type tag map, `{ expire: 0 }` immediate expiry; drafts + request/contact/subscriber docs ignored) |
+| `POST /api/revalidate` | Sanity webhook: signature-checked blanket revalidation (`revalidatePath("/", "layout")`; drafts + request/contact/subscriber docs ignored) |
 | `POST /api/broadcast/send` | Studio "Publish & notify": token + zod-guarded single-post broadcast |
 | `/admin/[[...tool]]` | Embedded Sanity Studio (isolated root layout, no site chrome) |
 
@@ -42,7 +42,8 @@ via `app/(site)/not-found.tsx` and the root `app/global-not-found.tsx`.
 - HeroUI v3 compound API only (`@heroui/react`) - docs: `heroui.com/docs/react/...`
 - Tailwind CSS v4, `tw-animate-css`, `framer-motion@13.3.0`
 - Sanity: `next-sanity`, `@sanity/client@7`, `groq@6`, `@portabletext/react@8`,
-  `@sanity/code-input` (HTML block editor), `isomorphic-dompurify` (HTML sanitizer)
+  `@sanity/code-input` (HTML block editor); HTML sanitizing is dependency-free
+  (`lib/sanitize-html.tsx`, no DOM/jsdom in the render path)
 - `next-themes` (class strategy + animated sun/moon toggle), `react-icons` only
   (`md`/`fa`/`fa6`/`ri`/`bs`/`pi`/`bi`/`hi2`/`si` - `si` solely for the header
   home icon); `lucide-react` is used for the mobile-menu `Menu`/`X` icons and
@@ -213,16 +214,12 @@ Server-Action boundary rules:
   idempotency. No webhook auto-send by design (single Sanity webhook is
   revalidate-only).
 - Cache revalidation (`app/api/revalidate/route.ts`): Sanity webhook POST with
-  `SANITY_REVALIDATE_SECRET` signature; expires per-type fetch tags with
-  `{ expire: 0 }` (blocking regen on next visit, no background dependency):
-  `post`/`author`→`blog`+`post`, `category`→`blog`+`category`,
-  `legalPage`→`blog`+`legalPage`, `siteSettings`→`blog`+`siteSettings`,
-  `testimonials`→`blog`+`testimonial`, `features`→`blog`+`feature`,
-  `licenses`→`blog`+`license`, anything else→`blog`.
+  `SANITY_REVALIDATE_SECRET` signature; blanket-purges the whole site shell
+  with `revalidatePath("/", "layout")` (tag-independent, cannot miss).
   Draft autosaves (`drafts.*`), `rentalRequest`, `contactMessage` and
-  `subscriber` writes are guard-ignored in code. Reads carry `next.tags`
-  (`blog` plus the specific tag on every CMS fetch), so the webhook
-  actually invalidates. Manual dashboard steps: point the webhook at the
+  `subscriber` writes are guard-ignored in code. Reads are plain tagged
+  `client.fetch` calls (`next.tags` carry the content type on every CMS
+  fetch). Manual dashboard steps: point the webhook at the
   production origin, keep the GROQ filter on published documents
   (`!(_id in path("drafts.**"))`), and rotate `SANITY_REVALIDATE_SECRET`
   in the dashboard + host env together if ever exposed.
@@ -232,7 +229,8 @@ Server-Action boundary rules:
   amounts with the Lucide `SaudiRiyal` icon (`components/price.tsx`, +
   `priceText()` for clipboard); mail templates keep `ر.س` text (inbox-safe).
   CMS-authored words are swapped at render time (`lib/currency-text.tsx`):
-   `CurrencyText` for plain strings (excerpts, descriptions, quotes, captions,
+   singular `ريال`/`riyal` always iconifies; dual/plural iconify with an
+   amount or standing alone, otherwise stay text. `CurrencyText` for plain strings (excerpts, descriptions, quotes, captions,
    FAQ questions), `annotateCurrencyBlocks` for Portable Text (post bodies,
    legal content, accordion answers), `normalizeCurrencyText` for metadata.
    Raw-HTML `code` blocks render through `lib/code-html.tsx` (sanitize, then

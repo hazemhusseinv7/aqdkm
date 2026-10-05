@@ -1,19 +1,6 @@
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { parseBody } from "next-sanity/webhook";
-
-import { BLOG_CACHE_TAG } from "@/lib/constants";
-
-const TAG_MAP: Record<string, string[]> = {
-  post: [BLOG_CACHE_TAG, "post"],
-  author: [BLOG_CACHE_TAG, "post"],
-  category: [BLOG_CACHE_TAG, "category"],
-  legalPage: [BLOG_CACHE_TAG, "legalPage"],
-  siteSettings: [BLOG_CACHE_TAG, "siteSettings"],
-  testimonials: [BLOG_CACHE_TAG, "testimonial"],
-  features: [BLOG_CACHE_TAG, "feature"],
-  licenses: [BLOG_CACHE_TAG, "license"],
-};
 
 export async function POST(request: NextRequest) {
   const secret = process.env.SANITY_REVALIDATE_SECRET;
@@ -40,11 +27,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Private high-frequency writes must never drive the public cache:
-    // rental requests, contact messages, and subscribers are excluded.
-    // Draft autosaves carry the normal _type, so they are excluded here too
-    // (the dashboard GROQ filter remains as belt-and-braces).
-    // Every other publish expires exactly the tags that carry its data.
+    // Private high-frequency writes and draft autosaves must never drive the
+    // public cache (the dashboard GROQ filter remains as belt-and-braces).
     if (
       body._id.startsWith("drafts.") ||
       body._type === "rentalRequest" ||
@@ -54,18 +38,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "ignored" });
     }
 
-    const tags = TAG_MAP[body._type] ?? [BLOG_CACHE_TAG];
-    for (const tag of tags) {
-      // Webhook invalidation must expire immediately: { expire: 0 } forces a
-      // blocking regen on next visit instead of background revalidation.
-      revalidateTag(tag, { expire: 0 });
-    }
+    revalidatePath("/", "layout");
 
     return NextResponse.json({
-      revalidated: "all",
-      _type: body._type,
+      revalidated: true,
       _id: body._id,
-      tags,
+      _type: body._type,
       now: Date.now(),
     });
   } catch (err) {
