@@ -117,6 +117,50 @@ export const rentalRequest = defineType({
           title: bilingualTitle("ownerIban"),
           type: "string",
         }),
+        defineField({
+          name: "counterType",
+          title: bilingualTitle("applicantCounterType"),
+          type: "string",
+          options: {
+            list: [
+              { title: "Individual", value: "فرد" },
+              { title: "Entity", value: "منشأة" },
+            ],
+            layout: "radio",
+          },
+        }),
+        defineField({
+          name: "unifiedNumber",
+          title: bilingualTitle("applicantUnifiedNumber"),
+          type: "string",
+          validation: (rule) =>
+            rule.custom((value) => {
+              if (!value) return true;
+              return (
+                /^70\d{8}$/.test(value) || "Must be 10 digits starting with 70"
+              );
+            }),
+        }),
+        defineField({
+          name: "repId",
+          title: bilingualTitle("applicantRepId"),
+          type: "string",
+        }),
+        defineField({
+          name: "repPhone",
+          title: bilingualTitle("applicantRepPhone"),
+          type: "string",
+        }),
+        defineField({
+          name: "repDob",
+          title: bilingualTitle("applicantRepDob"),
+          type: "date",
+        }),
+        defineField({
+          name: "authNumber",
+          title: bilingualTitle("applicantAuthNumber"),
+          type: "string",
+        }),
       ],
     }),
     defineField({
@@ -170,11 +214,6 @@ export const rentalRequest = defineType({
                 /^70\d{8}$/.test(value) || "Must be 10 digits starting with 70"
               );
             }),
-        }),
-        defineField({
-          name: "entityName",
-          title: bilingualTitle("counterpartyEntityName"),
-          type: "string",
         }),
         defineField({
           name: "repId",
@@ -381,6 +420,11 @@ export const rentalRequest = defineType({
         defineField({
           name: "annualRent",
           title: bilingualTitle("annualRent"),
+          type: "number",
+        }),
+        defineField({
+          name: "totalRent",
+          title: bilingualTitle("totalRent"),
           type: "number",
         }),
         defineField({

@@ -135,6 +135,16 @@ export function durationToMonths(
   }
 }
 
+export function isTotalRentCase(
+  payment: string,
+  duration: string,
+  customMonths?: number,
+): boolean {
+  if (payment === "single") return true;
+  if (!duration) return false;
+  return durationToMonths(duration, customMonths) < 12;
+}
+
 export const CURRENCY_SYMBOL = "ر.س";
 
 const CurrencyFormat = new Intl.NumberFormat("ar-SA-u-nu-latn", {

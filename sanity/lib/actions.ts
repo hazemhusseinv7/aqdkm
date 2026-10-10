@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import type {
   RequestDetail,
   RequestStatus,
@@ -9,6 +10,7 @@ import {
   calcFeeBreakdown,
   durationToMonths,
   feeConfigFromSettings,
+  isTotalRentCase,
   type ContractType,
 } from "@/lib/fees";
 import {
@@ -19,6 +21,7 @@ import {
 } from "@/lib/validation";
 import { SITE_URL } from "@/lib/blog";
 import {
+  COMMERCIAL_EXTRA_KINDS,
   counterTypeText,
   OPTION_VALUES,
   propValueLists,
@@ -59,11 +62,12 @@ function assertValidRentalRequest(
   s: SerializedFormState,
 ): void {
   const isCommercial = contractType === "commercial";
+  const isCommercialTenant = isCommercial && s.role === "tenant";
   if (s.role !== "owner" && s.role !== "tenant") throw invalid("role");
+  if (!validators.iban(s.ownerIban)) throw invalid("ownerIban");
   if (!validators.mobile(s.applicantPhone)) throw invalid("applicantPhone");
   if (!validators.nationalOrIqama(s.applicantId)) throw invalid("applicantId");
-  if (!validators.iban(s.ownerIban)) throw invalid("ownerIban");
-  if (s.role === "tenant" && !isAdultISO(s.applicantDob))
+  if (s.role === "tenant" && !isCommercialTenant && !isAdultISO(s.applicantDob))
     throw invalid("applicantDob");
   if (s.role === "owner" && s.isAgent && !validators.required(s.agencyNumber))
     throw invalid("agencyNumber");
@@ -81,7 +85,7 @@ function assertValidRentalRequest(
   } else {
     if (!validators.nationalOrIqama(s.otherId)) throw invalid("otherId");
     if (!validators.mobile(s.otherPhone)) throw invalid("otherPhone");
-    if (s.role === "owner" && !isAdultISO(s.otherDob))
+    if ((s.role === "owner" || isCommercialTenant) && !isAdultISO(s.otherDob))
       throw invalid("otherDob");
   }
   if (!validators.deedNumber(s.deedNumber)) throw invalid("deedNumber");
@@ -98,7 +102,13 @@ function assertValidRentalRequest(
   if (!s.contractStart) throw invalid("contractStart");
   if (s.duration === "custom" && !(s.customMonths >= 1))
     throw invalid("customMonths");
-  if (!(s.annualRent > 0) || !s.duration || !s.payment) throw invalid("terms");
+  if (!s.duration || !s.payment) throw invalid("terms");
+  if (
+    isTotalRentCase(s.payment, s.duration, s.customMonths)
+      ? !(s.totalRent > 0)
+      : !(s.annualRent > 0)
+  )
+    throw invalid("terms");
   if (!s.propertyType || !s.unitType || !s.floor) throw invalid("property");
   if (!validators.required(s.unitNumber)) throw invalid("unitNumber");
   if (!(s.area > 0)) throw invalid("area");
@@ -109,11 +119,18 @@ function assertValidRentalRequest(
     throw invalid("unitCustom");
   if (s.floor === "other" && !validators.required(s.floorCustom))
     throw invalid("floorCustom");
-  if (!s.rooms) throw invalid("rooms");
-  if (s.rooms === "other" && !(s.roomsCustom > 0)) throw invalid("roomsCustom");
+  if (!isCommercial && !s.rooms) throw invalid("rooms");
+  if (!isCommercial && s.rooms === "other" && !(s.roomsCustom > 0))
+    throw invalid("roomsCustom");
   if (
     !Array.isArray(s.extras) ||
     !s.extras.every((e) => e.kind && e.count >= 1)
+  )
+    throw invalid("extras");
+  // Commercial offers AC kinds only (no rooms there either).
+  if (
+    isCommercial &&
+    s.extras.some((e) => !COMMERCIAL_EXTRA_KINDS.includes(e.kind ?? ""))
   )
     throw invalid("extras");
   if (s.extras.some((e) => e.kind === "kitchen") && s.kitchenCabinets == null)
@@ -128,6 +145,8 @@ export async function submitRentalRequest(
   const isCommercial = contractType === "commercial";
   const months =
     s.duration === "custom" ? s.customMonths : durationToMonths(s.duration);
+  const totalCase = isTotalRentCase(s.payment, s.duration, s.customMonths);
+  const isCommercialTenant = isCommercial && s.role === "tenant";
 
   let settingsFees = null;
   try {
@@ -147,50 +166,109 @@ export async function submitRentalRequest(
   const requestNo = requestNumber();
   const { propList, unitList } = propValueLists(isCommercial);
   const ownerIban = s.ownerIban.trim().replace(/[\s-]/g, "").toUpperCase();
-  await getWriteClient().create({
-    _type: "rentalRequest",
+  const roomsValue = isCommercial
+    ? undefined
+    : s.rooms === "other"
+      ? String(s.roomsCustom)
+      : s.rooms || undefined;
+  const roomsCustomValue =
+    isCommercial || s.rooms !== "other" ? undefined : s.roomsCustom;
+  // Single source of truth: the stored document doubles as the admin-email
+  // detail, so the email path needs no re-fetch of the document just created.
+  const detail: NonNullable<RequestDetail> = {
     requestNo,
     contractType,
     status: "new",
     submittedAt: new Date().toISOString(),
     applicant: {
       role: storedArabic(OPTION_VALUES.role, s.role),
-      isAgent: s.isAgent,
-      agencyNumber: s.agencyNumber || undefined,
-      phone: normalizePhone(s.applicantPhone),
-      nationalId: s.applicantId,
-      dob: toDateString(s.applicantDob),
+      isAgent: s.role === "owner" ? s.isAgent : false,
+      agencyNumber:
+        s.role === "owner" ? s.agencyNumber || undefined : undefined,
+      counterType: isCommercialTenant
+        ? (counterTypeText(s.counterType) ?? undefined)
+        : undefined,
+      phone: normalizePhone(
+        isCommercialTenant
+          ? s.counterType === "entity"
+            ? s.repPhone
+            : s.otherPhone
+          : s.applicantPhone,
+      ),
+      nationalId: isCommercialTenant
+        ? s.counterType === "entity"
+          ? undefined
+          : s.otherId || undefined
+        : s.applicantId,
+      dob: isCommercialTenant
+        ? s.counterType === "entity"
+          ? undefined
+          : toDateString(s.otherDob)
+        : toDateString(s.applicantDob),
       ownerIban: s.role === "owner" ? ownerIban : undefined,
-    },
-    counterparty: {
-      counterType:
-        counterTypeText(s.counterType) ?? (isCommercial ? undefined : "فرد"),
-      nationalId: s.otherId || undefined,
-      phone: s.otherPhone ? normalizePhone(s.otherPhone) : undefined,
-      dob: toDateString(s.otherDob),
-      ownerIban: s.role === "tenant" ? ownerIban : undefined,
       unifiedNumber:
-        isCommercial && s.counterType === "entity"
+        isCommercialTenant && s.counterType === "entity"
           ? s.unifiedNumber || undefined
           : undefined,
-      entityName:
-        isCommercial && s.counterType === "entity"
-          ? s.entityName || undefined
-          : undefined,
       repId:
-        isCommercial && s.counterType === "entity"
+        isCommercialTenant && s.counterType === "entity"
           ? s.repId || undefined
           : undefined,
       repPhone:
-        isCommercial && s.counterType === "entity" && s.repPhone
+        isCommercialTenant && s.counterType === "entity" && s.repPhone
           ? normalizePhone(s.repPhone)
           : undefined,
       repDob:
-        isCommercial && s.counterType === "entity"
+        isCommercialTenant && s.counterType === "entity"
           ? toDateString(s.repDob)
           : undefined,
       authNumber:
-        isCommercial && s.counterType === "entity"
+        isCommercialTenant && s.counterType === "entity"
+          ? s.authNumber || undefined
+          : undefined,
+    },
+    counterparty: {
+      counterType: isCommercialTenant
+        ? "فرد"
+        : (counterTypeText(s.counterType) ??
+          (isCommercial ? undefined : "فرد")),
+      nationalId: isCommercialTenant
+        ? s.applicantId || undefined
+        : s.counterType !== "entity"
+          ? s.otherId || undefined
+          : undefined,
+      phone: isCommercialTenant
+        ? normalizePhone(s.applicantPhone)
+        : s.counterType !== "entity" && s.otherPhone
+          ? normalizePhone(s.otherPhone)
+          : undefined,
+      dob: isCommercialTenant
+        ? toDateString(s.applicantDob)
+        : s.counterType !== "entity"
+          ? toDateString(s.otherDob)
+          : undefined,
+      ownerIban: s.role === "tenant" ? ownerIban : undefined,
+      unifiedNumber:
+        !isCommercialTenant && isCommercial && s.counterType === "entity"
+          ? s.unifiedNumber || undefined
+          : undefined,
+      repId:
+        !isCommercialTenant && isCommercial && s.counterType === "entity"
+          ? s.repId || undefined
+          : undefined,
+      repPhone:
+        !isCommercialTenant &&
+        isCommercial &&
+        s.counterType === "entity" &&
+        s.repPhone
+          ? normalizePhone(s.repPhone)
+          : undefined,
+      repDob:
+        !isCommercialTenant && isCommercial && s.counterType === "entity"
+          ? toDateString(s.repDob)
+          : undefined,
+      authNumber:
+        !isCommercialTenant && isCommercial && s.counterType === "entity"
           ? s.authNumber || undefined
           : undefined,
     },
@@ -198,15 +276,17 @@ export async function submitRentalRequest(
       deedNumber: s.deedNumber || undefined,
       deedDate: toDateString(s.deedDate),
       propertyType: storedArabic(propList, s.propertyType, s.propertyCustom),
-      propertyCustom: s.propertyCustom || undefined,
+      propertyCustom:
+        s.propertyType === "other" ? s.propertyCustom || undefined : undefined,
       unitType: storedArabic(unitList, s.unitType, s.unitCustom),
-      unitCustom: s.unitCustom || undefined,
+      unitCustom:
+        s.unitType === "other" ? s.unitCustom || undefined : undefined,
       unitNumber: s.unitNumber || undefined,
       floor: storedArabic(OPTION_VALUES.floor, s.floor, s.floorCustom),
-      floorCustom: s.floorCustom || undefined,
+      floorCustom: s.floor === "other" ? s.floorCustom || undefined : undefined,
       area: s.area,
-      rooms: s.rooms === "other" ? String(s.roomsCustom) : s.rooms || undefined,
-      roomsCustom: s.rooms === "other" ? s.roomsCustom : undefined,
+      rooms: roomsValue,
+      roomsCustom: roomsCustomValue,
       extras: storedExtras(s.extras),
       kitchenCabinets: s.extras.some((e) => e.kind === "kitchen")
         ? (s.kitchenCabinets ?? undefined)
@@ -216,8 +296,10 @@ export async function submitRentalRequest(
     },
     location: {
       locationManual: s.locationManual,
-      mapsLink: s.mapsLink || undefined,
-      city: storedArabic(OPTION_VALUES.city, s.city),
+      mapsLink: !s.locationManual ? s.mapsLink || undefined : undefined,
+      city: s.locationManual
+        ? storedArabic(OPTION_VALUES.city, s.city)
+        : undefined,
       buildingNumber: s.buildingNumber || undefined,
       additionalNumber: s.additionalNumber || undefined,
       postalCode: s.postalCode || undefined,
@@ -227,34 +309,31 @@ export async function submitRentalRequest(
         s.duration === "custom"
           ? "مخصص"
           : storedArabic(OPTION_VALUES.duration, s.duration),
-      customMonths: s.customMonths,
+      customMonths: s.duration === "custom" ? s.customMonths : undefined,
       contractStart: toDateString(s.contractStart),
       payment: storedArabic(OPTION_VALUES.payment, s.payment),
-      annualRent: s.annualRent,
+      annualRent: totalCase ? undefined : s.annualRent,
+      totalRent: totalCase ? s.totalRent : undefined,
       feeBreakdown: breakdown,
       notes: s.notes || undefined,
     },
-  });
+  };
+  await getWriteClient().create({ _type: "rentalRequest", ...detail });
 
-  await notifyAdminNewRequest(requestNo, s.applicantPhone, SITE_URL);
+  // Admin email sends after the response: the user waits only for the save.
+  after(() => notifyAdminNewRequest(detail, SITE_URL));
 
   return { requestNo, fee: breakdown.total };
 }
 
 async function notifyAdminNewRequest(
-  requestNo: string,
-  applicantPhone: string,
+  detail: NonNullable<RequestDetail>,
   siteUrl: string,
 ): Promise<void> {
   try {
     const adminEmail = process.env.ADMIN_EMAIL?.trim();
     if (!adminEmail) {
       console.warn("ADMIN_EMAIL is not set; skipping new-request email.");
-      return;
-    }
-    const detail = await getRequestDetail(requestNo, applicantPhone);
-    if (!detail) {
-      console.error(`New-request email skipped: ${requestNo} not found.`);
       return;
     }
     const { sendNewRequestNotification } = await import("@/lib/email");
@@ -380,6 +459,7 @@ export async function getRequestStatus(
       submittedAt?: string;
       feeTotal?: number;
       annualRent?: number;
+      totalRent?: number;
     } | null;
     if (!data?.requestNo) {
       return null;
@@ -391,6 +471,7 @@ export async function getRequestStatus(
       submittedAt: `${data.submittedAt ?? ""}`,
       feeTotal: typeof data.feeTotal === "number" ? data.feeTotal : null,
       annualRent: typeof data.annualRent === "number" ? data.annualRent : null,
+      totalRent: typeof data.totalRent === "number" ? data.totalRent : null,
     };
   } catch {
     return null;

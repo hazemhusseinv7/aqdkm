@@ -82,6 +82,7 @@ export const paymentOptions: IconOption[] = withIcons(OPTION_VALUES.payment, {
   quarterly: <FaMoneyBillWave />,
   semi: <FaMoneyBillWave />,
   yearly: <FaMoneyBillWave />,
+  single: <FaMoneyBillWave />,
 });
 
 export const residentialPropertyTypes: IconOption[] = withIcons(

@@ -22,6 +22,27 @@ export const FIELD_LABELS = {
     ar: "رقم الهوية / الإقامة لمقدم الطلب",
   },
   applicantDob: { en: "Date of birth", ar: "تاريخ ميلاد مقدم الطلب" },
+  applicantCounterType: { en: "Applicant type", ar: "نوع مقدم الطلب" },
+  applicantUnifiedNumber: {
+    en: "Applicant unified number (700…)",
+    ar: "الرقم الموحد للمنشأة",
+  },
+  applicantRepId: {
+    en: "Applicant representative ID",
+    ar: "هوية المفوّض بالتوقيع",
+  },
+  applicantRepPhone: {
+    en: "Applicant representative phone",
+    ar: "جوال المفوّض بالتوقيع",
+  },
+  applicantRepDob: {
+    en: "Applicant representative date of birth",
+    ar: "تاريخ ميلاد المفوّض بالتوقيع",
+  },
+  applicantAuthNumber: {
+    en: "Applicant authorization number",
+    ar: "رقم التفويض أو الوكالة",
+  },
   counterpartyType: { en: "Party type", ar: "نوع الطرف الآخر" },
   counterpartyNationalId: {
     en: "National ID / Iqama",
@@ -33,7 +54,6 @@ export const FIELD_LABELS = {
     en: "Unified number (700…)",
     ar: "الرقم الموحد للمنشأة",
   },
-  counterpartyEntityName: { en: "Entity name", ar: "اسم المنشأة" },
   counterpartyRepId: { en: "Representative ID", ar: "هوية المفوّض بالتوقيع" },
   counterpartyRepPhone: {
     en: "Representative phone",
@@ -63,7 +83,10 @@ export const FIELD_LABELS = {
   rooms: { en: "Rooms", ar: "الغرف" },
   roomsCustom: { en: "Rooms (custom)", ar: "عدد الغرف" },
   extras: { en: "Extras", ar: "المرافق المتوفرة" },
-  kitchenCabinets: { en: "Kitchen cabinets installed", ar: "تركيب خزائن المطبخ" },
+  kitchenCabinets: {
+    en: "Kitchen cabinets installed",
+    ar: "تركيب خزائن المطبخ",
+  },
   electroMeter: { en: "Electricity meter", ar: "رقم عداد الكهرباء" },
   waterMeter: { en: "Water meter", ar: "رقم عداد المياه" },
   mapsLink: { en: "Maps link", ar: "رابط موقع العقار" },
@@ -77,6 +100,7 @@ export const FIELD_LABELS = {
   contractStart: { en: "Contract start", ar: "تاريخ بداية العقد" },
   payment: { en: "Payment schedule", ar: "طريقة الدفع" },
   annualRent: { en: "Annual rent", ar: "الإيجار السنوي" },
+  totalRent: { en: "Total rent", ar: "إجمالي مبلغ الإيجار" },
   ownerIban: { en: "Landlord IBAN", ar: "IBAN المؤجر" },
   feeYears: { en: "Billed years", ar: "سنوات الاحتساب" },
   feeGovernment: { en: "Government fee", ar: "الرسوم الحكومية" },
@@ -131,6 +155,7 @@ export const OPTION_VALUES = {
     { value: "quarterly", label: "كل 3 أشهر" },
     { value: "semi", label: "كل 6 أشهر" },
     { value: "yearly", label: "سنوي" },
+    { value: "single", label: "دفعة واحدة" },
   ],
   residentialProperty: [
     { value: "building", label: "عمارة" },
@@ -210,12 +235,16 @@ export function propValueLists(isCommercial: boolean) {
   };
 }
 
+export const COMMERCIAL_EXTRA_KINDS: readonly string[] = [
+  "split_ac",
+  "window_ac",
+];
+
 export const EXTRA_LABELS: Record<string, string> = {
   kitchen: "يوجد مطبخ",
   majlis: "يوجد مجلس",
   split_ac: "مكيفات سبليت",
   window_ac: "مكيفات شباك",
-  extra_room: "غرفة إضافية",
   storage: "غرفة مخزن",
   sitting: "يوجد صالة",
   bathrooms: "الحمامات",
@@ -235,7 +264,10 @@ export function storedArabic(
 export function storedExtras(
   extras: { kind: string; count: number }[],
 ): { kind: string; count: number }[] {
-  return extras.map((e) => ({ kind: EXTRA_LABELS[e.kind] ?? e.kind, count: e.count }));
+  return extras.map((e) => ({
+    kind: EXTRA_LABELS[e.kind] ?? e.kind,
+    count: e.count,
+  }));
 }
 
 export function counterTypeText(value?: string | null): string | null {

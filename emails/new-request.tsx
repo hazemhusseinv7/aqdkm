@@ -97,6 +97,8 @@ export function NewRequestNotification({
   const loc = detail.location;
   const tm = detail.terms;
   const isEntity = counterTypeText(c?.counterType) === "منشأة";
+  const applicantIsEntity =
+    counterTypeText(detail.applicant.counterType) === "منشأة";
 
   const counterpartyRows: Row[] = [
     { label: L.counterpartyType.ar, display: counterTypeText(c?.counterType) },
@@ -106,10 +108,6 @@ export function NewRequestNotification({
           {
             label: L.counterpartyUnifiedNumber.ar,
             display: c?.unifiedNumber ?? null,
-          },
-          {
-            label: L.counterpartyEntityName.ar,
-            display: c?.entityName ?? null,
           },
           { label: L.counterpartyRepId.ar, display: c?.repId ?? null },
           { label: L.counterpartyRepPhone.ar, display: c?.repPhone ?? null },
@@ -151,18 +149,51 @@ export function NewRequestNotification({
               label: L.applicantRole.ar,
               display: lookupOption(OPTION_VALUES.role, detail.applicant.role),
             },
-            {
-              label: L.applicantPhone.ar,
-              display: detail.applicant.phone ?? null,
-            },
-            {
-              label: L.applicantNationalId.ar,
-              display: detail.applicant.nationalId ?? null,
-            },
-            {
-              label: L.applicantDob.ar,
-              display: formatDualDate(detail.applicant.dob),
-            },
+            ...(detail.applicant.counterType
+              ? [
+                  {
+                    label: L.applicantCounterType.ar,
+                    display: counterTypeText(detail.applicant.counterType),
+                  },
+                ]
+              : []),
+            ...(applicantIsEntity
+              ? [
+                  {
+                    label: L.applicantUnifiedNumber.ar,
+                    display: detail.applicant.unifiedNumber ?? null,
+                  },
+                  {
+                    label: L.applicantRepId.ar,
+                    display: detail.applicant.repId ?? null,
+                  },
+                  {
+                    label: L.applicantRepPhone.ar,
+                    display: detail.applicant.repPhone ?? null,
+                  },
+                  {
+                    label: L.applicantRepDob.ar,
+                    display: formatDualDate(detail.applicant.repDob),
+                  },
+                  {
+                    label: L.applicantAuthNumber.ar,
+                    display: detail.applicant.authNumber ?? null,
+                  },
+                ]
+              : [
+                  {
+                    label: L.applicantPhone.ar,
+                    display: detail.applicant.phone ?? null,
+                  },
+                  {
+                    label: L.applicantNationalId.ar,
+                    display: detail.applicant.nationalId ?? null,
+                  },
+                  {
+                    label: L.applicantDob.ar,
+                    display: formatDualDate(detail.applicant.dob),
+                  },
+                ]),
             ...(detail.applicant.ownerIban
               ? [
                   {
@@ -249,10 +280,14 @@ export function NewRequestNotification({
                 OPTION_VALUES.floor,
               ),
             },
-            {
-              label: L.rooms.ar,
-              display: countText(p?.rooms, p?.roomsCustom),
-            },
+            ...(isCommercial
+              ? []
+              : [
+                  {
+                    label: L.rooms.ar,
+                    display: countText(p?.rooms, p?.roomsCustom),
+                  },
+                ]),
             { label: L.extras.ar, display: extrasText(p?.extras) },
             ...(p?.extras?.some(
               (e) => e.kind === "kitchen" || e.kind === EXTRA_LABELS.kitchen,
@@ -300,7 +335,19 @@ export function NewRequestNotification({
               label: L.payment.ar,
               display: lookupOption(OPTION_VALUES.payment, tm?.payment),
             },
-            { label: L.annualRent.ar, display: formatMoney(tm?.annualRent) },
+            ...(tm?.totalRent != null
+              ? [
+                  {
+                    label: L.totalRent.ar,
+                    display: formatMoney(tm.totalRent),
+                  },
+                ]
+              : [
+                  {
+                    label: L.annualRent.ar,
+                    display: formatMoney(tm?.annualRent),
+                  },
+                ]),
             {
               label: L.feeYears.ar,
               display:

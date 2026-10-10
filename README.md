@@ -86,7 +86,7 @@ Studio lives at `/admin`. IDs are Sanity-generated; drafts stay in
 |---|---|---|
 | `rentalRequest` | document | Groups: general / parties / property / terms; statuses new → reviewing → approved → completed / cancelled; user-filled fields are **read-only**, field titles bilingual (`English / العربية`); every submit emails the all-fields table to `ADMIN_EMAIL` (skipped with a server log when unset) |
 | `contactMessage` | document | `name/phone/email/message` are **read-only** (staff never edits submissions); `status` uses the `StatusTabs` tab input; `submittedAt` read-only |
-| `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`, `marketingPoints[]` text+icon-picker array driving the hero/CTA visuals — hidden when empty) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) / cta (starting-fee note phrase + residential/commercial amounts, manual marketing numbers) |
+| `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`, `marketingPoints[]` text+icon-picker array driving the hero/CTA visuals - hidden when empty) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) / cta (starting-fee note phrase + residential/commercial amounts, manual marketing numbers) |
 | `post` / `category` / `author` | documents | Blog group in Studio; post bodies accept text, images, and `code` (HTML) blocks; FAQs live in `siteSettings.faqs[]`; slugs accept Arabic (auto-slugified + validated, decoded at render, sitemap-encoded) |
 | `legalPage` | document | Terms / privacy / FAQ pages: title, description, Portable Text content + Q&A accordion; footer + `/legal/[slug]` (Arabic slugs, same as posts) |
 | `testimonials` / `features` / `licenses` | singletons | Homepage sections: reviews (name + quote required; role/city/date/rating optional), feature cards (icon picker), license cards |
@@ -140,6 +140,10 @@ Server-Action boundary rules:
   for individual tenants (applicant side) and for the counterparty individual
   on the owner side.   The commercial counterparty toggle defaults to منشأة
   (first) with فرد second; residential has no toggle and is always فرد.
+  For commercial tenants the cards swap: the toggle types the applicant
+  tenant first (`applicant.counterType` + entity fields on the applicant
+  node), the identity card captures the owner, and the adult rule follows
+  the tenant's birth date.
   Step 4 collects counted amenities (every checked
   item needs a count ≥ 1) plus a conditional kitchen-cabinets نعم/لا toggle.
   The stepper allows backward jumps plus fast-forward through verified steps,
@@ -153,8 +157,13 @@ Server-Action boundary rules:
   steps 0–4 first: on failure it jumps to the offending step with highlights on
   and a step-named toast, so free stepper/review navigation can never smuggle
   invalid data to submit. `submitRentalRequest` re-checks everything server-side
-  (`assertValidRentalRequest`, shared `validators`) - empty `rooms` are
-  rejected, not written as `""`. Amenity counts must each be ≥ 1. Dates are normalized to
+  (`assertValidRentalRequest`, shared `validators`) - empty residential `rooms`
+  are
+  rejected, not written as `""` (commercial has no rooms field at all, and its
+  extras are AC-only via `COMMERCIAL_EXTRA_KINDS`). Single payment
+  (`دفعة واحدة`) or a sub-year duration swaps annual rent for `totalRent`
+  (`isTotalRentCase`, `lib/fees.ts`); exactly one of the two is validated
+  and stored. Amenity counts must each be ≥ 1. Dates are normalized to
   Gregorian ISO at the submit boundary (the Hijri picker stores Gregorian;
   non-Gregorian input is rejected server-side).
 - Dates (`lib/calendar.ts`): wheel picker with Gregorian / Hijri (Umm al-Qura)
@@ -180,7 +189,7 @@ Server-Action boundary rules:
   lookup; both lookups run in parallel via `allSettled` so infra failures
   render a dedicated load-error card instead of a false phone-mismatch. The
   summary lookup returns only
-  `requestNo/contractType/status/submittedAt/feeTotal/annualRent` -
+  `requestNo/contractType/status/submittedAt/feeTotal/annualRent/totalRent` -
   no names, IDs, phones, or deed data ever leaves Sanity. The full detail view
   additionally requires the applicant phone recorded on the request (wrong
   phone → summary only + mismatch notice); lookup phones accept local,

@@ -3,11 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getLocalTimeZone, today } from "@internationalized/date";
-import {
-  reviveCalendarDate,
-  toGregorianISO,
-  formatDual,
-} from "@/lib/calendar";
+import { reviveCalendarDate, toGregorianISO, formatDual } from "@/lib/calendar";
 import {
   Card,
   Button,
@@ -83,6 +79,7 @@ import {
   calcFee,
   durationToMonths,
   formatCurrency,
+  isTotalRentCase,
   DEFAULT_FEE_CONFIG,
   type ContractType,
   type FeeConfig,
@@ -101,6 +98,7 @@ import {
   countOptions,
   cityOptions,
 } from "@/lib/options";
+import { COMMERCIAL_EXTRA_KINDS } from "@/lib/request-fields";
 import type { FormState, Role, SerializedFormState } from "@/lib/request-form";
 
 /** Normalize stored extras: legacy string[] drafts become count-1 entries. */
@@ -137,7 +135,6 @@ const initial: FormState = {
   otherDob: null,
   counterType: "individual",
   unifiedNumber: "",
-  entityName: "",
   repId: "",
   repPhone: "",
   repDob: null,
@@ -156,6 +153,7 @@ const initial: FormState = {
   contractStart: null,
   payment: "",
   annualRent: 0,
+  totalRent: 0,
   ownerIban: "",
   propertyType: "",
   propertyCustom: "",
@@ -199,6 +197,12 @@ export function SmartForm({
   const skipSave = useRef(false);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setS((p) => ({ ...p, [k]: v }));
+  const applyRole = (role: Role) =>
+    setS((p) => ({
+      ...p,
+      role,
+      ...(role === "tenant" ? { isAgent: false, agencyNumber: "" } : {}),
+    }));
 
   const draftKey = `aqdkm-draft-${contractType}`;
 
@@ -215,7 +219,30 @@ export function SmartForm({
           counterType: isCommercial
             ? parsed.counterType || "entity"
             : "individual",
-          extras: reviveExtras(parsed.extras),
+          ...(parsed.role === "tenant"
+            ? { isAgent: false, agencyNumber: "" }
+            : {}),
+          ...(parsed.propertyType !== "other" ? { propertyCustom: "" } : {}),
+          ...(parsed.unitType !== "other" ? { unitCustom: "" } : {}),
+          ...(parsed.floor !== "other" ? { floorCustom: "" } : {}),
+          ...(parsed.locationManual === true ? { mapsLink: "" } : {}),
+          ...(parsed.locationManual === false ? { city: "" } : {}),
+          ...(parsed.duration !== "custom" ? { customMonths: 0 } : {}),
+          ...(isCommercial && parsed.counterType === "entity"
+            ? { otherId: "", otherPhone: "", otherDob: null }
+            : {}),
+          extras: reviveExtras(parsed.extras).filter(
+            (e) => !isCommercial || COMMERCIAL_EXTRA_KINDS.includes(e.kind),
+          ),
+          // Commercial never offers kitchen: drop any revived answer with it.
+          ...(isCommercial ? { kitchenCabinets: null } : {}),
+          ...(isTotalRentCase(
+            parsed.payment ?? "",
+            parsed.duration ?? "",
+            parsed.customMonths ?? 0,
+          )
+            ? { annualRent: 0 }
+            : { totalRent: 0 }),
           deedDate: reviveCalendarDate(parsed.deedDate),
           applicantDob: reviveCalendarDate(parsed.applicantDob),
           otherDob: reviveCalendarDate(parsed.otherDob),
@@ -285,6 +312,8 @@ export function SmartForm({
       ? s.floorCustom || "أخرى"
       : (floorOptions.find((d) => d.value === s.floor)?.label ?? s.floor);
   const roomsLabel = s.rooms === "other" ? String(s.roomsCustom) : s.rooms;
+  const totalCase = isTotalRentCase(s.payment, s.duration, s.customMonths);
+  const isCommercialTenant = isCommercial && s.role === "tenant";
 
   const err = (cond: boolean, msg: string) => (touched && cond ? msg : null);
 
@@ -296,10 +325,14 @@ export function SmartForm({
         if (!validators.mobile(s.applicantPhone)) return false;
         if (!validators.nationalOrIqama(s.applicantId)) return false;
         if (!validators.iban(s.ownerIban)) return false;
-        if (s.role === "tenant" && !isAdultISO(toGregorianISO(s.applicantDob)))
+        if (
+          s.role === "tenant" &&
+          !isCommercialTenant &&
+          !isAdultISO(toGregorianISO(s.applicantDob))
+        )
           return false;
         if (
-          s.role === "owner" &&
+          (s.role === "owner" || isCommercialTenant) &&
           s.counterType !== "entity" &&
           !isAdultISO(toGregorianISO(s.otherDob))
         )
@@ -335,7 +368,8 @@ export function SmartForm({
       case 3:
         if (!s.contractStart) return false;
         if (s.duration === "custom" && !(s.customMonths >= 1)) return false;
-        return s.annualRent > 0 && !!s.duration && !!s.payment;
+        if (totalCase ? !(s.totalRent > 0) : !(s.annualRent > 0)) return false;
+        return !!s.duration && !!s.payment;
       case 4:
         if (!s.propertyType || !s.unitType || !s.floor) return false;
         if (!validators.required(s.unitNumber)) return false;
@@ -351,13 +385,20 @@ export function SmartForm({
         if (s.floor === "other" && !validators.required(s.floorCustom))
           return false;
         if (!s.extras.every((e) => e.kind && e.count >= 1)) return false;
+        // Commercial offers AC kinds only.
+        if (
+          isCommercial &&
+          s.extras.some((e) => !COMMERCIAL_EXTRA_KINDS.includes(e.kind))
+        )
+          return false;
         if (
           s.extras.some((e) => e.kind === "kitchen") &&
           s.kitchenCabinets == null
         )
           return false;
-        if (!s.rooms) return false;
-        if (s.rooms === "other" && !(s.roomsCustom > 0)) return false;
+        if (!isCommercial && !s.rooms) return false;
+        if (!isCommercial && s.rooms === "other" && !(s.roomsCustom > 0))
+          return false;
         return true;
       default:
         return true;
@@ -400,6 +441,8 @@ export function SmartForm({
     try {
       const payload: SerializedFormState = {
         ...s,
+        annualRent: totalCase ? 0 : s.annualRent,
+        totalRent: totalCase ? s.totalRent : 0,
         applicantDob: toGregorianISO(s.applicantDob),
         otherDob: toGregorianISO(s.otherDob),
         repDob: toGregorianISO(s.repDob),
@@ -437,6 +480,126 @@ export function SmartForm({
       }
     }
   };
+
+  const applicantCard = (
+    <SectionCard
+      icon={<MdBadge />}
+      title={isCommercialTenant ? "بيانات الطرف الآخر" : "بيانات مقدم الطلب"}
+      description={
+        isCommercialTenant
+          ? "بيانات الطرف المقابل في العقد"
+          : "بيانات المتقدم بطلب التوثيق"
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <IconText
+          label={
+            isCommercialTenant
+              ? "رقم الهوية / الإقامة للطرف الآخر"
+              : "رقم الهوية / الإقامة لمقدم الطلب"
+          }
+          required
+          icon={<MdBadge />}
+          description={helpers.nationalOrIqama}
+          placeholder="مثال: 1xxx xxxx xx"
+          value={s.applicantId}
+          onChange={(v) => set("applicantId", v)}
+          dir="ltr"
+          inputMode="numeric"
+          error={err(
+            !validators.nationalOrIqama(s.applicantId),
+            messages.nationalOrIqama,
+          )}
+        />
+        <IconDate
+          label={
+            isCommercialTenant
+              ? "تاريخ ميلاد الطرف الآخر"
+              : "تاريخ ميلاد مقدم الطلب"
+          }
+          icon={<MdCake />}
+          name="applicant-dob"
+          description={
+            s.role === "tenant" && !isCommercialTenant
+              ? "يجب أن يكون العمر 18 سنة على الأقل"
+              : "اختياري"
+          }
+          value={s.applicantDob}
+          onChange={(v) => set("applicantDob", v)}
+          maxYear={new Date().getFullYear()}
+          error={err(
+            s.role === "tenant" &&
+              !isCommercialTenant &&
+              !isAdultISO(toGregorianISO(s.applicantDob)),
+            messages.adult,
+          )}
+        />
+        <IconText
+          label={isCommercialTenant ? "جوال الطرف الآخر" : "جوال مقدم الطلب"}
+          required
+          icon={<MdPhone />}
+          description={helpers.mobile}
+          placeholder="مثال: 05xx xxx xxx"
+          value={s.applicantPhone}
+          onChange={(v) => set("applicantPhone", v)}
+          dir="ltr"
+          inputMode="tel"
+          error={err(!validators.mobile(s.applicantPhone), messages.mobile)}
+        />
+      </div>
+
+      {s.role === "owner" && (
+        <IconText
+          label="IBAN المؤجر"
+          required
+          icon={<MdAccountBalanceWallet />}
+          description="رقم الآيبان البنكي الدولي للمؤجر"
+          placeholder="مثال: SA03 8000 0000 6080 1016 7519"
+          value={s.ownerIban}
+          onChange={(v) => set("ownerIban", v)}
+          dir="ltr"
+          error={err(!validators.iban(s.ownerIban), messages.iban)}
+        />
+      )}
+
+      {s.role === "owner" && (
+        <IconSwitch
+          label="هل أنت وكيل عن المالك؟"
+          icon={<MdGavel />}
+          checked={s.isAgent}
+          onChange={(v) => set("isAgent", v)}
+        />
+      )}
+      {s.role === "owner" && s.isAgent && (
+        <IconText
+          label="رقم الوكالة"
+          required
+          icon={<MdGavel />}
+          description="كما هو مدون في صك الوكالة"
+          placeholder="يرجى إدخال رقم الوكالة"
+          value={s.agencyNumber}
+          onChange={(v) => set("agencyNumber", v)}
+          error={err(!validators.required(s.agencyNumber), messages.required)}
+        />
+      )}
+      {s.role === "tenant" && (
+        <>
+          <Separator />
+          <IconText
+            label="IBAN المؤجر"
+            required
+            icon={<MdAccountBalanceWallet />}
+            description="رقم الآيبان البنكي الدولي للمؤجر"
+            placeholder="مثال: SA03 8000 0000 6080 1016 7519"
+            value={s.ownerIban}
+            onChange={(v) => set("ownerIban", v)}
+            dir="ltr"
+            error={err(!validators.iban(s.ownerIban), messages.iban)}
+          />
+        </>
+      )}
+    </SectionCard>
+  );
 
   if (loading) {
     return <SmartFormSkeleton />;
@@ -521,7 +684,7 @@ export function SmartForm({
                       key={r.value}
                       variant="tertiary"
                       className={`cursor-pointer transition-all ${active ? "ring-accent bg-accent/20 ring-2" : "opacity-80 hover:shadow-md"}`}
-                      onClick={() => set("role", r.value as Role)}
+                      onClick={() => applyRole(r.value as Role)}
                     >
                       <Card.Header>
                         <span
@@ -575,105 +738,20 @@ export function SmartForm({
 
           {step === 1 && (
             <div className="flex flex-col gap-4">
-              <SectionCard
-                icon={<MdBadge />}
-                title="بيانات مقدم الطلب"
-                description="بيانات المتقدم بطلب التوثيق"
-              >
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <IconText
-                    label="رقم الهوية / الإقامة لمقدم الطلب"
-                    required
-                    icon={<MdBadge />}
-                    description={helpers.nationalOrIqama}
-                    placeholder="مثال: 1xxx xxxx xx"
-                    value={s.applicantId}
-                    onChange={(v) => set("applicantId", v)}
-                    dir="ltr"
-                    inputMode="numeric"
-                    error={err(
-                      !validators.nationalOrIqama(s.applicantId),
-                      messages.nationalOrIqama,
-                    )}
-                  />
-                  <IconDate
-                    label="تاريخ ميلاد مقدم الطلب"
-                    icon={<MdCake />}
-                    name="applicant-dob"
-                    description={
-                      s.role === "tenant"
-                        ? "يجب أن يكون العمر 18 سنة على الأقل"
-                        : "اختياري"
-                    }
-                    value={s.applicantDob}
-                    onChange={(v) => set("applicantDob", v)}
-                    maxYear={new Date().getFullYear()}
-                    error={err(
-                      s.role === "tenant" &&
-                        !isAdultISO(toGregorianISO(s.applicantDob)),
-                      messages.adult,
-                    )}
-                  />
-                  <IconText
-                    label="جوال مقدم الطلب"
-                    required
-                    icon={<MdPhone />}
-                    description={helpers.mobile}
-                    placeholder="مثال: 05xx xxx xxx"
-                    value={s.applicantPhone}
-                    onChange={(v) => set("applicantPhone", v)}
-                    dir="ltr"
-                    inputMode="tel"
-                    error={err(
-                      !validators.mobile(s.applicantPhone),
-                      messages.mobile,
-                    )}
-                  />
-                </div>
-
-                {s.role === "owner" && (
-                  <IconText
-                    label="IBAN المؤجر"
-                    required
-                    icon={<MdAccountBalanceWallet />}
-                    description="رقم الآيبان البنكي الدولي للمؤجر"
-                    placeholder="مثال: SA03 8000 0000 6080 1016 7519"
-                    value={s.ownerIban}
-                    onChange={(v) => set("ownerIban", v)}
-                    dir="ltr"
-                    error={err(!validators.iban(s.ownerIban), messages.iban)}
-                  />
-                )}
-
-                {s.role === "owner" && (
-                  <IconSwitch
-                    label="هل أنت وكيل عن المالك؟"
-                    icon={<MdGavel />}
-                    checked={s.isAgent}
-                    onChange={(v) => set("isAgent", v)}
-                  />
-                )}
-                {s.role === "owner" && s.isAgent && (
-                  <IconText
-                    label="رقم الوكالة"
-                    required
-                    icon={<MdGavel />}
-                    description="كما هو مدون في صك الوكالة"
-                    placeholder="يرجى إدخال رقم الوكالة"
-                    value={s.agencyNumber}
-                    onChange={(v) => set("agencyNumber", v)}
-                    error={err(
-                      !validators.required(s.agencyNumber),
-                      messages.required,
-                    )}
-                  />
-                )}
-              </SectionCard>
+              {!isCommercialTenant && applicantCard}
 
               <SectionCard
                 icon={<FaUsers />}
-                title="بيانات الطرف الآخر"
-                description="بيانات الطرف المقابل في العقد"
+                title={
+                  isCommercialTenant
+                    ? "بيانات مقدم الطلب"
+                    : "بيانات الطرف الآخر"
+                }
+                description={
+                  isCommercialTenant
+                    ? "بيانات المتقدم بطلب التوثيق"
+                    : "بيانات الطرف المقابل في العقد"
+                }
               >
                 {isCommercial ? (
                   <>
@@ -686,7 +764,11 @@ export function SmartForm({
                       }
                     >
                       <ToggleButtonGroup
-                        aria-label="نوع الطرف الآخر"
+                        aria-label={
+                          isCommercialTenant
+                            ? "نوع مقدم الطلب"
+                            : "نوع الطرف الآخر"
+                        }
                         selectionMode="single"
                         disallowEmptySelection
                         fullWidth
@@ -705,7 +787,6 @@ export function SmartForm({
                                 }
                               : {
                                   unifiedNumber: "",
-                                  entityName: "",
                                   repId: "",
                                   repPhone: "",
                                   repDob: null,
@@ -795,7 +876,11 @@ export function SmartForm({
                     ) : (
                       <div className="grid gap-4 sm:grid-cols-2">
                         <IconText
-                          label="رقم الهوية / الإقامة للطرف الآخر"
+                          label={
+                            isCommercialTenant
+                              ? "رقم الهوية / الإقامة لمقدم الطلب"
+                              : "رقم الهوية / الإقامة للطرف الآخر"
+                          }
                           required
                           icon={<MdBadge />}
                           description={helpers.nationalOrIqama}
@@ -810,11 +895,15 @@ export function SmartForm({
                           )}
                         />
                         <IconDate
-                          label="تاريخ ميلاد الطرف الآخر"
+                          label={
+                            isCommercialTenant
+                              ? "تاريخ ميلاد مقدم الطلب"
+                              : "تاريخ ميلاد الطرف الآخر"
+                          }
                           icon={<MdCake />}
                           name="other-dob"
                           description={
-                            s.role === "owner"
+                            s.role === "owner" || isCommercialTenant
                               ? "يجب أن يكون العمر 18 سنة على الأقل"
                               : "اختياري"
                           }
@@ -822,13 +911,17 @@ export function SmartForm({
                           onChange={(v) => set("otherDob", v)}
                           maxYear={new Date().getFullYear()}
                           error={err(
-                            s.role === "owner" &&
+                            (s.role === "owner" || isCommercialTenant) &&
                               !isAdultISO(toGregorianISO(s.otherDob)),
                             messages.adult,
                           )}
                         />
                         <IconText
-                          label="جوال الطرف الآخر"
+                          label={
+                            isCommercialTenant
+                              ? "جوال مقدم الطلب"
+                              : "جوال الطرف الآخر"
+                          }
                           required
                           icon={<MdPhone />}
                           description={helpers.mobile}
@@ -897,23 +990,8 @@ export function SmartForm({
                     />
                   </div>
                 )}
-                {s.role === "tenant" && (
-                  <>
-                    <Separator />
-                    <IconText
-                      label="IBAN المؤجر"
-                      required
-                      icon={<MdAccountBalanceWallet />}
-                      description="رقم الآيبان البنكي الدولي للمؤجر"
-                      placeholder="مثال: SA03 8000 0000 6080 1016 7519"
-                      value={s.ownerIban}
-                      onChange={(v) => set("ownerIban", v)}
-                      dir="ltr"
-                      error={err(!validators.iban(s.ownerIban), messages.iban)}
-                    />
-                  </>
-                )}
               </SectionCard>
+              {isCommercialTenant && applicantCard}
             </div>
           )}
 
@@ -1212,21 +1290,40 @@ export function SmartForm({
                     onChange={(v) => set("payment", v)}
                     error={err(!s.payment, messages.required)}
                   />
-                  <IconNumber
-                    label="الإيجار السنوي"
-                    required
-                    icon={<BiSolidCoinStack />}
-                    suffix={<SaudiRiyal className="size-4" />}
-                    min={1}
-                    emptyWhenZero
-                    placeholder="مثال: 24000"
-                    value={s.annualRent}
-                    onChange={(v) => set("annualRent", v)}
-                    error={err(
-                      !(s.annualRent > 0),
-                      "يرجى إدخال إيجار سنوي أكبر من صفر",
-                    )}
-                  />
+                  {!totalCase && (
+                    <IconNumber
+                      label="الإيجار السنوي"
+                      required
+                      icon={<BiSolidCoinStack />}
+                      suffix={<SaudiRiyal className="size-4" />}
+                      min={1}
+                      emptyWhenZero
+                      placeholder="مثال: 24000"
+                      value={s.annualRent}
+                      onChange={(v) => set("annualRent", v)}
+                      error={err(
+                        !(s.annualRent > 0),
+                        "يرجى إدخال إيجار سنوي أكبر من صفر",
+                      )}
+                    />
+                  )}
+                  {totalCase && (
+                    <IconNumber
+                      label="إجمالي مبلغ الإيجار"
+                      required
+                      icon={<BiSolidCoinStack />}
+                      suffix={<SaudiRiyal className="size-4" />}
+                      min={1}
+                      emptyWhenZero
+                      placeholder="مثال: 24000"
+                      value={s.totalRent}
+                      onChange={(v) => set("totalRent", v)}
+                      error={err(
+                        !(s.totalRent > 0),
+                        "يرجى إدخال إجمالي مبلغ إيجار أكبر من صفر",
+                      )}
+                    />
+                  )}
                 </div>
               </SectionCard>
             </div>
@@ -1289,28 +1386,32 @@ export function SmartForm({
                     onChange={(v) => set("area", v)}
                     error={err(!(s.area > 0), "يرجى إدخال مساحة أكبر من صفر")}
                   />
-                  <IconSelect
-                    label="الغرف"
-                    required
-                    icon={<FaDoorOpen />}
-                    options={countOptions(<FaDoorOpen />)}
-                    value={s.rooms}
-                    onChange={(v) => set("rooms", v)}
-                    error={err(!s.rooms, messages.required)}
-                  />
-                  {s.rooms === "other" && (
-                    <IconNumber
-                      label="عدد الغرف"
-                      required
-                      icon={<FaDoorOpen />}
-                      min={1}
-                      value={s.roomsCustom}
-                      onChange={(v) => set("roomsCustom", v)}
-                      error={err(
-                        !(s.roomsCustom > 0),
-                        "يرجى إدخال عدد أكبر من صفر",
+                  {!isCommercial && (
+                    <>
+                      <IconSelect
+                        label="الغرف"
+                        required
+                        icon={<FaDoorOpen />}
+                        options={countOptions(<FaDoorOpen />)}
+                        value={s.rooms}
+                        onChange={(v) => set("rooms", v)}
+                        error={err(!s.rooms, messages.required)}
+                      />
+                      {s.rooms === "other" && (
+                        <IconNumber
+                          label="عدد الغرف"
+                          required
+                          icon={<FaDoorOpen />}
+                          min={1}
+                          value={s.roomsCustom}
+                          onChange={(v) => set("roomsCustom", v)}
+                          error={err(
+                            !(s.roomsCustom > 0),
+                            "يرجى إدخال عدد أكبر من صفر",
+                          )}
+                        />
                       )}
-                    />
+                    </>
                   )}
                   <IconSelect
                     label="نوع العقار"
@@ -1459,11 +1560,6 @@ export function SmartForm({
                               icon: <PiFanFill />,
                             },
                             {
-                              value: "extra_room",
-                              label: "غرفة إضافية",
-                              icon: <FaDoorOpen />,
-                            },
-                            {
                               value: "storage",
                               label: "غرفة مخزن",
                               icon: <PiWarehouseFill />,
@@ -1478,7 +1574,11 @@ export function SmartForm({
                               label: "الحمامات",
                               icon: <PiBathtubFill />,
                             },
-                          ]}
+                          ].filter(
+                            (o) =>
+                              !isCommercial ||
+                              COMMERCIAL_EXTRA_KINDS.includes(o.value),
+                          )}
                         />
                         {s.extras.some((e) => e.kind === "kitchen") && (
                           <div className="flex min-w-0 flex-col gap-1">
@@ -1550,25 +1650,37 @@ export function SmartForm({
                   onEdit={() => setStep(0)}
                 />
                 <SummaryRow
-                  title="جوال مقدم الطلب"
+                  title={
+                    isCommercialTenant ? "جوال الطرف الآخر" : "جوال مقدم الطلب"
+                  }
                   value={s.applicantPhone}
                   onEdit={() => setStep(1)}
                 />
                 <SummaryRow
-                  title="رقم الهوية / الإقامة لمقدم الطلب"
+                  title={
+                    isCommercialTenant
+                      ? "رقم الهوية / الإقامة للطرف الآخر"
+                      : "رقم الهوية / الإقامة لمقدم الطلب"
+                  }
                   value={s.applicantId}
                   onEdit={() => setStep(1)}
                 />
                 {s.applicantDob && (
                   <SummaryRow
-                    title="تاريخ ميلاد مقدم الطلب"
+                    title={
+                      isCommercialTenant
+                        ? "تاريخ ميلاد الطرف الآخر"
+                        : "تاريخ ميلاد مقدم الطلب"
+                    }
                     value={dateLabel(s.applicantDob)}
                     onEdit={() => setStep(1)}
                   />
                 )}
                 {isCommercial && (
                   <SummaryRow
-                    title="نوع الطرف الآخر"
+                    title={
+                      isCommercialTenant ? "نوع مقدم الطلب" : "نوع الطرف الآخر"
+                    }
                     value={s.counterType === "entity" ? "منشأة" : "فرد"}
                     onEdit={() => setStep(1)}
                   />
@@ -1608,18 +1720,30 @@ export function SmartForm({
                 ) : (
                   <>
                     <SummaryRow
-                      title="رقم الهوية / الإقامة للطرف الآخر"
+                      title={
+                        isCommercialTenant
+                          ? "رقم الهوية / الإقامة لمقدم الطلب"
+                          : "رقم الهوية / الإقامة للطرف الآخر"
+                      }
                       value={s.otherId}
                       onEdit={() => setStep(1)}
                     />
                     <SummaryRow
-                      title="جوال الطرف الآخر"
+                      title={
+                        isCommercialTenant
+                          ? "جوال مقدم الطلب"
+                          : "جوال الطرف الآخر"
+                      }
                       value={s.otherPhone}
                       onEdit={() => setStep(1)}
                     />
                     {s.otherDob && (
                       <SummaryRow
-                        title="تاريخ ميلاد الطرف الآخر"
+                        title={
+                          isCommercialTenant
+                            ? "تاريخ ميلاد مقدم الطلب"
+                            : "تاريخ ميلاد الطرف الآخر"
+                        }
                         value={dateLabel(s.otherDob)}
                         onEdit={() => setStep(1)}
                       />
@@ -1691,8 +1815,8 @@ export function SmartForm({
                   onEdit={() => setStep(3)}
                 />
                 <SummaryRow
-                  title="الإيجار السنوي"
-                  value={formatCurrency(s.annualRent)}
+                  title={totalCase ? "إجمالي مبلغ الإيجار" : "الإيجار السنوي"}
+                  value={formatCurrency(totalCase ? s.totalRent : s.annualRent)}
                   onEdit={() => setStep(3)}
                 />
                 <SummaryRow
@@ -1702,7 +1826,7 @@ export function SmartForm({
                 />
                 <SummaryRow
                   title="الدور والمساحة"
-                  value={`الدور ${floorLabel} - ${s.area} م² - ${roomsLabel} غرف`}
+                  value={`الدور ${floorLabel} - ${s.area} م²${isCommercial ? "" : ` - ${roomsLabel} غرف`}`}
                   onEdit={() => setStep(4)}
                 />
                 <SummaryRow
@@ -1808,6 +1932,7 @@ export function SmartForm({
                         });
                         return;
                       }
+                      router.prefetch("/request/success");
                       setConfirmOpen(true);
                     }}
                   >
@@ -1859,10 +1984,14 @@ export function SmartForm({
                             <div className="flex items-center justify-between gap-3 text-sm">
                               <span className="text-muted flex items-center gap-1.5">
                                 <BiSolidCoinStack className="text-accent size-4" />
-                                الإيجار السنوي
+                                {totalCase
+                                  ? "إجمالي مبلغ الإيجار"
+                                  : "الإيجار السنوي"}
                               </span>
                               <strong className="tabular-nums">
-                                {formatCurrency(s.annualRent)}
+                                {formatCurrency(
+                                  totalCase ? s.totalRent : s.annualRent,
+                                )}
                               </strong>
                             </div>
                             <div className="flex items-center justify-between gap-3 text-sm">

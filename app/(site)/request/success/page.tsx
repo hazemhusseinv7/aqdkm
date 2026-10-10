@@ -72,6 +72,11 @@ export default async function RequestSuccessPage({
               <Price value={status.annualRent} />
             </SummaryRow>
           )}
+          {status.totalRent !== null && (
+            <SummaryRow icon={<BiSolidCoinStack />} label="إجمالي مبلغ الإيجار">
+              <Price value={status.totalRent} />
+            </SummaryRow>
+          )}
           {status.feeTotal !== null && (
             <SummaryRow
               icon={<MdReceiptLong />}

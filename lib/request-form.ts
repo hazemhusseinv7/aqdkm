@@ -4,7 +4,8 @@ export type Role = "owner" | "tenant";
 
 export type ExtraItem = { kind: string; count: number };
 
-type DateFields = "otherDob" | "repDob" | "deedDate" | "contractStart" | "applicantDob";
+type DateFields =
+  "otherDob" | "repDob" | "deedDate" | "contractStart" | "applicantDob";
 
 export type SerializedFormState = Omit<FormState, DateFields> & {
   otherDob: string | null;
@@ -26,7 +27,6 @@ export type FormState = {
   otherDob: CalendarDate | null;
   counterType: "individual" | "entity" | "";
   unifiedNumber: string;
-  entityName: string;
   repId: string;
   repPhone: string;
   repDob: CalendarDate | null;
@@ -45,6 +45,7 @@ export type FormState = {
   contractStart: CalendarDate | null;
   payment: string;
   annualRent: number;
+  totalRent: number;
   ownerIban: string;
   propertyType: string;
   propertyCustom: string;
@@ -72,10 +73,16 @@ export type RequestDetail = {
     role?: string;
     isAgent?: boolean;
     agencyNumber?: string;
+    counterType?: string;
     phone?: string;
     nationalId?: string;
     dob?: string;
     ownerIban?: string;
+    unifiedNumber?: string;
+    repId?: string;
+    repPhone?: string;
+    repDob?: string;
+    authNumber?: string;
   };
   counterparty?: {
     counterType?: string;
@@ -84,7 +91,6 @@ export type RequestDetail = {
     dob?: string;
     ownerIban?: string;
     unifiedNumber?: string;
-    entityName?: string;
     repId?: string;
     repPhone?: string;
     repDob?: string;
@@ -122,6 +128,7 @@ export type RequestDetail = {
     contractStart?: string;
     payment?: string;
     annualRent?: number;
+    totalRent?: number;
     feeBreakdown?: {
       years?: number;
       government?: number;
@@ -139,4 +146,5 @@ export type RequestStatus = {
   submittedAt: string;
   feeTotal: number | null;
   annualRent: number | null;
+  totalRent: number | null;
 } | null;

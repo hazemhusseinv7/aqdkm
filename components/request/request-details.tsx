@@ -181,6 +181,8 @@ export function RequestDetails({ detail }: { detail: Detail }) {
   const c = detail.counterparty;
   const t = detail.terms;
   const isEntity = counterTypeText(c?.counterType) === "منشأة";
+  const applicantIsEntity =
+    counterTypeText(detail.applicant.counterType) === "منشأة";
 
   const durationDisplay = durationText(t?.duration, t?.customMonths);
   const extrasDisplay = extrasText(p?.extras);
@@ -193,24 +195,68 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           label={L.applicantRole.ar}
           display={lookupOption(OPTION_VALUES.role, detail.applicant.role)}
         />
-        <FieldRow
-          icon={<MdPhone />}
-          label={L.applicantPhone.ar}
-          display={detail.applicant.phone ?? null}
-          ltr
-        />
-        <FieldRow
-          icon={<MdBadge />}
-          label={L.applicantNationalId.ar}
-          display={detail.applicant.nationalId ?? null}
-          ltr
-        />
-        <FieldRow
-          icon={<MdCake />}
-          label={L.applicantDob.ar}
-          display={formatDualDate(detail.applicant.dob)}
-          copy={detail.applicant.dob ?? null}
-        />
+        {detail.applicant.counterType ? (
+          <FieldRow
+            icon={applicantIsEntity ? <FaBuilding /> : <FaUsers />}
+            label={L.applicantCounterType.ar}
+            display={counterTypeText(detail.applicant.counterType)}
+          />
+        ) : null}
+        {applicantIsEntity ? (
+          <>
+            <FieldRow
+              icon={<MdNumbers />}
+              label={L.applicantUnifiedNumber.ar}
+              display={detail.applicant.unifiedNumber ?? null}
+              ltr
+            />
+            <FieldRow
+              icon={<MdBadge />}
+              label={L.applicantRepId.ar}
+              display={detail.applicant.repId ?? null}
+              ltr
+            />
+            <FieldRow
+              icon={<MdPhone />}
+              label={L.applicantRepPhone.ar}
+              display={detail.applicant.repPhone ?? null}
+              ltr
+            />
+            <FieldRow
+              icon={<MdCake />}
+              label={L.applicantRepDob.ar}
+              display={formatDualDate(detail.applicant.repDob)}
+              copy={detail.applicant.repDob ?? null}
+            />
+            <FieldRow
+              icon={<MdGavel />}
+              label={L.applicantAuthNumber.ar}
+              display={detail.applicant.authNumber ?? null}
+              ltr
+            />
+          </>
+        ) : (
+          <>
+            <FieldRow
+              icon={<MdPhone />}
+              label={L.applicantPhone.ar}
+              display={detail.applicant.phone ?? null}
+              ltr
+            />
+            <FieldRow
+              icon={<MdBadge />}
+              label={L.applicantNationalId.ar}
+              display={detail.applicant.nationalId ?? null}
+              ltr
+            />
+            <FieldRow
+              icon={<MdCake />}
+              label={L.applicantDob.ar}
+              display={formatDualDate(detail.applicant.dob)}
+              copy={detail.applicant.dob ?? null}
+            />
+          </>
+        )}
         {detail.applicant.ownerIban ? (
           <FieldRow
             icon={<MdAccountBalanceWallet />}
@@ -258,11 +304,6 @@ export function RequestDetails({ detail }: { detail: Detail }) {
             />
             <FieldRow
               icon={<FaBuilding />}
-              label={L.counterpartyEntityName.ar}
-              display={c?.entityName ?? null}
-            />
-            <FieldRow
-              icon={<MdBadge />}
               label={L.counterpartyRepId.ar}
               display={c?.repId ?? null}
               ltr
@@ -410,11 +451,13 @@ export function RequestDetails({ detail }: { detail: Detail }) {
             OPTION_VALUES.floor,
           )}
         />
-        <FieldRow
-          icon={<FaDoorOpen />}
-          label={L.rooms.ar}
-          display={countText(p?.rooms, p?.roomsCustom)}
-        />
+        {!isCommercial && (
+          <FieldRow
+            icon={<FaDoorOpen />}
+            label={L.rooms.ar}
+            display={countText(p?.rooms, p?.roomsCustom)}
+          />
+        )}
         <FieldRow
           icon={<MdKitchen />}
           label={L.extras.ar}
@@ -467,14 +510,23 @@ export function RequestDetails({ detail }: { detail: Detail }) {
           label={L.payment.ar}
           display={lookupOption(OPTION_VALUES.payment, t?.payment)}
         />
-        <FieldRow
-          icon={<BiSolidCoinStack />}
-          label={L.annualRent.ar}
-          display={
-            t?.annualRent != null ? <Price value={t.annualRent} /> : null
-          }
-          copy={priceText(t?.annualRent)}
-        />
+        {t?.totalRent != null ? (
+          <FieldRow
+            icon={<BiSolidCoinStack />}
+            label={L.totalRent.ar}
+            display={<Price value={t.totalRent} />}
+            copy={priceText(t.totalRent)}
+          />
+        ) : (
+          <FieldRow
+            icon={<BiSolidCoinStack />}
+            label={L.annualRent.ar}
+            display={
+              t?.annualRent != null ? <Price value={t.annualRent} /> : null
+            }
+            copy={priceText(t?.annualRent)}
+          />
+        )}
         {t?.feeBreakdown?.years != null && (
           <FieldRow
             icon={<BiSolidCoinStack />}

@@ -129,10 +129,10 @@ export const REQUEST_DETAIL_QUERY = defineQuery(
     contractType,
     status,
     submittedAt,
-    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban },
+    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban, counterType, unifiedNumber, repId, repPhone, repDob, authNumber },
     counterparty{
       counterType, nationalId, phone, dob, ownerIban, unifiedNumber,
-      entityName, repId, repPhone, repDob, authNumber
+      repId, repPhone, repDob, authNumber
     },
     property{
       deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,
@@ -142,7 +142,7 @@ export const REQUEST_DETAIL_QUERY = defineQuery(
     },
     location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },
     terms{
-      duration, customMonths, contractStart, payment, annualRent,
+      duration, customMonths, contractStart, payment, annualRent, totalRent,
       feeBreakdown{ years, government, company, total }, notes
     }
   }`,
@@ -155,7 +155,8 @@ export const REQUEST_STATUS_QUERY = defineQuery(
     status,
     submittedAt,
     "feeTotal": terms.feeBreakdown.total,
-    "annualRent": terms.annualRent
+    "annualRent": terms.annualRent,
+    "totalRent": terms.totalRent
   }`,
 );
 

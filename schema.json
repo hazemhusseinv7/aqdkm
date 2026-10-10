@@ -2480,6 +2480,58 @@
                 "type": "string"
               },
               "optional": true
+            },
+            "counterType": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "فرد"
+                  },
+                  {
+                    "type": "string",
+                    "value": "منشأة"
+                  }
+                ]
+              },
+              "optional": true
+            },
+            "unifiedNumber": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "repId": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "repPhone": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "repDob": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "authNumber": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
             }
           }
         },
@@ -2536,13 +2588,6 @@
               "optional": true
             },
             "unifiedNumber": {
-              "type": "objectAttribute",
-              "value": {
-                "type": "string"
-              },
-              "optional": true
-            },
-            "entityName": {
               "type": "objectAttribute",
               "value": {
                 "type": "string"
@@ -2817,6 +2862,13 @@
               "optional": true
             },
             "annualRent": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "number"
+              },
+              "optional": true
+            },
+            "totalRent": {
               "type": "objectAttribute",
               "value": {
                 "type": "number"
