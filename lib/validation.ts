@@ -1,16 +1,3 @@
-/** ISO 13616 mod-97 checksum for international bank account numbers. */
-function ibanMod97Ok(clean: string): boolean {
-  const rearranged = clean.slice(4) + clean.slice(0, 4);
-  let remainder = 0;
-  for (const ch of rearranged) {
-    const code = ch >= "A" && ch <= "Z" ? ch.charCodeAt(0) - 55 : ch;
-    for (const d of String(code)) {
-      remainder = (remainder * 10 + Number(d)) % 97;
-    }
-  }
-  return remainder === 1;
-}
-
 export const validators = {
   nationalOrIqama: (v: string) => /^[12]\d{9}$/.test(v.trim()),
   mobile: (v: string) => /^05\d{8}$/.test(v.trim().replace(/[\s-]/g, "")),
@@ -18,12 +5,7 @@ export const validators = {
   required: (v: string) => v.trim().length > 0,
   deedNumber: (v: string) => v.trim().length >= 4,
   postal: (v: string) => /^\d{5}$/.test(v.trim()),
-  iban: (v: unknown) => {
-    if (typeof v !== "string") return false;
-    const clean = v.trim().replace(/[\s-]/g, "").toUpperCase();
-    if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(clean)) return false;
-    return ibanMod97Ok(clean);
-  },
+  iban: (_v: unknown) => true,
 };
 
 export const messages = {

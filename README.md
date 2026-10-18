@@ -135,7 +135,8 @@ Server-Action boundary rules:
   review) with draft restore, autosave indicator, inline fee box in step 3 +
   review (no sidebar; explainer sums derived from the active `FeeConfig`), and
   a matching `SmartFormSkeleton` shown during the ~500 ms draft-restore
-  window. Step 1 collects the landlord IBAN (international, mod-97 checked,
+  window. Step 1 collects the landlord IBAN (free-text, unvalidated; accepted
+  as supplied, normalized to trimmed uppercase at the submit boundary;
   applicant side for owners / counterparty side for tenants) and enforces 18+
   for individual tenants (applicant side) and for the counterparty individual
   on the owner side.   The commercial counterparty toggle defaults to منشأة
