@@ -82,6 +82,8 @@ export const POST_DETAIL_QUERY = defineQuery(
     title,
     "slug": slug.current,
     excerpt,
+    seoTitle,
+    seoDescription,
     publishedAt,
     cover{ alt, caption, asset-> },
     categories[]->{ _id, title, "slug": slug.current },

@@ -3,7 +3,7 @@ import { arabicSlugify, validateArabicSlug } from "../lib/arabicSlug";
 import { RtlPortableTextInput } from "../lib/components/RtlPortableTextInput";
 import { RtlTextFieldInput } from "../lib/components/RtlTextFieldInput";
 import { MdFolder, MdInfo } from "react-icons/md";
-import { RiArticleFill } from "react-icons/ri";
+import { RiArticleFill, RiFileSearchFill } from "react-icons/ri";
 
 export const post = defineType({
   name: "post",
@@ -14,6 +14,7 @@ export const post = defineType({
     { name: "general", title: "General", icon: MdInfo },
     { name: "content", title: "Content", icon: RiArticleFill },
     { name: "taxonomy", title: "Taxonomy", icon: MdFolder },
+    { name: "seo", title: "SEO", icon: RiFileSearchFill },
   ],
   fields: [
     defineField({
@@ -161,6 +162,27 @@ export const post = defineType({
       readOnly: true,
       description:
         "Resend broadcast id for this post (analytics in the Resend dashboard). Clear alongside Broadcast sent at to resend.",
+    }),
+    defineField({
+      name: "seoTitle",
+      title: "SEO title",
+      type: "string",
+      group: "seo",
+      components: { input: RtlTextFieldInput },
+      description:
+        "Search-result page title; falls back to the post title when left empty",
+      validation: (rule) => rule.max(60).warning("Keep it under 60 characters"),
+    }),
+    defineField({
+      name: "seoDescription",
+      title: "SEO description",
+      type: "text",
+      group: "seo",
+      components: { input: RtlTextFieldInput },
+      description:
+        "Search-result page description; falls back to the excerpt when left empty",
+      validation: (rule) =>
+        rule.max(160).warning("Keep it under 160 characters"),
     }),
   ],
   preview: {

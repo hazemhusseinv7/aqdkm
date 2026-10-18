@@ -104,8 +104,13 @@
 }
 
 html {
-  @apply scroll-smooth;
   font-family: var(--font-arabic), "IBM Plex Sans Arabic", Tahoma, sans-serif;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    @apply scroll-smooth;
+  }
 }
 
 input,

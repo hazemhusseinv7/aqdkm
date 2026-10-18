@@ -55,12 +55,15 @@ export async function generateMetadata({
     const post = stegaClean(data) as POST_DETAIL_QUERY_RESULT;
     if (!post) return { title: "المقال غير موجود" };
     const cover = postCoverImage(post.cover);
-    const description = normalizeCurrencyText(post.excerpt);
+    const displayTitle = post.seoTitle || post.title;
+    const description = normalizeCurrencyText(
+      post.seoDescription || post.excerpt,
+    );
     return {
-      title: `${post.title} | المدونة`,
+      title: `${displayTitle} | المدونة`,
       description,
       openGraph: {
-        title: post.title,
+        title: displayTitle,
         description,
         ...(cover ? { images: [{ url: cover.src }] } : {}),
       },

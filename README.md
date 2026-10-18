@@ -87,7 +87,7 @@ Studio lives at `/admin`. IDs are Sanity-generated; drafts stay in
 | `rentalRequest` | document | Groups: general / parties / property / terms; statuses new → reviewing → approved → completed / cancelled; user-filled fields are **read-only**, field titles bilingual (`English / العربية`); every submit emails the all-fields table to `ADMIN_EMAIL` (skipped with a server log when unset) |
 | `contactMessage` | document | `name/phone/email/message` are **read-only** (staff never edits submissions); `status` uses the `StatusTabs` tab input; `submittedAt` read-only |
 | `siteSettings` | singleton | Groups: general (fees, `supportPhone`, `email`, `regaLicenseUrl`, `faqs[]`, `marketingPoints[]` text+icon-picker array driving the hero/CTA visuals - hidden when empty) / social (`socialLinks[]`) / analytics (`gaMeasurementId`, `gtmId`) / cta (starting-fee note phrase + residential/commercial amounts, manual marketing numbers) |
-| `post` / `category` / `author` | documents | Blog group in Studio; post bodies accept text, images, and `code` (HTML) blocks; FAQs live in `siteSettings.faqs[]`; slugs accept Arabic (auto-slugified + validated, decoded at render, sitemap-encoded) |
+| `post` / `category` / `author` | documents | Blog group in Studio; post groups `general / content / taxonomy / seo` with optional `seoTitle` / `seoDescription` (60 / 160-char soft limits) that override the meta title/description and fall back to `title` / `excerpt` when empty; post bodies accept text, images, and `code` (HTML) blocks; FAQs live in `siteSettings.faqs[]`; slugs accept Arabic (auto-slugified + validated, decoded at render, sitemap-encoded) |
 | `legalPage` | document | Terms / privacy / FAQ pages: title, description, Portable Text content + Q&A accordion; footer + `/legal/[slug]` (Arabic slugs, same as posts) |
 | `testimonials` / `features` / `licenses` | singletons | Homepage sections: reviews (name + quote required; role/city/date/rating optional), feature cards (icon picker), license cards |
 | `subscriber` | document | Newsletter double opt-in; user fields read-only; status via radio (`pending/confirmed/unsubscribed`) |
@@ -98,7 +98,8 @@ tab buttons), `FeesInput` (fee matrix), `StatusInput` (configured badge),
 override rendering `dir="auto"`; defers to field-level inputs and option-list
 pickers), `RtlPortableTextInput` (hard-RTL rich-text wrapper, wired per-field
 on post body / legal content+answers / settings FAQ answers),
-`RtlTextFieldInput` (hard-RTL text wrapper, wired on post excerpt). The
+`RtlTextFieldInput` (hard-RTL text wrapper, wired on post excerpt and the
+`seoTitle`/`seoDescription` SEO fields). The
 `Advanced` tool tab (same folder) manages requests in bulk: checkbox
 multi-select over a status/type-filtered list, bulk status changes and bulk
 deletes (typed-count confirm) executed as single all-or-nothing transactions
@@ -246,6 +247,14 @@ Server-Action boundary rules:
    Raw-HTML `code` blocks render through `lib/code-html.tsx` (sanitize, then
    the same icon swap; pasted `<table>`s become real HeroUI Tables via the
    `components/blog/html-table.tsx` client island).
+- Article anchors (`lib/anchors.ts`): headings (`h2`-`h4`, Portable Text and
+  sanitized HTML alike) get an `id` - explicit `id=` survives the sanitizer
+  whitelist (`lib/sanitize-html.tsx` `parseAttrs`), otherwise an auto-slug from
+  the heading text is generated with `-2` dedupe. TOC-style `#fragment` links
+  render same-tab; authoring convention is TOC href = heading id. Fragment,
+  relative (`/…`), `mailto:` and `tel:` links open in the same tab; only
+  external URLs get `target="_blank" rel="noreferrer"` (both render paths:
+  `lib/sanitize-html.tsx` and `components/blog/portable-text.tsx`).
 - Skeletons mirror their content by construction: `SmartFormSkeleton` copies
   the step-0 layout (same `max-w-5xl > Card` shell, stepper shapes, separator,
   title row + two role cards, toolbar - no sidebar; ships an explicit mobile

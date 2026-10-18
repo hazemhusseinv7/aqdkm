@@ -249,6 +249,8 @@ export type Post = {
   author?: AuthorReference;
   broadcastSentAt?: string;
   broadcastId?: string;
+  seoTitle?: string;
+  seoDescription?: string;
 };
 
 export type Author = {
@@ -916,12 +918,14 @@ export type LEGAL_PAGE_QUERY_RESULT = {
 
 // Source: sanity/lib/queries.ts
 // Variable: POST_DETAIL_QUERY
-// Query: *[_type == "post" && slug.current == $slug][0]{    _id,    title,    "slug": slug.current,    excerpt,    publishedAt,    cover{ alt, caption, asset-> },    categories[]->{ _id, title, "slug": slug.current },    author->{ name, role, bio, avatar{ alt, asset-> } },    body[]{      _key,      _type,      ...,      markDefs[]{        _key,        ...,        _type == "link" => { "href": @.href }      },      _type == "image" => { asset-> }    }  }
+// Query: *[_type == "post" && slug.current == $slug][0]{    _id,    title,    "slug": slug.current,    excerpt,    seoTitle,    seoDescription,    publishedAt,    cover{ alt, caption, asset-> },    categories[]->{ _id, title, "slug": slug.current },    author->{ name, role, bio, avatar{ alt, asset-> } },    body[]{      _key,      _type,      ...,      markDefs[]{        _key,        ...,        _type == "link" => { "href": @.href }      },      _type == "image" => { asset-> }    }  }
 export type POST_DETAIL_QUERY_RESULT = {
   _id: string;
   title: string;
   slug: string;
   excerpt: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
   publishedAt: string;
   cover: {
     alt: string;
@@ -1412,7 +1416,7 @@ declare module "@sanity/client" {
     '*[_type == "post" && defined(slug.current)][].slug.current': POST_SLUGS_QUERY_RESULT;
     '*[_type == "legalPage" && defined(slug.current)] | order(_createdAt asc){\n    _id,\n    title,\n    "slug": slug.current\n  }': LEGAL_PAGES_NAV_QUERY_RESULT;
     '*[_type == "legalPage" && slug.current == $slug][0]{\n    _id,\n    title,\n    description,\n    content[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    },\n    accordion[]{ _key, question, answer[]{ _key, _type, ..., markDefs[]{ _key, ... } } }\n  }': LEGAL_PAGE_QUERY_RESULT;
-    '*[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role, bio, avatar{ alt, asset-> } },\n    body[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    }\n  }': POST_DETAIL_QUERY_RESULT;
+    '*[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    seoTitle,\n    seoDescription,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role, bio, avatar{ alt, asset-> } },\n    body[]{\n      _key,\n      _type,\n      ...,\n      markDefs[]{\n        _key,\n        ...,\n        _type == "link" => { "href": @.href }\n      },\n      _type == "image" => { asset-> }\n    }\n  }': POST_DETAIL_QUERY_RESULT;
     '*[_type == "category"] | order(title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    "postCount": count(*[_type == "post" && references(^._id) && defined(publishedAt)])\n  }': CATEGORIES_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current) && defined(publishedAt) && $categorySlug in categories[]->slug.current] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    cover{ alt, caption, asset-> },\n    categories[]->{ _id, title, "slug": slug.current },\n    author->{ name, role }\n  }': POSTS_BY_CATEGORY_QUERY_RESULT;
     '*[_type == "rentalRequest" && requestNo == $requestNo][0]{\n    requestNo,\n    contractType,\n    status,\n    submittedAt,\n    applicant{ role, isAgent, agencyNumber, phone, nationalId, dob, ownerIban, counterType, unifiedNumber, repId, repPhone, repDob, authNumber },\n    counterparty{\n      counterType, nationalId, phone, dob, ownerIban, unifiedNumber,\n      repId, repPhone, repDob, authNumber\n    },\n    property{\n      deedNumber, deedDate, propertyType, propertyCustom, unitType, unitCustom,\n      unitNumber, floor, floorCustom, area, rooms, roomsCustom,\n      extras[]{ kind, count }, kitchenCabinets,\n      electroMeter, waterMeter\n    },\n    location{ locationManual, mapsLink, city, buildingNumber, additionalNumber, postalCode },\n    terms{\n      duration, customMonths, contractStart, payment, annualRent, totalRent,\n      feeBreakdown{ years, government, company, total }, notes\n    }\n  }': REQUEST_DETAIL_QUERY_RESULT;

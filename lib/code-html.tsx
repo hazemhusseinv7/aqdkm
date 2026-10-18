@@ -66,7 +66,10 @@ function extractTable(table: HtmlNode): HtmlTableData | null {
   };
 }
 
-export function renderCodeHtml(dirty: string): ReactNode {
+export function renderCodeHtml(
+  dirty: string,
+  headingIds: Set<string>,
+): ReactNode {
   let nodes: HtmlNode[];
   try {
     nodes = parseTree(dirty);
@@ -84,7 +87,7 @@ export function renderCodeHtml(dirty: string): ReactNode {
     if (run.length > 0) {
       out.push(
         <div key={key} dir="auto" className="leading-8">
-          {renderTree(run, key)}
+          {renderTree(run, key, headingIds)}
         </div>,
       );
       run = [];
@@ -100,7 +103,7 @@ export function renderCodeHtml(dirty: string): ReactNode {
       } else {
         out.push(
           <div key={`t${k}`} dir="auto" className="leading-8">
-            {renderTree([node], `t${k}`)}
+            {renderTree([node], `t${k}`, headingIds)}
           </div>,
         );
       }

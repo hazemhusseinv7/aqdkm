@@ -1,6 +1,9 @@
 import { Fragment, type ReactNode } from "react";
 
 import { CurrencyText } from "./currency-text";
+import { headingAnchorId, linkAnchorProps } from "./anchors";
+
+const ID_SAFE = /^[a-zA-Z0-9\u0600-\u06FF_-]{1,96}$/;
 
 const ALLOWED_TAGS = new Set([
   "p",
@@ -98,6 +101,12 @@ function parseAttrs(tag: string, raw: string): Attrs {
     if (tag === "a" && name === "href") {
       if (HREF_SAFE.test(value.trim())) attrs.href = value.trim();
     } else if (
+      (tag === "h2" || tag === "h3" || tag === "h4") &&
+      name === "id" &&
+      ID_SAFE.test(value.trim())
+    ) {
+      attrs.id = value.trim();
+    } else if (
       (tag === "td" || tag === "th") &&
       (name === "colspan" || name === "rowspan") &&
       NUMERIC.test(value.trim())
@@ -182,7 +191,20 @@ export function parseTree(html: string): HtmlNode[] {
 let keyCounter = 0;
 const nextKey = (base: string) => `${base}-${keyCounter++}`;
 
-function renderNodes(nodes: HtmlNode[], base: string): ReactNode[] {
+function nodeText(nodes: HtmlNode[]): string {
+  let out = "";
+  for (const n of nodes) {
+    if (n.kind === "text") out += n.text;
+    else if (n.kind === "el") out += nodeText(n.children);
+  }
+  return out;
+}
+
+function renderNodes(
+  nodes: HtmlNode[],
+  base: string,
+  headingIds: Set<string>,
+): ReactNode[] {
   return nodes.map((node) => {
     if (node.kind === "text") {
       return (
@@ -193,7 +215,7 @@ function renderNodes(nodes: HtmlNode[], base: string): ReactNode[] {
     }
     const key = nextKey(base);
     const { tag, attrs, children } = node;
-    const inner = renderNodes(children, base);
+    const inner = renderNodes(children, base, headingIds);
     switch (tag) {
       case "strong":
       case "b":
@@ -205,19 +227,31 @@ function renderNodes(nodes: HtmlNode[], base: string): ReactNode[] {
         return <u key={key}>{inner}</u>;
       case "h2":
         return (
-          <h2 key={key} className="pt-4 text-2xl font-bold">
+          <h2
+            key={key}
+            id={headingAnchorId(nodeText(children), "h2", headingIds, attrs.id)}
+            className="scroll-mt-24 pt-4 text-2xl font-bold"
+          >
             {inner}
           </h2>
         );
       case "h3":
         return (
-          <h3 key={key} className="pt-3 text-xl font-bold">
+          <h3
+            key={key}
+            id={headingAnchorId(nodeText(children), "h3", headingIds, attrs.id)}
+            className="scroll-mt-24 pt-3 text-xl font-bold"
+          >
             {inner}
           </h3>
         );
       case "h4":
         return (
-          <h4 key={key} className="pt-2 text-lg font-bold">
+          <h4
+            key={key}
+            id={headingAnchorId(nodeText(children), "h4", headingIds, attrs.id)}
+            className="scroll-mt-24 pt-2 text-lg font-bold"
+          >
             {inner}
           </h4>
         );
@@ -255,8 +289,7 @@ function renderNodes(nodes: HtmlNode[], base: string): ReactNode[] {
           <a
             key={key}
             href={attrs.href}
-            target="_blank"
-            rel="noreferrer"
+            {...linkAnchorProps(attrs.href)}
             className="text-accent underline underline-offset-4"
           >
             {inner}
@@ -331,10 +364,14 @@ function renderNodes(nodes: HtmlNode[], base: string): ReactNode[] {
 
 export function renderSanitizedHtml(html: string, keyBase = "h"): ReactNode {
   if (!html || !html.trim()) return null;
-  return <>{renderNodes(parseTree(html), keyBase)}</>;
+  return <>{renderNodes(parseTree(html), keyBase, new Set<string>())}</>;
 }
 
-export function renderTree(nodes: HtmlNode[], keyBase = "h"): ReactNode {
+export function renderTree(
+  nodes: HtmlNode[],
+  keyBase = "h",
+  headingIds: Set<string> = new Set<string>(),
+): ReactNode {
   if (!nodes || nodes.length === 0) return null;
-  return <>{renderNodes(nodes, keyBase)}</>;
+  return <>{renderNodes(nodes, keyBase, headingIds)}</>;
 }
