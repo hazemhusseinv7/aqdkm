@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
-import { client } from "@/sanity/lib/client";
+import { fetchPrivate } from "@/sanity/lib/readClient";
 import {
   SUBSCRIBER_BY_EMAIL_QUERY,
   SUBSCRIBER_BY_TOKEN_QUERY,
@@ -27,7 +27,9 @@ export function normalizeEmail(value: string): string {
 export async function findSubscriberByEmail(
   email: string,
 ): Promise<Subscriber | null> {
-  const data = await client.fetch(SUBSCRIBER_BY_EMAIL_QUERY, {
+  // Private read: subscribers live only as drafts (anonymous API readers
+  // can never see drafts), so fetch with the tokened raw-perspective client.
+  const data = await fetchPrivate(SUBSCRIBER_BY_EMAIL_QUERY, {
     email: normalizeEmail(email),
   });
   return (data ?? null) as Subscriber | null;
@@ -36,7 +38,7 @@ export async function findSubscriberByEmail(
 export async function findSubscriberByToken(
   token: string,
 ): Promise<Subscriber | null> {
-  const data = await client.fetch(SUBSCRIBER_BY_TOKEN_QUERY, { tok: token });
+  const data = await fetchPrivate(SUBSCRIBER_BY_TOKEN_QUERY, { tok: token });
   return (data ?? null) as Subscriber | null;
 }
 
@@ -72,7 +74,11 @@ export async function upsertPendingSubscriber(
     };
   }
 
+  // Drafts-only storage: emails are personal data and the dataset is
+  // publicly readable on the Free plan. The publish action is blocked for
+  // this type in sanity.config.ts; only this server write path creates it.
   const created = (await client.create({
+    _id: `drafts.${randomUUID()}`,
     _type: "subscriber",
     email: clean,
     status: "pending",

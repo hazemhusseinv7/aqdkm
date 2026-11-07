@@ -39,6 +39,23 @@ const CONTRACT_TYPES = [
   { title: "Commercial", value: "commercial" },
 ];
 
+function dedupeRequests(rows: RequestRow[]): RequestRow[] {
+  const drafts = new Map<string, RequestRow>();
+  for (const row of rows) {
+    const baseId = row._id.replace(/^drafts\./, "");
+    const existing = drafts.get(baseId);
+    if (
+      !existing ||
+      (row._id.startsWith("drafts.") && !existing._id.startsWith("drafts."))
+    ) {
+      drafts.set(baseId, row);
+    }
+  }
+  return [...drafts.values()].sort(
+    (a, b) => Date.parse(b.submittedAt) - Date.parse(a.submittedAt),
+  );
+}
+
 function statusTitle(value: string): string {
   return STATUSES.find((s) => s.value === value)?.title ?? value;
 }
@@ -70,7 +87,11 @@ export function AdvancedRequestsTool() {
 
   useEffect(() => {
     let cancelled = false;
-    const filters = ['_type == "rentalRequest"', '!(_id in path("drafts.**"))'];
+    // Requests live only as drafts (personal data, Free plan): include
+    // drafts explicitly. Published copies should not exist thanks to the
+    // publish-action guard in sanity.config.ts, but dedupe defensively if
+    // one ever appears (draft wins).
+    const filters = ['_type == "rentalRequest"'];
     const params: Record<string, string> = {};
     if (statusFilter) {
       filters.push("status == $status");
@@ -87,7 +108,7 @@ export function AdvancedRequestsTool() {
       )
       .then(
         (data) => {
-          if (!cancelled) setRows(data ?? []);
+          if (!cancelled) setRows(dedupeRequests(data ?? []));
         },
         (e: unknown) => {
           if (!cancelled)

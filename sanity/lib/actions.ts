@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { after } from "next/server";
 import type {
   RequestDetail,
@@ -35,6 +37,7 @@ import {
   REQUEST_STATUS_QUERY,
   SITE_SETTINGS_QUERY,
 } from "./queries";
+import { fetchPrivate } from "./readClient";
 import type { SITE_SETTINGS_QUERY_RESULT } from "@/sanity.types";
 import { getWriteClient } from "./writeClient";
 
@@ -318,7 +321,16 @@ export async function submitRentalRequest(
       notes: s.notes || undefined,
     },
   };
-  await getWriteClient().create({ _type: "rentalRequest", ...detail });
+  // Drafts-only storage: rental requests contain government-ID/IBAN data and
+  // the Space is on the Free plan (public datasets), so the document is
+  // created as a draft - invisible to anonymous API readers, fully visible
+  // in the Studio. The publish action is blocked for this type in
+  // sanity.config.ts. Only this server write path may ever create it.
+  await getWriteClient().create({
+    _id: `drafts.${randomUUID()}`,
+    _type: "rentalRequest",
+    ...detail,
+  });
 
   // Admin email sends after the response: the user waits only for the save.
   after(() => notifyAdminNewRequest(detail, SITE_URL));
@@ -364,7 +376,10 @@ export async function submitContactMessage(input: {
     throw new Error(`validation: ${firstError}`);
   }
   const phone = rawPhone;
+  // Drafts-only storage (see submitRentalRequest): contact details are
+  // personal data and the dataset is publicly readable on the Free plan.
   const created = await getWriteClient().create({
+    _id: `drafts.${randomUUID()}`,
     _type: "contactMessage",
     name,
     phone,
@@ -426,7 +441,9 @@ export async function getRequestDetail(
     return null;
   }
   try {
-    const data = (await client.fetch(REQUEST_DETAIL_QUERY, {
+    // Private read: requests live only as drafts, which anonymous queries
+    // can never see - hence the tokened client with raw perspective.
+    const data = (await fetchPrivate(REQUEST_DETAIL_QUERY, {
       requestNo: normalized,
     })) as RequestDetail;
     if (!data?.requestNo) {
@@ -450,7 +467,7 @@ export async function getRequestStatus(
     return null;
   }
   try {
-    const data = (await client.fetch(REQUEST_STATUS_QUERY, {
+    const data = (await fetchPrivate(REQUEST_STATUS_QUERY, {
       requestNo: normalized,
     })) as {
       requestNo?: string;
